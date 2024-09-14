@@ -9,3 +9,7 @@ type RoleEntity struct {
 	AdminRole  bool      `json:"adminRole"`
 	ModRole    bool      `json:"modRole"`
 }
+
+func (RoleEntity) TableName() string {
+	return "roles"
+}

@@ -14,7 +14,7 @@ type DatabaseConfig struct {
 	Password string
 	Database string
 	Port     int
-	SSLMode  bool
+	SSLMode  string
 }
 
 func GetNewDatabaseConfig() DatabaseConfig {
@@ -28,11 +28,11 @@ func GetNewDatabaseConfig() DatabaseConfig {
 		log.Println("failed to get the port")
 		return DatabaseConfig{}
 	}
-	var SSLMode bool
-	if os.Getenv("SSLMODE") == "true" {
-		SSLMode = true
+	var SSLMode string
+	if os.Getenv("SSLMODE") == "enable" {
+		SSLMode = "enable"
 	} else {
-		SSLMode = false
+		SSLMode = "disable"
 	}
 
 	return DatabaseConfig{
