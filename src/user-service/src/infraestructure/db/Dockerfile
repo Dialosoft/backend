@@ -1,7 +1,0 @@
-FROM postgres:16-alpine
-
-ENV POSTGRES_USER=biznet
-ENV POSTGRES_PASSWORD=biznet
-ENV POSTGRES_DB=biznet-test
-
-EXPOSE 5432
