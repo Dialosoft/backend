@@ -8,7 +8,7 @@ import (
 
 // UserDtoToUserEntity returns a new UserEntity based on a UserDto, filling in the data.
 // It returns an error if any of the required fields (Username, Email, or Password) are empty.
-func UserDtoToUserEntity(userDto dto.UserDto) (*models.UserEntity, error) {
+func UserDtoToUserEntity(userDto *dto.UserDto) (*models.UserEntity, error) {
 	if userDto.Username == "" ||
 		userDto.Email == "" ||
 		userDto.Password == "" {
@@ -27,7 +27,7 @@ func UserDtoToUserEntity(userDto dto.UserDto) (*models.UserEntity, error) {
 // UserEntityToUserDto converts a UserEntity to a UserDto.
 // Returns an error if the UserEntity has missing required fields (Username or Email).
 // The Password field is intentionally left blank in the resulting UserDto.
-func UserEntityToUserDto(userEntity models.UserEntity) (*dto.UserDto, error) {
+func UserEntityToUserDto(userEntity *models.UserEntity) (*dto.UserDto, error) {
 	if userEntity.Username == "" ||
 		userEntity.Email == "" {
 		return nil, errorsUtils.ErrParameterCannotBeNull
