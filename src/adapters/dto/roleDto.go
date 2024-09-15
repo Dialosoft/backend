@@ -13,7 +13,6 @@ type RoleDto struct {
 	Permission int            `json:"permission"`
 	AdminRole  bool           `json:"adminRole"`
 	ModRole    bool           `json:"modRole"`
-	Email      string         `json:"email"`
 	CreatedAt  time.Time      `json:"createdAt"`
 	UpdatedAt  time.Time      `json:"updatedAt"`
 	DeletedAt  gorm.DeletedAt `json:"deletedAt"`
