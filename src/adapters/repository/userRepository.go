@@ -7,13 +7,13 @@ import (
 )
 
 type UserRepository interface {
-	FindAllUsers() ([]models.UserEntity, error)
+	FindAllUsers() ([]*models.UserEntity, error)
 	FindByID(id uuid.UUID) (*models.UserEntity, error)
 	FindByUsername(username string) (*models.UserEntity, error)
 	Create(newUser models.UserEntity) (uuid.UUID, error)
 	Update(userID uuid.UUID, updatedUser models.UserEntity) error
 	Delete(userID uuid.UUID) error
-	Restore(userId uuid.UUID) error
+	Restore(userID uuid.UUID) error
 }
 
 type userRepositoryImpl struct {
@@ -21,8 +21,8 @@ type userRepositoryImpl struct {
 }
 
 // GetAllUsers implements UserRepository.
-func (repo *userRepositoryImpl) FindAllUsers() ([]models.UserEntity, error) {
-	var users []models.UserEntity
+func (repo *userRepositoryImpl) FindAllUsers() ([]*models.UserEntity, error) {
+	var users []*models.UserEntity
 	if err := repo.db.Preload("Role").
 		Find(&users).Error; err != nil {
 		return nil, err

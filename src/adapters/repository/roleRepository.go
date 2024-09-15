@@ -7,7 +7,7 @@ import (
 )
 
 type RoleRepository interface {
-	FindAllRoles() ([]models.RoleEntity, error)
+	FindAllRoles() ([]*models.RoleEntity, error)
 	FindByID(roleID uuid.UUID) (*models.RoleEntity, error)
 	FindByType(roleType string) (*models.RoleEntity, error)
 	Create(newRole models.RoleEntity) (uuid.UUID, error)
@@ -21,8 +21,8 @@ type roleRepositoryImpl struct {
 }
 
 // FindAllRoles implements RoleRepository.
-func (repo *roleRepositoryImpl) FindAllRoles() ([]models.RoleEntity, error) {
-	var roles []models.RoleEntity
+func (repo *roleRepositoryImpl) FindAllRoles() ([]*models.RoleEntity, error) {
+	var roles []*models.RoleEntity
 	if err := repo.db.Find(&roles).Error; err != nil {
 		return nil, err
 	}
