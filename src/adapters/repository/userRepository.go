@@ -86,7 +86,10 @@ func (repo *userRepositoryImpl) Delete(userID uuid.UUID) error {
 
 // Restore implements UserRepository.
 func (repo *userRepositoryImpl) Restore(userID uuid.UUID) error {
-	result := repo.db.Unscoped().Model(&models.UserEntity{}).Where("id = ?", userID).Update("deleted_at", nil)
+	result := repo.db.Unscoped().
+		Model(&models.UserEntity{}).
+		Where("id = ?", userID).
+		Update("deleted_at", nil)
 	if result.Error != nil {
 		return result.Error
 	}
