@@ -1,8 +1,6 @@
 package repository
 
 import (
-	"errors"
-
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -13,8 +11,8 @@ type UserRepository interface {
 	FindByID(id uuid.UUID) (*models.UserEntity, error)
 	FindByUsername(username string) (*models.UserEntity, error)
 	Create(newUser models.UserEntity) (uuid.UUID, error)
-	Update(userId uuid.UUID, updatedUser models.UserEntity) error
-	Delete(userId uuid.UUID) error
+	Update(userID uuid.UUID, updatedUser models.UserEntity) error
+	Delete(userID uuid.UUID) error
 	Restore(userId uuid.UUID) error
 }
 
@@ -28,6 +26,9 @@ func (repo *userRepositoryImpl) FindAllUsers() ([]models.UserEntity, error) {
 	if err := repo.db.Preload("Role").
 		Find(&users).Error; err != nil {
 		return nil, err
+	}
+	if len(users) == 0 {
+		return nil, gorm.ErrRecordNotFound
 	}
 	return users, nil
 }
@@ -72,20 +73,20 @@ func (repo *userRepositoryImpl) Update(userID uuid.UUID, updatedUser models.User
 		return result.Error
 	}
 	if result.RowsAffected == 0 {
-		return errors.New("no user found with the given id")
+		return gorm.ErrRecordNotFound
 	}
 
 	return nil
 }
 
 // Delete implements UserRepository.
-func (repo *userRepositoryImpl) Delete(userId uuid.UUID) error {
-	return repo.db.Delete(&models.UserEntity{}, userId).Error
+func (repo *userRepositoryImpl) Delete(userID uuid.UUID) error {
+	return repo.db.Delete(&models.UserEntity{}, userID).Error
 }
 
 // Restore implements UserRepository.
-func (repo *userRepositoryImpl) Restore(userId uuid.UUID) error {
-	result := repo.db.Unscoped().Model(&models.UserEntity{}).Where("id = ?", userId).Update("deleted_at", nil)
+func (repo *userRepositoryImpl) Restore(userID uuid.UUID) error {
+	result := repo.db.Unscoped().Model(&models.UserEntity{}).Where("id = ?", userID).Update("deleted_at", nil)
 	if result.Error != nil {
 		return result.Error
 	}
