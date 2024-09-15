@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
 	"github.com/gofiber/fiber/v3"
@@ -15,7 +14,6 @@ func main() {
 
 	var err error
 	var db *gorm.DB
-	app := fiber.New(fiber.Config{})
 
 	conf := config.GetNewDatabaseConfig()
 	if conf.Database == "" {
@@ -34,11 +32,10 @@ func main() {
 		}
 	}
 
-	_ = db
+	// Api Setup
+	api := config.SetupAPI(db, fiber.Config{})
 
-	router.SetRoutes(app)
-
-	if err := app.Listen(":8080"); err != nil {
+	if err := api.Listen(":8080"); err != nil {
 		log.Fatal(err)
 	}
 }
