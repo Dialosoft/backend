@@ -20,6 +20,20 @@ func ErrNotFound(c fiber.Ctx) error {
 	return c.Status(fiber.StatusNotFound).JSON(err)
 }
 
+func ErrBadRequest(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "BAD REQUEST",
+	}
+	return c.Status(fiber.StatusBadRequest).JSON(err)
+}
+
+func ErrConflict(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "CONFLICT",
+	}
+	return c.Status(fiber.StatusConflict).JSON(err)
+}
+
 func ErrUUIDParse(c fiber.Ctx) error {
 	err := StandardError{
 		ErrorMessage: "ID provided is not a valid UUID type",
