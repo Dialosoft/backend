@@ -1,8 +1,16 @@
 package controller
 
 import (
+	"errors"
+	"strings"
+
+	"github.com/Dialosoft/src/adapters/http/request"
+	"github.com/Dialosoft/src/adapters/http/response"
+	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -18,10 +26,74 @@ func (uc *UserController) GetAllUsers(c fiber.Ctx) error {
 	users, err := uc.UserService.GetAllUsers()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "users not found"})
+			return response.ErrNotFound(c)
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(users)
+	return response.Standard(c, "OK", users)
+}
+
+func (uc *UserController) GetUserByID(c fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	uuid, err := uuid.Parse(id)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	user, err := uc.UserService.GetUserByID(uuid)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "OK", user)
+}
+
+func (uc *UserController) GetUserByUsername(c fiber.Ctx) error {
+	username := c.Params("username")
+	if username == "" {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	user, err := uc.UserService.GetUserByUsername(username)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "OK", user)
+}
+
+func (uc *UserController) CreateNewUSer(c fiber.Ctx) error {
+	var req request.UserRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	userDto, err := mapper.UserRequestToUserDto(&req)
+	if err != nil {
+		if err == errorsUtils.ErrParameterCannotBeNull {
+			return response.ErrEmptyParametersOrArguments(c)
+		}
+	}
+
+	id, err := uc.UserService.CreateNewUser(*userDto)
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) ||
+			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			return response.ErrConflict(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.StandardCreated(c, "CREATED", id)
 }
