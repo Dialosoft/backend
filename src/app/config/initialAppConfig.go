@@ -16,6 +16,8 @@ func SetupAPI(db *gorm.DB, fiberConfigs fiber.Config) *fiber.App {
 
 	app := fiber.New(fiberConfigs)
 
+	api := app.Group("/dialosoft-api/v1")
+
 	// Repositories
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
@@ -30,7 +32,7 @@ func SetupAPI(db *gorm.DB, fiberConfigs fiber.Config) *fiber.App {
 	// Routers
 	userRouter := router.NewUserRouter(userController)
 
-	userRouter.SetupUserRoutes(app)
+	userRouter.SetupUserRoutes(api)
 
 	return app
 }
