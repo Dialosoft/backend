@@ -13,10 +13,12 @@ func NewUserRouter(userController *controller.UserController) *UserRouter {
 	return &UserRouter{UserController: userController}
 }
 
-func (r *UserRouter) SetupUserRoutes(api *fiber.App) {
+func (r *UserRouter) SetupUserRoutes(api fiber.Router) {
 	userGroup := api.Group("/users")
 
 	{
-		userGroup.Get("", r.UserController.GetAllUsers)
+		userGroup.Get("/get-all-users", r.UserController.GetAllUsers)
+		userGroup.Get("/get-user-by-id/:id", r.UserController.GetUserByID)
+		userGroup.Post("/create-user", r.UserController.CreateNewUSer)
 	}
 }
