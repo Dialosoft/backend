@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
 )
@@ -37,6 +38,20 @@ func UserEntityToUserDto(userEntity *models.UserEntity) (*dto.UserDto, error) {
 		Username: userEntity.Username,
 		Password: "",
 		Email:    userEntity.Email,
+	}
+
+	return &userDto, nil
+}
+
+func UserRequestToUserDto(userRequest *request.UserRequest) (*dto.UserDto, error) {
+	if userRequest.Username == "" || userRequest.Email == "" || userRequest.Password == "" {
+		return nil, errorsUtils.ErrParameterCannotBeNull
+	}
+
+	userDto := dto.UserDto{
+		Username: userRequest.Username,
+		Password: userRequest.Password,
+		Email:    userRequest.Email,
 	}
 
 	return &userDto, nil
