@@ -2,6 +2,7 @@ package router
 
 import (
 	"github.com/Dialosoft/src/adapters/http/controller"
+	"github.com/Dialosoft/src/adapters/http/middleware"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -13,10 +14,11 @@ func NewAuthRouter(authRouter *controller.AuthController) *AuthRouter {
 	return &AuthRouter{AuthController: authRouter}
 }
 
-func (r *AuthRouter) SetupAuthRoutes(api fiber.Router) {
+func (r *AuthRouter) SetupAuthRoutes(api fiber.Router, middlewares *middleware.AuthMiddleware /* maybe unused !!!*/) {
 	authGroup := api.Group("/auth")
 	{
 		authGroup.Post("/register", r.AuthController.Register)
 		authGroup.Post("/login", r.AuthController.Login)
+		authGroup.Post("/refresh-token", r.AuthController.RefreshToken)
 	}
 }

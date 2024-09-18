@@ -32,7 +32,6 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 
 	// Middlewares
 	authMiddleware := middleware.NewAuthMiddleware(authService, generalConfig.JWTKey)
-	_ = authMiddleware
 
 	// Controllers
 	userController := controller.NewUserController(userService)
@@ -43,7 +42,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 	authRouter := router.NewAuthRouter(authController)
 
 	userRouter.SetupUserRoutes(api)
-	authRouter.SetupAuthRoutes(api)
+	authRouter.SetupAuthRoutes(api, authMiddleware)
 
 	return app
 }

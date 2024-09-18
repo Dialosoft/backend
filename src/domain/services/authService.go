@@ -177,7 +177,7 @@ func (service *authServiceImpl) GetRoleInformationByRoleID(roleID string) (strin
 			return "", err
 		}
 
-		err = service.cacheRepository.Set(context.Background(), roleModel.RoleType, "true", time.Hour*48)
+		err = service.cacheRepository.Set(context.Background(), roleModel.ID.String(), "true", time.Hour*48)
 		if err != nil {
 			return "", err
 		}
