@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
+	"github.com/Dialosoft/src/domain/models"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/Dialosoft/src/pkg/utils/jsonWebToken"
 	"github.com/Dialosoft/src/pkg/utils/security"
@@ -20,6 +22,8 @@ type AuthService interface {
 	Login(username, password string) (string, string, error)
 	RefreshToken(token string) (string, error)
 	InvalidateRefreshToken(token string) error
+	IsTokenBlacklisted(token string) bool
+	GetRoleInformationByRoleID(roleID string) (string, error)
 }
 
 type authServiceImpl struct {
@@ -148,6 +152,40 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 func (service *authServiceImpl) InvalidateRefreshToken(token string) error {
 	expiration := time.Hour * 720
 	return service.cacheRepository.Set(context.Background(), fmt.Sprintf("blacklist:%s", token), "true", expiration)
+}
+
+func (service *authServiceImpl) IsTokenBlacklisted(token string) bool {
+	is, err := service.cacheRepository.Exists(context.Background(), fmt.Sprintf("blacklist:%s", token))
+	if err != nil {
+		log.Println("ERROR:", err)
+		return false
+	}
+	return is
+}
+
+func (service *authServiceImpl) GetRoleInformationByRoleID(roleID string) (string, error) {
+	var roleModel *models.RoleEntity
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		return "", err
+	}
+
+	key, err := service.cacheRepository.Get(context.Background(), roleID)
+	if err != nil || key == "" {
+		roleModel, err = service.roleRepository.FindByID(roleUUID)
+		if err != nil {
+			return "", err
+		}
+
+		err = service.cacheRepository.Set(context.Background(), roleModel.RoleType, "true", time.Hour*48)
+		if err != nil {
+			return "", err
+		}
+
+		return roleModel.RoleType, nil
+	}
+
+	return key, nil
 }
 
 func NewAuthService(userRepository repository.UserRepository,
