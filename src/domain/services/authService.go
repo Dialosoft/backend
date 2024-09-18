@@ -14,6 +14,7 @@ import (
 type AuthService interface {
 	Register(user dto.UserDto) (uuid.UUID, string, string, error)
 	Login(username, password string) (string, string, error)
+	RefreshToken(token string) (string, error)
 }
 
 type authServiceImpl struct {
@@ -96,6 +97,11 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 	}
 
 	return accesToken, tokenEntity.Token, nil
+}
+
+// RefreshToken implements AuthService.
+func (service *authServiceImpl) RefreshToken(token string) (string, error) {
+	panic("")
 }
 
 func NewAuthService(userRepository repository.UserRepository, roleRepository repository.RoleRepository, tokenRepository repository.TokenRepository, jwtKey string) AuthService {

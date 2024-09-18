@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -18,6 +19,8 @@ func main() {
 	if conf.Database == "" {
 		log.Fatal("not variable setted")
 	}
+
+	fmt.Println(conf)
 
 	// Database
 	for {

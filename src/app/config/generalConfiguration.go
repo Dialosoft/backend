@@ -36,6 +36,11 @@ func GetGeneralConfig() GeneralConfig {
 		SSLMode = "disable"
 	}
 
+	jwtKey := os.Getenv("JWTKEY")
+	if jwtKey == "" {
+		log.Fatal("JWT key is missing")
+	}
+
 	return GeneralConfig{
 		Host:     os.Getenv("HOST"),
 		User:     os.Getenv("USER"),
@@ -43,6 +48,6 @@ func GetGeneralConfig() GeneralConfig {
 		Database: os.Getenv("DATABASE"),
 		Port:     port,
 		SSLMode:  SSLMode,
-		JWTKey:   os.Getenv("JWTKEY"),
+		JWTKey:   jwtKey,
 	}
 }
