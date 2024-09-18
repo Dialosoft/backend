@@ -8,16 +8,17 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type DatabaseConfig struct {
+type GeneralConfig struct {
 	Host     string
 	User     string
 	Password string
 	Database string
 	Port     int
 	SSLMode  string
+	JWTKey   string
 }
 
-func GetNewDatabaseConfig() DatabaseConfig {
+func GetGeneralConfig() GeneralConfig {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
@@ -26,7 +27,7 @@ func GetNewDatabaseConfig() DatabaseConfig {
 	port, err := strconv.Atoi(os.Getenv("PORT"))
 	if err != nil {
 		log.Println("failed to get the port")
-		return DatabaseConfig{}
+		return GeneralConfig{}
 	}
 	var SSLMode string
 	if os.Getenv("SSLMODE") == "enable" {
@@ -35,12 +36,13 @@ func GetNewDatabaseConfig() DatabaseConfig {
 		SSLMode = "disable"
 	}
 
-	return DatabaseConfig{
+	return GeneralConfig{
 		Host:     os.Getenv("HOST"),
 		User:     os.Getenv("USER"),
 		Password: os.Getenv("PASSWORD"),
 		Database: os.Getenv("DATABASE"),
 		Port:     port,
 		SSLMode:  SSLMode,
+		JWTKey:   os.Getenv("JWTKEY"),
 	}
 }

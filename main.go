@@ -6,7 +6,6 @@ import (
 
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
-	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
@@ -15,7 +14,7 @@ func main() {
 	var err error
 	var db *gorm.DB
 
-	conf := config.GetNewDatabaseConfig()
+	conf := config.GetGeneralConfig()
 	if conf.Database == "" {
 		log.Fatal("not variable setted")
 	}
@@ -33,7 +32,7 @@ func main() {
 	}
 
 	// Api Setup
-	api := config.SetupAPI(db, fiber.Config{})
+	api := config.SetupAPI(db, conf)
 
 	if err := api.Listen(":8080"); err != nil {
 		log.Fatal(err)
