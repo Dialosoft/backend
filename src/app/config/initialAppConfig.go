@@ -6,13 +6,14 @@ import (
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/gofiber/fiber/v3"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 // Setup for the api
 //
 // repositories -> services -> controllers -> routers
-func SetupAPI(db *gorm.DB, generalConfig GeneralConfig) *fiber.App {
+func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig) *fiber.App {
 
 	app := fiber.New(fiber.Config{})
 
@@ -22,10 +23,11 @@ func SetupAPI(db *gorm.DB, generalConfig GeneralConfig) *fiber.App {
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
+	cacheRepository := repository.NewRedisRepository(redisConn)
 
 	// Services
 	userService := services.NewUserService(userRepository, roleRepository)
-	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, generalConfig.JWTKey)
+	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheRepository, generalConfig.JWTKey)
 
 	// Controllers
 	userController := controller.NewUserController(userService)
