@@ -43,6 +43,7 @@ func GenerateRefreshToken(secretKey string, userID uuid.UUID) (string, models.To
 	}
 
 	tokenEntity := models.TokenEntity{
+		Token:     refreshToken,
 		ID:        tokenID,
 		UserID:    userID,
 		ExpiresAt: time.Now().Add(time.Hour * 720),
