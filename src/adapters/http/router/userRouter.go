@@ -19,6 +19,6 @@ func (r *UserRouter) SetupUserRoutes(api fiber.Router) {
 	{
 		userGroup.Get("/get-all-users", r.UserController.GetAllUsers)
 		userGroup.Get("/get-user-by-id/:id", r.UserController.GetUserByID)
-		userGroup.Post("/create-user", r.UserController.CreateNewUSer)
+		userGroup.Post("/create-user", r.UserController.CreateNewUser)
 	}
 }
