@@ -85,8 +85,9 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 				return "", "", err
 			}
 			tokenEntity = &newTokenEntity
+		} else {
+			return "", "", err
 		}
-		return "", "", err
 	}
 
 	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userEntity.ID)
