@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/Dialosoft/src/adapters/http/controller"
+	"github.com/Dialosoft/src/adapters/http/middleware"
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
@@ -28,6 +29,10 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 	// Services
 	userService := services.NewUserService(userRepository, roleRepository)
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheRepository, generalConfig.JWTKey)
+
+	// Middlewares
+	authMiddleware := middleware.NewAuthMiddleware(authService, generalConfig.JWTKey)
+	_ = authMiddleware
 
 	// Controllers
 	userController := controller.NewUserController(userService)
