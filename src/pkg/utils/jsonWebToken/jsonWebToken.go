@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Dialosoft/src/domain/models"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
@@ -25,11 +26,11 @@ func GenerateJWT(secretKey string, id uuid.UUID) (string, error) {
 	return signedToken, nil
 }
 
-func GenerateRefreshToken(secretKey string, id uuid.UUID) (string, uuid.UUID, error) {
+func GenerateRefreshToken(secretKey string, userID uuid.UUID) (string, models.TokenEntity, error) {
 	tokenID := uuid.New()
 	claims := jwt.RegisteredClaims{
 		Issuer:    "dialosoft-api",
-		Subject:   id.String(),
+		Subject:   userID.String(),
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 720)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 		ID:        tokenID.String(),
@@ -38,10 +39,17 @@ func GenerateRefreshToken(secretKey string, id uuid.UUID) (string, uuid.UUID, er
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	refreshToken, err := token.SignedString([]byte(secretKey))
 	if err != nil {
-		return "", uuid.UUID{}, err
+		return "", models.TokenEntity{}, err
 	}
 
-	return refreshToken, tokenID, nil
+	tokenEntity := models.TokenEntity{
+		ID:        tokenID,
+		UserID:    userID,
+		ExpiresAt: time.Now().Add(time.Hour * 720),
+		CreatedAt: time.Now(),
+	}
+
+	return refreshToken, tokenEntity, nil
 }
 
 func ValidateJWT(tokenString, secretKey string) (jwt.MapClaims, error) {

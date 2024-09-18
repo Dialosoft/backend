@@ -10,7 +10,7 @@ type TokenRepository interface {
 	FindAllTokens() ([]*models.TokenEntity, error)
 	FindTokenByID(tokenID uuid.UUID) (*models.TokenEntity, error)
 	FindTokenByUserID(userID uuid.UUID) (*models.TokenEntity, error)
-	Save(tokenEntity models.TokenEntity) (uuid.UUID, error)
+	Save(tokenEntity models.TokenEntity) error
 	Update(tokenID uuid.UUID, tokenEntity models.TokenEntity) error
 	Delete(tokenID uuid.UUID) error
 }
@@ -53,13 +53,13 @@ func (repo *tokenRepositoryImpl) FindTokenByUserID(userID uuid.UUID) (*models.To
 }
 
 // Save implements TokenRepository.
-func (repo *tokenRepositoryImpl) Save(tokenEntity models.TokenEntity) (uuid.UUID, error) {
+func (repo *tokenRepositoryImpl) Save(tokenEntity models.TokenEntity) error {
 	result := repo.db.Create(&tokenEntity)
 	if result.Error != nil {
-		return uuid.UUID{}, result.Error
+		return result.Error
 	}
 
-	return tokenEntity.ID, nil
+	return nil
 }
 
 // Update implements TokenRepository.
