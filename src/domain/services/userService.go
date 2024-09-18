@@ -32,12 +32,8 @@ func (service *userServiceImpl) GetAllUsers() ([]*dto.UserDto, error) {
 	}
 
 	for _, v := range usersEntities {
-		userDto, err := mapper.UserEntityToUserDto(v)
-		if err != nil {
-			return nil, err
-		} else {
-			usersDtos = append(usersDtos, userDto)
-		}
+		userDto := mapper.UserEntityToUserDto(v)
+		usersDtos = append(usersDtos, userDto)
 	}
 
 	return usersDtos, nil
@@ -49,10 +45,7 @@ func (service *userServiceImpl) GetUserByID(userID uuid.UUID) (*dto.UserDto, err
 	if err != nil {
 		return nil, err
 	}
-	userDto, err := mapper.UserEntityToUserDto(userEntity)
-	if err != nil {
-		return nil, err
-	}
+	userDto := mapper.UserEntityToUserDto(userEntity)
 
 	return userDto, nil
 }
@@ -63,10 +56,7 @@ func (service *userServiceImpl) GetUserByUsername(username string) (*dto.UserDto
 	if err != nil {
 		return nil, err
 	}
-	userDto, err := mapper.UserEntityToUserDto(userEntity)
-	if err != nil {
-		return nil, err
-	}
+	userDto := mapper.UserEntityToUserDto(userEntity)
 
 	return userDto, nil
 }
@@ -79,10 +69,7 @@ func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, e
 		return uuid.UUID{}, err
 	}
 
-	userEntity, err := mapper.UserDtoToUserEntity(&newUser)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
+	userEntity := mapper.UserDtoToUserEntity(&newUser)
 
 	userEntity.ID = roleEntity.ID
 	userEntity.Role = *roleEntity
@@ -97,11 +84,9 @@ func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, e
 
 // UpdateUser implements UserService.
 func (service *userServiceImpl) UpdateUser(userID uuid.UUID, updatedUser dto.UserDto) error {
-	userDto, err := mapper.UserDtoToUserEntity(&updatedUser)
-	if err != nil {
-		return err
-	}
-	if err = service.repository.Update(userID, *userDto); err != nil {
+	userDto := mapper.UserDtoToUserEntity(&updatedUser)
+
+	if err := service.repository.Update(userID, *userDto); err != nil {
 		return err
 	}
 

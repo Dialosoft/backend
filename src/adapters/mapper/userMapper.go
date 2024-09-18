@@ -8,44 +8,44 @@ import (
 
 // UserDtoToUserEntity returns a new UserEntity based on a UserDto, filling in the data.
 // It returns an error if any of the required fields (Username, Email, or Password) are empty.
-func UserDtoToUserEntity(userDto *dto.UserDto) (*models.UserEntity, error) {
+func UserDtoToUserEntity(userDto *dto.UserDto) *models.UserEntity {
 	userEntity := models.UserEntity{
 		Username: userDto.Username,
 		Email:    userDto.Email,
 		Password: userDto.Password,
 	}
 
-	return &userEntity, nil
+	return &userEntity
 }
 
 // UserEntityToUserDto converts a UserEntity to a UserDto.
 // Returns an error if the UserEntity has missing required fields (Username or Email).
 // The Password field is intentionally left blank in the resulting UserDto.
-func UserEntityToUserDto(userEntity *models.UserEntity) (*dto.UserDto, error) {
+func UserEntityToUserDto(userEntity *models.UserEntity) *dto.UserDto {
 	userDto := dto.UserDto{
 		Username: userEntity.Username,
 		Password: "",
 		Email:    userEntity.Email,
 	}
 
-	return &userDto, nil
+	return &userDto
 }
 
-func UserRequestToUserDto(userRequest *request.UserRequest) (*dto.UserDto, error) {
+func UserRequestToUserDto(userRequest *request.UserRequest) *dto.UserDto {
 	userDto := dto.UserDto{
 		Username: userRequest.Username,
 		Password: userRequest.Password,
 		Email:    userRequest.Email,
 	}
 
-	return &userDto, nil
+	return &userDto
 }
 
-func UserUpdateRequestToUserDto(userRequest *request.UpdateUserRequest) (*dto.UserDto, error) {
+func UserUpdateRequestToUserDto(userRequest *request.UpdateUserRequest) *dto.UserDto {
 	userDto := dto.UserDto{
 		Username: userRequest.Username,
 		Email:    userRequest.Email,
 	}
 
-	return &userDto, nil
+	return &userDto
 }

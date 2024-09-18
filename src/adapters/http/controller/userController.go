@@ -8,7 +8,6 @@ import (
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/domain/services"
-	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -79,12 +78,7 @@ func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	userDto, err := mapper.UserRequestToUserDto(&req)
-	if err != nil {
-		if err == errorsUtils.ErrParameterCannotBeNull {
-			return response.ErrEmptyParametersOrArguments(c)
-		}
-	}
+	userDto := mapper.UserRequestToUserDto(&req)
 
 	id, err := uc.UserService.CreateNewUser(*userDto)
 	if err != nil {
@@ -111,10 +105,7 @@ func (uc *UserController) UpdateUser(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	userDto, err := mapper.UserUpdateRequestToUserDto(&req)
-	if err != nil {
-		return response.ErrInternalServer(c)
-	}
+	userDto := mapper.UserUpdateRequestToUserDto(&req)
 
 	err = uc.UserService.UpdateUser(userUUID, *userDto)
 	if err != nil {
