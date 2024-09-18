@@ -56,7 +56,7 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 
 	accesToken, refreshToken, err := ac.AuthService.Login(req.Username, req.Password)
 	if err != nil {
-		if err == errorsUtils.ErrUnauthorizedAcces {
+		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound {
 			return response.ErrUnauthorized(c)
 		}
 		return response.ErrInternalServer(c)
@@ -65,5 +65,28 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 	return response.Standard(c, "Successfully logged in", response.LoginResponse{
 		Token:        accesToken,
 		RefreshToken: refreshToken,
+	})
+}
+
+func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
+	var req request.RefreshToken
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	accesToken, err := ac.AuthService.RefreshToken(req.Refresh)
+	if err != nil {
+		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound || err == errorsUtils.ErrRefreshTokenExpiredOrInvalid {
+			return response.ErrUnauthorized(c)
+		} else if err == errorsUtils.ErrRoleIDInRefreshToken {
+			return response.PersonalizedErr(c, err.Error(), fiber.StatusBadRequest)
+		} else if err == errorsUtils.ErrInvalidUUID {
+			return response.PersonalizedErr(c, err.Error(), fiber.StatusBadRequest)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "successfully refreshed", fiber.Map{
+		"accesToken": accesToken,
 	})
 }
