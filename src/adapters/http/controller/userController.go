@@ -73,7 +73,7 @@ func (uc *UserController) GetUserByUsername(c fiber.Ctx) error {
 	return response.Standard(c, "OK", user)
 }
 
-func (uc *UserController) CreateNewUSer(c fiber.Ctx) error {
+func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 	var req request.UserRequest
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ErrBadRequest(c)
