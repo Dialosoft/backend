@@ -8,6 +8,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -40,9 +41,29 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return response.Standard(c, "OK", response.RegisterResponse{
+	return response.Standard(c, "Successfully registered", response.RegisterResponse{
 		UserID:       userID.String(),
 		Token:        token,
+		RefreshToken: refreshToken,
+	})
+}
+
+func (ac *AuthController) Login(c fiber.Ctx) error {
+	var req request.LoginRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	accesToken, refreshToken, err := ac.AuthService.Login(req.Username, req.Password)
+	if err != nil {
+		if err == errorsUtils.ErrUnauthorizedAcces {
+			return response.ErrUnauthorized(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "Successfully logged in", response.LoginResponse{
+		Token:        accesToken,
 		RefreshToken: refreshToken,
 	})
 }

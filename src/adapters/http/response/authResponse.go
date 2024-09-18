@@ -5,3 +5,8 @@ type RegisterResponse struct {
 	Token        string
 	RefreshToken string
 }
+
+type LoginResponse struct {
+	Token        string
+	RefreshToken string
+}

@@ -8,6 +8,7 @@ import (
 
 type TokenEntity struct {
 	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	Token     string    `json:"token" gorm:"type:text;not null"`
 	UserID    uuid.UUID `json:"userID" gorm:"type:uuid;not null"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
