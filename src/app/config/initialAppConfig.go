@@ -12,27 +12,31 @@ import (
 // Setup for the api
 //
 // repositories -> services -> controllers -> routers
-func SetupAPI(db *gorm.DB, fiberConfigs fiber.Config) *fiber.App {
+func SetupAPI(db *gorm.DB, generalConfig GeneralConfig) *fiber.App {
 
-	app := fiber.New(fiberConfigs)
+	app := fiber.New(fiber.Config{})
 
 	api := app.Group("/dialosoft-api/v1")
 
 	// Repositories
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
+	tokenRepository := repository.NewTokenRepository(db)
 
 	// Services
 	userService := services.NewUserService(userRepository, roleRepository)
-	_ = services.NewRoleRepository(roleRepository)
+	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, generalConfig.JWTKey)
 
 	// Controllers
 	userController := controller.NewUserController(userService)
+	authController := controller.NewAuthController(authService)
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)
+	authRouter := router.NewAuthRouter(authController)
 
 	userRouter.SetupUserRoutes(api)
+	authRouter.SetupAuthRoutes(api)
 
 	return app
 }
