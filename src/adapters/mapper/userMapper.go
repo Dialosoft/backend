@@ -4,18 +4,11 @@ import (
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/Dialosoft/src/pkg/errorsUtils"
 )
 
 // UserDtoToUserEntity returns a new UserEntity based on a UserDto, filling in the data.
 // It returns an error if any of the required fields (Username, Email, or Password) are empty.
 func UserDtoToUserEntity(userDto *dto.UserDto) (*models.UserEntity, error) {
-	if userDto.Username == "" ||
-		userDto.Email == "" ||
-		userDto.Password == "" {
-		return nil, errorsUtils.ErrParameterCannotBeNull
-	}
-
 	userEntity := models.UserEntity{
 		Username: userDto.Username,
 		Email:    userDto.Email,
@@ -29,11 +22,6 @@ func UserDtoToUserEntity(userDto *dto.UserDto) (*models.UserEntity, error) {
 // Returns an error if the UserEntity has missing required fields (Username or Email).
 // The Password field is intentionally left blank in the resulting UserDto.
 func UserEntityToUserDto(userEntity *models.UserEntity) (*dto.UserDto, error) {
-	if userEntity.Username == "" ||
-		userEntity.Email == "" {
-		return nil, errorsUtils.ErrParameterCannotBeNull
-	}
-
 	userDto := dto.UserDto{
 		Username: userEntity.Username,
 		Password: "",
@@ -44,13 +32,18 @@ func UserEntityToUserDto(userEntity *models.UserEntity) (*dto.UserDto, error) {
 }
 
 func UserRequestToUserDto(userRequest *request.UserRequest) (*dto.UserDto, error) {
-	if userRequest.Username == "" || userRequest.Email == "" || userRequest.Password == "" {
-		return nil, errorsUtils.ErrParameterCannotBeNull
-	}
-
 	userDto := dto.UserDto{
 		Username: userRequest.Username,
 		Password: userRequest.Password,
+		Email:    userRequest.Email,
+	}
+
+	return &userDto, nil
+}
+
+func UserUpdateRequestToUserDto(userRequest *request.UpdateUserRequest) (*dto.UserDto, error) {
+	userDto := dto.UserDto{
+		Username: userRequest.Username,
 		Email:    userRequest.Email,
 	}
 
