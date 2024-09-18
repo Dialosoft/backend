@@ -1,3 +1,16 @@
+/*
+Welcome to the main code of the Dialosoft Forum Software project
+This project is licensed under the GPL-3.0 license
+
+For any use of the code, it will be to stay within the open source world.
+follow us on github: https://github.com/Dialosoft
+
+This source code was developed by:
+
+  - Flussen
+
+with Golang and ❤️
+*/
 package main
 
 import (
