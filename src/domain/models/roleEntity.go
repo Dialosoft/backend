@@ -8,8 +8,8 @@ import (
 )
 
 type RoleEntity struct {
-	ID         uuid.UUID      `json:"id"`
-	RoleType   string         `json:"roleType"`
+	ID         uuid.UUID      `json:"id" gorm:"type:uuid;primaryKey;default:uuid_generate_v4()"`
+	RoleType   string         `json:"roleType" gorm:"type:varchar(250);unique;not null"`
 	Permission int            `json:"permission"`
 	AdminRole  bool           `json:"adminRole"`
 	ModRole    bool           `json:"modRole"`
