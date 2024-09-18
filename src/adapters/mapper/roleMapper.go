@@ -3,16 +3,11 @@ package mapper
 import (
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/Dialosoft/src/pkg/errorsUtils"
 )
 
 // RoleDtoToRoleEntity converts a RoleDto to a RoleEntity.
 // It returns an error if any of the required fields (RoleType or Permission) are empty or invalid.
-func RoleDtoToRoleEntity(roleDto *dto.RoleDto) (*models.RoleEntity, error) {
-	if roleDto.RoleType == "" {
-		return nil, errorsUtils.ErrParameterCannotBeNull
-	}
-
+func RoleDtoToRoleEntity(roleDto *dto.RoleDto) *models.RoleEntity {
 	roleEntity := models.RoleEntity{
 		ID:         roleDto.ID,
 		RoleType:   roleDto.RoleType,
@@ -24,16 +19,12 @@ func RoleDtoToRoleEntity(roleDto *dto.RoleDto) (*models.RoleEntity, error) {
 		DeletedAt:  roleDto.DeletedAt,
 	}
 
-	return &roleEntity, nil
+	return &roleEntity
 }
 
 // RoleEntityToRoleDto converts a RoleEntity to a RoleDto.
 // Returns an error if the RoleEntity has missing required fields (RoleType or Permission).
-func RoleEntityToRoleDto(roleEntity *models.RoleEntity) (*dto.RoleDto, error) {
-	if roleEntity.RoleType == "" {
-		return nil, errorsUtils.ErrParameterCannotBeNull
-	}
-
+func RoleEntityToRoleDto(roleEntity *models.RoleEntity) *dto.RoleDto {
 	roleDto := dto.RoleDto{
 		ID:         roleEntity.ID,
 		RoleType:   roleEntity.RoleType,
@@ -45,5 +36,5 @@ func RoleEntityToRoleDto(roleEntity *models.RoleEntity) (*dto.RoleDto, error) {
 		DeletedAt:  roleEntity.DeletedAt,
 	}
 
-	return &roleDto, nil
+	return &roleDto
 }
