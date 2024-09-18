@@ -20,5 +20,8 @@ func (r *UserRouter) SetupUserRoutes(api fiber.Router) {
 		userGroup.Get("/get-all-users", r.UserController.GetAllUsers)
 		userGroup.Get("/get-user-by-id/:id", r.UserController.GetUserByID)
 		userGroup.Post("/create-user", r.UserController.CreateNewUser)
+		userGroup.Put("/update-user/:id", r.UserController.UpdateUser)
+		userGroup.Delete("/delete-user/:id", r.UserController.DeleteUser)
+		userGroup.Patch("/restore-user/:id", r.UserController.RestoreUser)
 	}
 }

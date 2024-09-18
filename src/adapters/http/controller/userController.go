@@ -97,3 +97,68 @@ func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 
 	return response.StandardCreated(c, "CREATED", id)
 }
+
+func (uc *UserController) UpdateUser(c fiber.Ctx) error {
+	var req request.UpdateUserRequest
+
+	id := c.Params("id")
+	userUUID, err := uuid.Parse(id)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	userDto, err := mapper.UserUpdateRequestToUserDto(&req)
+	if err != nil {
+		return response.ErrInternalServer(c)
+	}
+
+	err = uc.UserService.UpdateUser(userUUID, *userDto)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "UPDATED", nil))
+}
+
+func (uc *UserController) DeleteUser(c fiber.Ctx) error {
+	id := c.Params("id")
+
+	userUUID, err := uuid.Parse(id)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	if err = uc.UserService.DeleteUser(userUUID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "DELETED", nil))
+}
+
+func (uc *UserController) RestoreUser(c fiber.Ctx) error {
+	id := c.Params("id")
+
+	userUUID, err := uuid.Parse(id)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	if err = uc.UserService.RestoreUser(userUUID); err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "RESTORED", nil))
+}
