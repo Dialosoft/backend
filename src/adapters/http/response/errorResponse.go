@@ -41,6 +41,27 @@ func ErrUnauthorized(c fiber.Ctx) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+func ErrForbidden(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "FORBIDDEN",
+	}
+	return c.Status(fiber.StatusForbidden).JSON(err)
+}
+
+func ErrUnauthorizedHeader(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "Authorization Header is missing",
+	}
+	return c.Status(fiber.StatusUnauthorized).JSON(err)
+}
+
+func ErrUnauthorizedInvalidHeader(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "Invalid authorization header format",
+	}
+	return c.Status(fiber.StatusUnauthorized).JSON(err)
+}
+
 func ErrUUIDParse(c fiber.Ctx) error {
 	err := StandardError{
 		ErrorMessage: "ID provided is not a valid UUID type",
@@ -53,4 +74,11 @@ func ErrEmptyParametersOrArguments(c fiber.Ctx) error {
 		ErrorMessage: "One of the parameters or arguments is empty",
 	}
 	return c.Status(fiber.StatusBadRequest).JSON(err)
+}
+
+func PersonalizedErr(c fiber.Ctx, message string, status int) error {
+	err := StandardError{
+		ErrorMessage: message,
+	}
+	return c.Status(status).JSON(err)
 }
