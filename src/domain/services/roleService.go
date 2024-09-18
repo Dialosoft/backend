@@ -51,12 +51,8 @@ func (service *roleServiceImpl) GetAllRoles() ([]*dto.RoleDto, error) {
 	}
 
 	for _, v := range rolesEntities {
-		roleDto, err := mapper.RoleEntityToRoleDto(v)
-		if err != nil {
-			return nil, err
-		} else {
-			rolesDtos = append(rolesDtos, roleDto)
-		}
+		roleDto := mapper.RoleEntityToRoleDto(v)
+		rolesDtos = append(rolesDtos, roleDto)
 	}
 
 	return rolesDtos, nil
@@ -68,10 +64,7 @@ func (service *roleServiceImpl) GetRoleByID(roleID uuid.UUID) (*dto.RoleDto, err
 	if err != nil {
 		return nil, err
 	}
-	roleDto, err := mapper.RoleEntityToRoleDto(roleEntity)
-	if err != nil {
-		return nil, err
-	}
+	roleDto := mapper.RoleEntityToRoleDto(roleEntity)
 
 	return roleDto, nil
 }
@@ -82,20 +75,14 @@ func (service *roleServiceImpl) GetRoleByType(roleType string) (*dto.RoleDto, er
 	if err != nil {
 		return nil, err
 	}
-	roleDto, err := mapper.RoleEntityToRoleDto(roleEntity)
-	if err != nil {
-		return nil, err
-	}
+	roleDto := mapper.RoleEntityToRoleDto(roleEntity)
 
 	return roleDto, nil
 }
 
 // CreateNewRole implements RoleService.
 func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error) {
-	roleEntity, err := mapper.RoleDtoToRoleEntity(&newRole)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
+	roleEntity := mapper.RoleDtoToRoleEntity(&newRole)
 
 	id, err := service.repository.Create(*roleEntity)
 	if err != nil {
@@ -107,10 +94,7 @@ func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, e
 
 // UpdateRole implements RoleService.
 func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, updatedRole dto.RoleDto) error {
-	roleEntity, err := mapper.RoleDtoToRoleEntity(&updatedRole)
-	if err != nil {
-		return err
-	}
+	roleEntity := mapper.RoleDtoToRoleEntity(&updatedRole)
 
 	return service.repository.Update(roleID, *roleEntity)
 }
