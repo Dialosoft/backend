@@ -38,7 +38,7 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 
 	userEntity := mapper.UserDtoToUserEntity(&user)
 
-	userEntity.ID = roleEntity.ID
+	userEntity.RoleID = roleEntity.ID
 	userEntity.Role = *roleEntity
 
 	userID, err := service.userRepository.Create(*userEntity)

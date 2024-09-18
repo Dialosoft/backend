@@ -1,12 +1,12 @@
 package response
 
 type RegisterResponse struct {
-	UserID       string
-	Token        string
-	RefreshToken string
+	UserID       string `json:"userID"`
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
 }
 
 type LoginResponse struct {
-	Token        string
-	RefreshToken string
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
 }
