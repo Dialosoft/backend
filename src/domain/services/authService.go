@@ -1,6 +1,10 @@
 package services
 
 import (
+	"context"
+	"fmt"
+	"time"
+
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
@@ -15,12 +19,14 @@ type AuthService interface {
 	Register(user dto.UserDto) (uuid.UUID, string, string, error)
 	Login(username, password string) (string, string, error)
 	RefreshToken(token string) (string, error)
+	InvalidateRefreshToken(token string) error
 }
 
 type authServiceImpl struct {
 	userRepository  repository.UserRepository
 	roleRepository  repository.RoleRepository
 	tokenRepository repository.TokenRepository
+	cacheRepository repository.RedisRepository
 	jwtKey          string
 }
 
@@ -47,12 +53,12 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 		return uuid.UUID{}, "", "", err
 	}
 
-	token, err := jsonWebToken.GenerateJWT(service.jwtKey, userID)
+	token, err := jsonWebToken.GenerateJWT(service.jwtKey, userID, userEntity.RoleID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
+	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID, userEntity.RoleID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
@@ -76,7 +82,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 	tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
+			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID, userEntity.RoleID)
 			if err != nil {
 				return "", "", err
 			}
@@ -91,7 +97,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		}
 	}
 
-	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userEntity.ID)
+	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userEntity.ID, userEntity.RoleID)
 	if err != nil {
 		return "", "", nil
 	}
@@ -100,10 +106,59 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 }
 
 // RefreshToken implements AuthService.
-func (service *authServiceImpl) RefreshToken(token string) (string, error) {
-	panic("")
+func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error) {
+	claims, err := jsonWebToken.ValidateJWT(refreshToken, service.jwtKey)
+	if err != nil {
+		return "", errorsUtils.ErrRefreshTokenExpiredOrInvalid
+	}
+
+	userID, err := claims.GetSubject()
+	if err != nil {
+		return "", err
+	}
+
+	var roleID string
+	if roleIDClaim, ok := claims["roleID"].(string); ok {
+		roleID = roleIDClaim
+	}
+
+	if roleID == "" {
+		return "", errorsUtils.ErrRoleIDInRefreshToken
+	}
+
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return "", errorsUtils.ErrInvalidUUID
+	}
+
+	roleUUID, err := uuid.Parse(roleID)
+	if err != nil {
+		return "", errorsUtils.ErrInvalidUUID
+	}
+
+	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userUUID, roleUUID)
+	if err != nil {
+		return "", err
+	}
+
+	return accesToken, nil
 }
 
-func NewAuthService(userRepository repository.UserRepository, roleRepository repository.RoleRepository, tokenRepository repository.TokenRepository, jwtKey string) AuthService {
-	return &authServiceImpl{userRepository: userRepository, roleRepository: roleRepository, tokenRepository: tokenRepository, jwtKey: jwtKey}
+// InvalidateToken implements AuthService.
+func (service *authServiceImpl) InvalidateRefreshToken(token string) error {
+	expiration := time.Hour * 720
+	return service.cacheRepository.Set(context.Background(), fmt.Sprintf("blacklist:%s", token), "true", expiration)
+}
+
+func NewAuthService(userRepository repository.UserRepository,
+	roleRepository repository.RoleRepository,
+	tokenRepository repository.TokenRepository,
+	cacheRepository repository.RedisRepository,
+	jwtKey string) AuthService {
+	return &authServiceImpl{
+		userRepository:  userRepository,
+		roleRepository:  roleRepository,
+		tokenRepository: tokenRepository,
+		cacheRepository: cacheRepository,
+		jwtKey:          jwtKey}
 }
