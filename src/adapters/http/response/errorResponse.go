@@ -34,6 +34,13 @@ func ErrConflict(c fiber.Ctx) error {
 	return c.Status(fiber.StatusConflict).JSON(err)
 }
 
+func ErrUnauthorized(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "UNAUTHORIZED",
+	}
+	return c.Status(fiber.StatusUnauthorized).JSON(err)
+}
+
 func ErrUUIDParse(c fiber.Ctx) error {
 	err := StandardError{
 		ErrorMessage: "ID provided is not a valid UUID type",
