@@ -18,7 +18,8 @@ type UserService interface {
 }
 
 type userServiceImpl struct {
-	repository repository.UserRepository
+	repository     repository.UserRepository
+	roleRepository repository.RoleRepository
 }
 
 // GetAllUsers implements UserService.
@@ -72,10 +73,20 @@ func (service *userServiceImpl) GetUserByUsername(username string) (*dto.UserDto
 
 // CreateNewUser implements UserService.
 func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, error) {
+
+	roleEntity, err := service.roleRepository.FindByType("user")
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
 	userEntity, err := mapper.UserDtoToUserEntity(&newUser)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
+
+	userEntity.ID = roleEntity.ID
+	userEntity.Role = *roleEntity
+
 	id, err := service.repository.Create(*userEntity)
 	if err != nil {
 		return uuid.UUID{}, err
@@ -107,6 +118,6 @@ func (service *userServiceImpl) RestoreUser(userID uuid.UUID) error {
 	return service.repository.Restore(userID)
 }
 
-func NewUserService(userRepository repository.UserRepository) UserService {
-	return &userServiceImpl{repository: userRepository}
+func NewUserService(userRepository repository.UserRepository, roleRepository repository.RoleRepository) UserService {
+	return &userServiceImpl{repository: userRepository, roleRepository: roleRepository}
 }

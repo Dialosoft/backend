@@ -23,7 +23,7 @@ func SetupAPI(db *gorm.DB, fiberConfigs fiber.Config) *fiber.App {
 	roleRepository := repository.NewRoleRepository(db)
 
 	// Services
-	userService := services.NewUserService(userRepository)
+	userService := services.NewUserService(userRepository, roleRepository)
 	_ = services.NewRoleRepository(roleRepository)
 
 	// Controllers

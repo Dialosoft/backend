@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
@@ -15,10 +17,28 @@ type RoleService interface {
 	UpdateRole(roleID uuid.UUID, updatedRole dto.RoleDto) error
 	DeleteRole(roleID uuid.UUID) error
 	RestoreRole(roleID uuid.UUID) error
+	GetDefaultRoles() (map[string]uuid.UUID, error)
 }
 
 type roleServiceImpl struct {
 	repository repository.RoleRepository
+}
+
+// GetDefaultRoles implements RoleService.
+func (service *roleServiceImpl) GetDefaultRoles() (map[string]uuid.UUID, error) {
+	roles := map[string]uuid.UUID{}
+
+	roleTypes := []string{"user", "moderator", "administrator"}
+
+	for _, roleType := range roleTypes {
+		role, err := service.GetRoleByType(roleType)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get default role %s: %w", roleType, err)
+		}
+		roles[roleType] = role.ID
+	}
+
+	return roles, nil
 }
 
 // GetAllRoles implements RoleService.
