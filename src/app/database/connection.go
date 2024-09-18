@@ -19,7 +19,7 @@ func ConnectToDatabase(conf config.DatabaseConfig) (*gorm.DB, error) {
 		return nil, err
 	}
 
-	err = db.AutoMigrate(models.UserEntity{}, models.RoleEntity{})
+	err = db.AutoMigrate(models.UserEntity{}, models.RoleEntity{}, models.TokenEntity{})
 	if err != nil {
 		return nil, err
 	}
