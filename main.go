@@ -20,6 +20,7 @@ import (
 
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
+	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -28,6 +29,10 @@ func main() {
 	var err error
 	var conn database.Connection
 	var redisConn *redis.Client
+	logger.InitLogger()
+
+	logger.Info("test")
+	logger.Error("err")
 
 	conf := config.GetGeneralConfig()
 	if conf.Database == "" {
