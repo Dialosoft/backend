@@ -57,12 +57,12 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 		return uuid.UUID{}, "", "", err
 	}
 
-	token, err := jsonWebToken.GenerateJWT(service.jwtKey, userID, userEntity.RoleID)
+	token, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userID, userEntity.RoleID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID, userEntity.RoleID)
+	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
@@ -86,7 +86,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 	tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID, userEntity.RoleID)
+			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
 			if err != nil {
 				return "", "", err
 			}
@@ -101,7 +101,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		}
 	}
 
-	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userEntity.ID, userEntity.RoleID)
+	accesToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userEntity.ID, userEntity.RoleID)
 	if err != nil {
 		return "", "", nil
 	}
@@ -140,7 +140,7 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 		return "", errorsUtils.ErrInvalidUUID
 	}
 
-	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userUUID, roleUUID)
+	accesToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userUUID, roleUUID)
 	if err != nil {
 		return "", err
 	}

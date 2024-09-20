@@ -21,13 +21,12 @@ import (
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
 	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 func main() {
 
 	var err error
-	var db *gorm.DB
+	var conn database.Connection
 	var redisConn *redis.Client
 
 	conf := config.GetGeneralConfig()
@@ -40,7 +39,7 @@ func main() {
 	// Database
 	for {
 		var count int
-		db, err = database.ConnectToDatabase(conf)
+		conn, err = database.ConnectToDatabase(conf)
 		if err == nil {
 			break
 		} else {
@@ -59,7 +58,7 @@ func main() {
 	}
 
 	// Api Setup
-	api := config.SetupAPI(db, redisConn, conf)
+	api := config.SetupAPI(conn.Gorm, redisConn, conf, conn.DefaultRolesIDs)
 
 	if err := api.Listen(":8080"); err != nil {
 		log.Fatal(err)
