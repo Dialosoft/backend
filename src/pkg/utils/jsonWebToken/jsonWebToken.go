@@ -9,13 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
-func GenerateJWT(secretKey string, id uuid.UUID, roleID uuid.UUID) (string, error) {
+func GenerateAccessJWT(secretKey string, id uuid.UUID, roleID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
-		"iss":    "dialosoft-api",
-		"sub":    id.String(),
-		"roleID": roleID.String(),
-		"exp":    jwt.NewNumericDate(time.Now().Add(time.Minute * 5)).Unix(),
-		"iat":    jwt.NewNumericDate(time.Now()).Unix(),
+		"iss": "dialosoft-api",
+		"sub": id.String(),
+		"rid": roleID.String(),
+		"exp": jwt.NewNumericDate(time.Now().Add(time.Minute * 5)).Unix(),
+		"iat": jwt.NewNumericDate(time.Now()).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -27,15 +27,14 @@ func GenerateJWT(secretKey string, id uuid.UUID, roleID uuid.UUID) (string, erro
 	return signedToken, nil
 }
 
-func GenerateRefreshToken(secretKey string, userID uuid.UUID, roleID uuid.UUID) (string, models.TokenEntity, error) {
+func GenerateRefreshToken(secretKey string, userID uuid.UUID) (string, models.TokenEntity, error) {
 	tokenID := uuid.New()
 	claims := jwt.MapClaims{
-		"iss":    "dialosoft-api",
-		"sub":    userID.String(),
-		"roleID": roleID.String(),
-		"exp":    jwt.NewNumericDate(time.Now().Add(time.Hour * 720)),
-		"iat":    jwt.NewNumericDate(time.Now()),
-		"jti":    tokenID.String(),
+		"iss": "dialosoft-api",
+		"sub": userID.String(),
+		"exp": jwt.NewNumericDate(time.Now().Add(time.Hour * 720)),
+		"iat": jwt.NewNumericDate(time.Now()),
+		"jti": tokenID.String(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -46,7 +45,6 @@ func GenerateRefreshToken(secretKey string, userID uuid.UUID, roleID uuid.UUID) 
 
 	tokenEntity := models.TokenEntity{
 		Token:     refreshToken,
-		RoleID:    roleID,
 		ID:        tokenID,
 		UserID:    userID,
 		ExpiresAt: time.Now().Add(time.Hour * 720),
