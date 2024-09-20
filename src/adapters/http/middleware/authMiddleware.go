@@ -7,6 +7,7 @@ import (
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/utils/jsonWebToken"
 	"github.com/gofiber/fiber/v3"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -21,33 +22,47 @@ func NewAuthMiddleware(authService services.AuthService, jwtKey string) *AuthMid
 
 func (am *AuthMiddleware) IsTokenBlacklisted() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
+		refreshToken := c.Get("X-Refresh-Token")
+		if refreshToken == "" {
 			return response.ErrUnauthorizedHeader(c)
 		}
 
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
+		accesTokenHeader := c.Get("Authorization")
+		if accesTokenHeader == "" {
+			return response.ErrUnauthorizedHeader(c)
+		}
+
+		accessTokenParts := strings.Split(accesTokenHeader, " ")
+		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
 			return response.ErrUnauthorizedInvalidHeader(c)
 		}
 
-		token := parts[1]
+		accesToken := accessTokenParts[1]
 
-		if am.AuthService.IsTokenBlacklisted(token) {
-			return response.PersonalizedErr(c, "Token has been invalidated", fiber.StatusUnauthorized)
-		}
-
-		claims, err := jsonWebToken.ValidateJWT(token, am.JwtKey)
+		_, err := jsonWebToken.ValidateJWT(refreshToken, am.JwtKey)
 		if err != nil {
 			return response.ErrUnauthorized(c)
 		}
 
-		userID, ok := claims["sub"].(string)
+		if am.AuthService.IsTokenBlacklisted(refreshToken) {
+			return response.PersonalizedErr(c, "Token has been invalidated", fiber.StatusUnauthorized)
+		}
+
+		claimsAcess, err := jsonWebToken.ValidateJWT(accesToken, am.JwtKey)
+		if err != nil {
+			if err == jwt.ErrTokenExpired {
+				return response.ErrExpiredAccessToken(c)
+			} else {
+				return response.PersonalizedErr(c, "token is not valid", fiber.StatusUnauthorized)
+			}
+		}
+
+		userID, ok := claimsAcess["sub"].(string)
 		if !ok {
 			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
 		}
 
-		roleID, ok := claims["roleID"].(string)
+		roleID, ok := claimsAcess["rid"].(string)
 		if !ok {
 			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
 		}
@@ -100,6 +115,23 @@ func (am *AuthMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler 
 
 		if roleIDString != roleRequiredID {
 			return response.ErrForbidden(c)
+		}
+
+		return c.Next()
+	}
+}
+
+func (am *AuthMiddleware) AuthorizeSelfUserID() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		userID := c.Locals("userID")
+		userIDString, ok := userID.(string)
+
+		if !ok || userIDString == "" {
+			return response.ErrInternalServer(c)
+		}
+
+		if c.Params("id") != userIDString {
+			return response.ErrUnauthorized(c)
 		}
 
 		return c.Next()
