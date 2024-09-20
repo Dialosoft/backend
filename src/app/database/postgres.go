@@ -1,11 +1,15 @@
 package database
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/domain/models"
+	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/google/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -41,6 +45,23 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 	}, nil
 }
 
+func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	log.Println("se entro en la funcion")
+
+	for {
+		select {
+		case <-ticker.C:
+			checkOldAndBlockedTokens(db)
+		case <-ctx.Done():
+			log.Println("Stopping token checker...")
+			return
+		}
+	}
+}
+
 func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 	roleMap := make(map[string]uuid.UUID)
 	roles := []models.RoleEntity{
@@ -54,16 +75,37 @@ func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 		result := db.Where("role_type = ?", role.RoleType).First(&existingRole)
 
 		if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			// Si el rol no existe, lo creamos y agregamos su ID al mapa
 			if err := db.Create(&role).Error; err != nil {
 				return nil, fmt.Errorf("failed to create role %s: %w", role.RoleType, err)
 			}
 			roleMap[role.RoleType] = role.ID
 		} else {
-			// Si el rol ya existe, agregamos su ID al mapa
 			roleMap[existingRole.RoleType] = existingRole.ID
 		}
 	}
 
 	return roleMap, nil
+}
+
+func checkOldAndBlockedTokens(db *gorm.DB) {
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+
+	var tokens []models.TokenEntity
+
+	err := db.Where("blocked = ? OR created_at < ?", true, thirtyDaysAgo).Find(&tokens).Error
+	if err != nil {
+		logger.Error(err.Error())
+		return
+	}
+
+	if len(tokens) > 0 {
+		for _, token := range tokens {
+			logger.Info(fmt.Sprintf("Deleting token ID: %d, Blocked: %v, Created At: %s\n", token.ID, token.Blocked, token.CreatedAt))
+			if err := db.Delete(&token).Error; err != nil {
+				logger.Error(fmt.Sprintf("Error deleting token ID: %d, error: %v\n", token.ID, err))
+			} else {
+				logger.Info(fmt.Sprintf("Successfully deleted token ID: %d", token.ID))
+			}
+		}
+	}
 }

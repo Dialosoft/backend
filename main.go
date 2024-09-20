@@ -14,6 +14,7 @@ with Golang and ❤️
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -30,9 +31,6 @@ func main() {
 	var conn database.Connection
 	var redisConn *redis.Client
 	logger.InitLogger()
-
-	logger.Info("test")
-	logger.Error("err")
 
 	conf := config.GetGeneralConfig()
 	if conf.Database == "" {
@@ -61,6 +59,11 @@ func main() {
 			time.Sleep(3 * time.Second)
 		}
 	}
+
+	// Auto destroy tokens script
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go database.StartTokenChecker(ctx, conn.Gorm, 24*time.Hour)
 
 	// Api Setup
 	api := config.SetupAPI(conn.Gorm, redisConn, conf, conn.DefaultRolesIDs)
