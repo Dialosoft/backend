@@ -41,6 +41,13 @@ func ErrUnauthorized(c fiber.Ctx) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+func ErrExpiredAccessToken(c fiber.Ctx) error {
+	err := StandardError{
+		ErrorMessage: "AccessToken expired",
+	}
+	return c.Status(fiber.StatusUnauthorized).JSON(err)
+}
+
 func ErrForbidden(c fiber.Ctx) error {
 	err := StandardError{
 		ErrorMessage: "FORBIDDEN",

@@ -57,12 +57,12 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 		return uuid.UUID{}, "", "", err
 	}
 
-	token, err := jsonWebToken.GenerateJWT(service.jwtKey, userID, userEntity.RoleID)
+	token, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userID, userEntity.RoleID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID, userEntity.RoleID)
+	refreshToken, tokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
@@ -74,6 +74,8 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 
 // Login implements AuthService.
 func (service *authServiceImpl) Login(username string, password string) (string, string, error) {
+	var refreshToken string
+
 	userEntity, err := service.userRepository.FindByUsername(username)
 	if err != nil {
 		return "", "", err
@@ -83,30 +85,49 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		return "", "", errorsUtils.ErrUnauthorizedAcces
 	}
 
-	tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
+	refreshToken, err = service.cacheRepository.Get(context.Background(), userEntity.ID.String())
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID, userEntity.RoleID)
-			if err != nil {
-				return "", "", err
-			}
 
-			err = service.tokenRepository.Save(newTokenEntity)
-			if err != nil {
+	}
+
+	if refreshToken == "" {
+		tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
+				if err != nil {
+					return "", "", err
+				}
+
+				err = service.tokenRepository.Save(newTokenEntity)
+				if err != nil {
+					return "", "", err
+				}
+
+				err = service.cacheRepository.Set(context.Background(), userEntity.ID.String(), newTokenEntity.Token, time.Hour*120) // 5 days
+				if err != nil {
+
+				}
+
+				refreshToken = newTokenEntity.Token
+
+			} else {
 				return "", "", err
 			}
-			tokenEntity = &newTokenEntity
 		} else {
-			return "", "", err
+			err = service.cacheRepository.Set(context.Background(), userEntity.ID.String(), tokenEntity.Token, time.Hour*120) // 5 days
+			if err != nil {
+			}
+			refreshToken = tokenEntity.Token
 		}
 	}
 
-	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userEntity.ID, userEntity.RoleID)
+	accesToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userEntity.ID, userEntity.RoleID)
 	if err != nil {
 		return "", "", nil
 	}
 
-	return accesToken, tokenEntity.Token, nil
+	return accesToken, refreshToken, nil
 }
 
 // RefreshToken implements AuthService.
@@ -140,7 +161,7 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 		return "", errorsUtils.ErrInvalidUUID
 	}
 
-	accesToken, err := jsonWebToken.GenerateJWT(service.jwtKey, userUUID, roleUUID)
+	accesToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userUUID, roleUUID)
 	if err != nil {
 		return "", err
 	}
