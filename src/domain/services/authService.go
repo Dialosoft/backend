@@ -74,6 +74,8 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 
 // Login implements AuthService.
 func (service *authServiceImpl) Login(username string, password string) (string, string, error) {
+	var refreshToken string
+
 	userEntity, err := service.userRepository.FindByUsername(username)
 	if err != nil {
 		return "", "", err
@@ -83,21 +85,40 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		return "", "", errorsUtils.ErrUnauthorizedAcces
 	}
 
-	tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
+	refreshToken, err = service.cacheRepository.Get(context.Background(), userEntity.ID.String())
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
-			if err != nil {
-				return "", "", err
-			}
 
-			err = service.tokenRepository.Save(newTokenEntity)
-			if err != nil {
+	}
+
+	if refreshToken == "" {
+		tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
+				if err != nil {
+					return "", "", err
+				}
+
+				err = service.tokenRepository.Save(newTokenEntity)
+				if err != nil {
+					return "", "", err
+				}
+
+				err = service.cacheRepository.Set(context.Background(), userEntity.ID.String(), newTokenEntity.Token, time.Hour*120) // 5 days
+				if err != nil {
+
+				}
+
+				refreshToken = newTokenEntity.Token
+
+			} else {
 				return "", "", err
 			}
-			tokenEntity = &newTokenEntity
 		} else {
-			return "", "", err
+			err = service.cacheRepository.Set(context.Background(), userEntity.ID.String(), tokenEntity.Token, time.Hour*120) // 5 days
+			if err != nil {
+			}
+			refreshToken = tokenEntity.Token
 		}
 	}
 
@@ -106,7 +127,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		return "", "", nil
 	}
 
-	return accesToken, tokenEntity.Token, nil
+	return accesToken, refreshToken, nil
 }
 
 // RefreshToken implements AuthService.
