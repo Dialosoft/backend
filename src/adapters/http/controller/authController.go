@@ -9,6 +9,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
+	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
@@ -24,6 +25,7 @@ func NewAuthController(authService services.AuthService) *AuthController {
 func (ac *AuthController) Register(c fiber.Ctx) error {
 	var req request.RegisterRequest
 	if err := c.Bind().Body(&req); err != nil {
+		logger.Error(err.Error())
 		return response.ErrBadRequest(c)
 	}
 	userDto := dto.UserDto{
@@ -36,6 +38,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) ||
 			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			logger.Error(err.Error())
 			return response.ErrConflict(c)
 		}
 		return response.ErrInternalServer(c)
@@ -51,14 +54,17 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 func (ac *AuthController) Login(c fiber.Ctx) error {
 	var req request.LoginRequest
 	if err := c.Bind().Body(&req); err != nil {
+		logger.Error(err.Error())
 		return response.ErrBadRequest(c)
 	}
 
 	accesToken, refreshToken, err := ac.AuthService.Login(req.Username, req.Password)
 	if err != nil {
 		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound {
+			logger.Error(err.Error())
 			return response.ErrUnauthorized(c)
 		}
+		logger.Error(err.Error())
 		return response.ErrInternalServer(c)
 	}
 
@@ -71,18 +77,23 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
 	var req request.RefreshToken
 	if err := c.Bind().Body(&req); err != nil {
+		logger.Error(err.Error())
 		return response.ErrBadRequest(c)
 	}
 
 	accesToken, err := ac.AuthService.RefreshToken(req.Refresh)
 	if err != nil {
 		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound || err == errorsUtils.ErrRefreshTokenExpiredOrInvalid {
+			logger.Error(err.Error())
 			return response.ErrUnauthorized(c)
 		} else if err == errorsUtils.ErrRoleIDInRefreshToken {
+			logger.Error(err.Error())
 			return response.PersonalizedErr(c, err.Error(), fiber.StatusBadRequest)
 		} else if err == errorsUtils.ErrInvalidUUID {
+			logger.Error(err.Error())
 			return response.PersonalizedErr(c, err.Error(), fiber.StatusBadRequest)
 		}
+		logger.Error(err.Error())
 		return response.ErrInternalServer(c)
 	}
 
