@@ -96,6 +96,10 @@ func (uc *UserController) UpdateUser(c fiber.Ctx) error {
 	var req request.UpdateUserRequest
 
 	id := c.Params("id")
+	if id == "" {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
 	userUUID, err := uuid.Parse(id)
 	if err != nil {
 		return response.ErrUUIDParse(c)
