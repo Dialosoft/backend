@@ -20,7 +20,7 @@ func NewAuthMiddleware(authService services.AuthService, jwtKey string) *Securit
 	return &SecurityMiddleware{AuthService: authService, JwtKey: jwtKey}
 }
 
-func (am *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
+func (sm *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		accesTokenHeader := c.Get("Authorization")
 		if accesTokenHeader == "" {
@@ -34,7 +34,7 @@ func (am *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 
 		accesToken := accessTokenParts[1]
 
-		claimsAcess, err := jsonWebToken.ValidateJWT(accesToken, am.JwtKey)
+		claimsAcess, err := jsonWebToken.ValidateJWT(accesToken, sm.JwtKey)
 		if err != nil {
 			if err == jwt.ErrTokenExpired {
 				return response.ErrExpiredAccessToken(c)
@@ -60,19 +60,19 @@ func (am *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 	}
 }
 
-func (am *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
+func (sm *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshToken := c.Get("X-Refresh-Token")
 		if refreshToken == "" {
 			return response.ErrUnauthorizedHeader(c)
 		}
 
-		_, err := jsonWebToken.ValidateJWT(refreshToken, am.JwtKey)
+		_, err := jsonWebToken.ValidateJWT(refreshToken, sm.JwtKey)
 		if err != nil {
 			return response.ErrUnauthorized(c)
 		}
 
-		if am.AuthService.IsTokenBlacklisted(refreshToken) {
+		if sm.AuthService.IsTokenBlacklisted(refreshToken) {
 			return response.PersonalizedErr(c, "Refresh Token has been invalidated", fiber.StatusUnauthorized)
 		}
 
@@ -80,7 +80,7 @@ func (am *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	}
 }
 
-func (am *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler {
+func (sm *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
 		if roleID == "" {
@@ -92,7 +92,7 @@ func (am *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Hand
 			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
 		}
 
-		roleName, err := am.AuthService.GetRoleInformationByRoleID(roleIDString)
+		roleName, err := sm.AuthService.GetRoleInformationByRoleID(roleIDString)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
 				return response.ErrNotFound(c)
@@ -107,7 +107,7 @@ func (am *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Hand
 	}
 }
 
-func (am *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler {
+func (sm *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
 		if roleID == "" {
@@ -127,7 +127,7 @@ func (am *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Hand
 	}
 }
 
-func (am *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
+func (sm *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		userID := c.Locals("userID")
 		userIDString, ok := userID.(string)
