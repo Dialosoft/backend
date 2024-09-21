@@ -14,7 +14,7 @@ func NewAuthRouter(authRouter *controller.AuthController) *AuthRouter {
 	return &AuthRouter{AuthController: authRouter}
 }
 
-func (r *AuthRouter) SetupAuthRoutes(api fiber.Router, middlewares *middleware.AuthMiddleware /* maybe unused !!!*/) {
+func (r *AuthRouter) SetupAuthRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware) {
 	authGroup := api.Group("/auth")
 	{
 		authGroup.Post("/register", r.AuthController.Register)

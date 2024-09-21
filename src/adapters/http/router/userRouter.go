@@ -17,7 +17,7 @@ func NewUserRouter(userController *controller.UserController) *UserRouter {
 	return &UserRouter{UserController: userController}
 }
 
-func (r *UserRouter) SetupUserRoutes(api fiber.Router, middleware *middleware.AuthMiddleware, defaultRoles map[string]uuid.UUID) {
+func (r *UserRouter) SetupUserRoutes(api fiber.Router, middleware *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
 	userGroup := api.Group("/users")
 
 	adminRoleID := defaultRoles["administrator"]

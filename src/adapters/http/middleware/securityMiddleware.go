@@ -11,16 +11,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthMiddleware struct {
+type SecurityMiddleware struct {
 	AuthService services.AuthService
 	JwtKey      string
 }
 
-func NewAuthMiddleware(authService services.AuthService, jwtKey string) *AuthMiddleware {
-	return &AuthMiddleware{AuthService: authService, JwtKey: jwtKey}
+func NewAuthMiddleware(authService services.AuthService, jwtKey string) *SecurityMiddleware {
+	return &SecurityMiddleware{AuthService: authService, JwtKey: jwtKey}
 }
 
-func (am *AuthMiddleware) IsTokenBlacklisted() fiber.Handler {
+func (am *SecurityMiddleware) IsTokenBlacklisted() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshToken := c.Get("X-Refresh-Token")
 		if refreshToken == "" {
@@ -74,7 +74,7 @@ func (am *AuthMiddleware) IsTokenBlacklisted() fiber.Handler {
 	}
 }
 
-func (am *AuthMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler {
+func (am *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
 		if roleID == "" {
@@ -101,7 +101,7 @@ func (am *AuthMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler 
 	}
 }
 
-func (am *AuthMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler {
+func (am *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
 		if roleID == "" {
@@ -121,7 +121,7 @@ func (am *AuthMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler 
 	}
 }
 
-func (am *AuthMiddleware) AuthorizeSelfUserID() fiber.Handler {
+func (am *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		userID := c.Locals("userID")
 		userIDString, ok := userID.(string)
