@@ -20,13 +20,8 @@ func NewAuthMiddleware(authService services.AuthService, jwtKey string) *Securit
 	return &SecurityMiddleware{AuthService: authService, JwtKey: jwtKey}
 }
 
-func (am *SecurityMiddleware) IsTokenBlacklisted() fiber.Handler {
+func (am *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		refreshToken := c.Get("X-Refresh-Token")
-		if refreshToken == "" {
-			return response.ErrUnauthorizedHeader(c)
-		}
-
 		accesTokenHeader := c.Get("Authorization")
 		if accesTokenHeader == "" {
 			return response.ErrUnauthorizedHeader(c)
@@ -38,15 +33,6 @@ func (am *SecurityMiddleware) IsTokenBlacklisted() fiber.Handler {
 		}
 
 		accesToken := accessTokenParts[1]
-
-		_, err := jsonWebToken.ValidateJWT(refreshToken, am.JwtKey)
-		if err != nil {
-			return response.ErrUnauthorized(c)
-		}
-
-		if am.AuthService.IsTokenBlacklisted(refreshToken) {
-			return response.PersonalizedErr(c, "Token has been invalidated", fiber.StatusUnauthorized)
-		}
 
 		claimsAcess, err := jsonWebToken.ValidateJWT(accesToken, am.JwtKey)
 		if err != nil {
@@ -69,6 +55,26 @@ func (am *SecurityMiddleware) IsTokenBlacklisted() fiber.Handler {
 
 		c.Locals("userID", userID)
 		c.Locals("roleID", roleID)
+
+		return c.Next()
+	}
+}
+
+func (am *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		refreshToken := c.Get("X-Refresh-Token")
+		if refreshToken == "" {
+			return response.ErrUnauthorizedHeader(c)
+		}
+
+		_, err := jsonWebToken.ValidateJWT(refreshToken, am.JwtKey)
+		if err != nil {
+			return response.ErrUnauthorized(c)
+		}
+
+		if am.AuthService.IsTokenBlacklisted(refreshToken) {
+			return response.PersonalizedErr(c, "Refresh Token has been invalidated", fiber.StatusUnauthorized)
+		}
 
 		return c.Next()
 	}

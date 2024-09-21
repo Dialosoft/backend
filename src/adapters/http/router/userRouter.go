@@ -29,15 +29,18 @@ func (r *UserRouter) SetupUserRoutes(api fiber.Router, middleware *middleware.Se
 		userGroup.Get("/get-all-users", r.UserController.GetAllUsers)
 		userGroup.Get("/get-user-by-id/:id", r.UserController.GetUserByID)
 		userGroup.Put("/update-user/:id", r.UserController.UpdateUser,
-			middleware.IsTokenBlacklisted(),
+			middleware.VerifyRefreshToken(),
+			middleware.GetAndVerifyAccesToken(),
 			middleware.AuthorizeSelfUserID(),
 		)
 		userGroup.Delete("/delete-user/:id", r.UserController.DeleteUser,
-			middleware.IsTokenBlacklisted(),
+			middleware.VerifyRefreshToken(),
+			middleware.GetAndVerifyAccesToken(),
 			middleware.RoleRequiredByID(adminRoleID.String()),
 		)
 		userGroup.Patch("/restore-user/:id", r.UserController.RestoreUser,
-			middleware.IsTokenBlacklisted(),
+			middleware.VerifyRefreshToken(),
+			middleware.GetAndVerifyAccesToken(),
 			middleware.RoleRequiredByID(adminRoleID.String()))
 	}
 }

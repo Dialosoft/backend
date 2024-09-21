@@ -19,6 +19,6 @@ func (r *AuthRouter) SetupAuthRoutes(api fiber.Router, middlewares *middleware.S
 	{
 		authGroup.Post("/register", r.AuthController.Register)
 		authGroup.Post("/login", r.AuthController.Login)
-		authGroup.Post("/refresh-token", r.AuthController.RefreshToken)
+		authGroup.Post("/refresh-token", r.AuthController.RefreshToken, middlewares.VerifyRefreshToken())
 	}
 }
