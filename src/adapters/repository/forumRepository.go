@@ -14,8 +14,8 @@ type ForumRepository interface {
 	FindByID(uuid uuid.UUID) (*models.Forum, error)
 	FindByIDWithDeleted(uuid uuid.UUID) (*models.Forum, error)
 	FindByName(name string) (*models.Forum, error)
-	Create(forum *models.Forum, categoryID uuid.UUID) error
-	Update(forum *models.Forum) error
+	Create(forum models.Forum) error
+	Update(forum models.Forum) error
 	UpdateCategoryOwner(id uuid.UUID, categoryID uuid.UUID) error
 	Delete(uuid uuid.UUID) error
 	Restore(uuid uuid.UUID) error
@@ -26,9 +26,9 @@ type forumRepositoryImpl struct {
 }
 
 // Create implements ForumRepository.
-func (repo *forumRepositoryImpl) Create(forum *models.Forum, categoryID uuid.UUID) error {
+func (repo *forumRepositoryImpl) Create(forum models.Forum) error {
 	var category models.Category
-	result := repo.db.Find(&category, "id = ?", categoryID.String())
+	result := repo.db.Find(&category, "id = ?", forum.CategoryID)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -130,7 +130,7 @@ func (repo *forumRepositoryImpl) Restore(uuid uuid.UUID) error {
 }
 
 // Update implements ForumRepository.
-func (repo *forumRepositoryImpl) Update(forum *models.Forum) error {
+func (repo *forumRepositoryImpl) Update(forum models.Forum) error {
 
 	result := repo.db.Model(forum).Updates(forum)
 	if result.Error != nil {

@@ -11,8 +11,8 @@ type CategoryRepository interface {
 	FindByID(uuid uuid.UUID) (*models.Category, error)
 	FindByName(name string) (*models.Category, error)
 	FindAllIncludingDeleted() ([]*models.Category, error)
-	Create(category *models.Category) error
-	Update(category *models.Category) error
+	Create(category models.Category) (uuid.UUID, error)
+	Update(category models.Category) error
 	Delete(uuid uuid.UUID) error
 	Restore(uuid uuid.UUID) error
 }
@@ -22,12 +22,12 @@ type categoryRepositoryImpl struct {
 }
 
 // Create implements CategoryRepository.
-func (repo *categoryRepositoryImpl) Create(category *models.Category) error {
-	result := repo.db.Create(category)
+func (repo *categoryRepositoryImpl) Create(category models.Category) (uuid.UUID, error) {
+	result := repo.db.Create(&category)
 	if result.Error != nil {
-		return result.Error
+		return uuid.UUID{}, result.Error
 	}
-	return nil
+	return category.ID, nil
 }
 
 // Delete implements CategoryRepository.
@@ -92,7 +92,7 @@ func (repo *categoryRepositoryImpl) Restore(uuid uuid.UUID) error {
 }
 
 // Update implements CategoryRepository.
-func (repo *categoryRepositoryImpl) Update(category *models.Category) error {
+func (repo *categoryRepositoryImpl) Update(category models.Category) error {
 	result := repo.db.Model(&category).Where("id = ?", category.ID).Updates(category)
 
 	if result.Error != nil {
