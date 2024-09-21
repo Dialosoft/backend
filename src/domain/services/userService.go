@@ -7,13 +7,36 @@ import (
 	"github.com/google/uuid"
 )
 
+// UserService defines a set of methods for handling business logic related to users.
+// It provides operations like retrieving, creating, updating, and deleting users in the system.
 type UserService interface {
+
+	// GetAllUsers retrieves all users as data transfer objects (DTOs).
+	// Returns a slice of pointers to UserDto and an error if something goes wrong.
 	GetAllUsers() ([]*dto.UserDto, error)
+
+	// GetUserByID retrieves a user by their unique identifier (UUID) as a DTO.
+	// Returns a pointer to UserDto if found, or an error otherwise.
 	GetUserByID(userID uuid.UUID) (*dto.UserDto, error)
+
+	// GetUserByUsername retrieves a user by their username (string) as a DTO.
+	// Returns a pointer to UserDto if found, or an error otherwise.
 	GetUserByUsername(username string) (*dto.UserDto, error)
+
+	// CreateNewUser creates a new user based on the provided UserDto.
+	// Returns the UUID of the created user and an error if the creation fails.
 	CreateNewUser(newUser dto.UserDto) (uuid.UUID, error)
+
+	// UpdateUser modifies an existing user identified by their UUID based on the provided UserDto.
+	// Returns an error if the update fails.
 	UpdateUser(userID uuid.UUID, updatedUser dto.UserDto) error
+
+	// DeleteUser marks a user as deleted by their UUID.
+	// Returns an error if the deletion fails.
 	DeleteUser(userID uuid.UUID) error
+
+	// RestoreUser restores a previously deleted user by their UUID.
+	// Returns an error if the restoration fails.
 	RestoreUser(userID uuid.UUID) error
 }
 

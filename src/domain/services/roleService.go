@@ -9,14 +9,41 @@ import (
 	"github.com/google/uuid"
 )
 
+// RoleService defines a set of methods for handling business logic related to roles.
+// It interacts with role data transfer objects (RoleDto) for operations like retrieving,
+// creating, updating, and deleting roles in the system.
 type RoleService interface {
+
+	// GetAllRoles retrieves all roles as data transfer objects (DTOs).
+	// Returns a slice of pointers to RoleDto and an error if something goes wrong.
 	GetAllRoles() ([]*dto.RoleDto, error)
+
+	// GetRoleByID retrieves a role by its unique identifier (UUID) as a DTO.
+	// Returns a pointer to RoleDto if found, or an error otherwise.
 	GetRoleByID(roleID uuid.UUID) (*dto.RoleDto, error)
+
+	// GetRoleByType retrieves a role by its type (string) as a DTO.
+	// Returns a pointer to RoleDto if found, or an error otherwise.
 	GetRoleByType(roleType string) (*dto.RoleDto, error)
+
+	// CreateNewRole creates a new role based on the provided RoleDto.
+	// Returns the UUID of the created role and an error if the creation fails.
 	CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error)
+
+	// UpdateRole modifies an existing role identified by its UUID based on the provided RoleDto.
+	// Returns an error if the update fails.
 	UpdateRole(roleID uuid.UUID, updatedRole dto.RoleDto) error
+
+	// DeleteRole marks a role as deleted by its UUID.
+	// Returns an error if the deletion fails.
 	DeleteRole(roleID uuid.UUID) error
+
+	// RestoreRole restores a previously deleted role by its UUID.
+	// Returns an error if the restoration fails.
 	RestoreRole(roleID uuid.UUID) error
+
+	// GetDefaultRoles retrieves a map of default role types and their corresponding UUIDs.
+	// Returns the map and an error if something goes wrong.
 	GetDefaultRoles() (map[string]uuid.UUID, error)
 }
 

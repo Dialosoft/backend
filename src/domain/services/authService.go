@@ -17,12 +17,32 @@ import (
 	"gorm.io/gorm"
 )
 
+// AuthService defines a set of methods for managing authentication processes,
+// such as user registration, login, token refresh, and token invalidation.
 type AuthService interface {
+
+	// Register registers a new user based on the provided UserDto.
+	// Returns the UUID of the created user, an access token, a refresh token, and an error if the operation fails.
 	Register(user dto.UserDto) (uuid.UUID, string, string, error)
+
+	// Login authenticates a user with the provided username and password.
+	// Returns an access token, a refresh token, and an error if authentication fails.
 	Login(username, password string) (string, string, error)
+
+	// RefreshToken refreshes the access token using the provided refresh token.
+	// Returns a new access token and an error if the operation fails.
 	RefreshToken(token string) (string, error)
+
+	// InvalidateRefreshToken invalidates a refresh token, preventing it from being used again.
+	// Returns an error if the invalidation fails.
 	InvalidateRefreshToken(token string) error
+
+	// IsTokenBlacklisted checks if the provided token has been blacklisted.
+	// Returns true if the token is blacklisted, false otherwise.
 	IsTokenBlacklisted(token string) bool
+
+	// GetRoleInformationByRoleID retrieves role information based on the provided role ID.
+	// Returns the role information as a string and an error if the retrieval fails.
 	GetRoleInformationByRoleID(roleID string) (string, error)
 }
 
