@@ -12,7 +12,7 @@ type ForumService interface {
 	GetAllForums() ([]*models.Forum, error)
 	GetForumByID(id uuid.UUID) (*models.Forum, error)
 	GetForumByName(name string) (*models.Forum, error)
-	CreateForum(forumDto dto.ForumDto) error
+	CreateForum(forumDto dto.ForumDto) (uuid.UUID, error)
 	UpdateForum(id uuid.UUID, forumDto dto.ForumDto) error
 	DeleteForum(id uuid.UUID) error
 	RestoreForum(id uuid.UUID) error
@@ -23,15 +23,15 @@ type forumServiceImpl struct {
 }
 
 // CreateForum implements ForumService.
-func (service *forumServiceImpl) CreateForum(forumDto dto.ForumDto) error {
+func (service *forumServiceImpl) CreateForum(forumDto dto.ForumDto) (uuid.UUID, error) {
 	forumEntity := mapper.ForumDtoToForumEntity(&forumDto)
 
-	err := service.forumRepository.Create(*forumEntity)
+	forumUUID, err := service.forumRepository.Create(*forumEntity)
 	if err != nil {
-		return err
+		return uuid.UUID{}, err
 	}
 
-	return nil
+	return forumUUID, nil
 }
 
 // DeleteForum implements ForumService.
