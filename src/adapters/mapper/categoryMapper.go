@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/domain/models"
 )
 
@@ -24,6 +25,15 @@ func CategoryEntityToCategoryDto(categoryEntity *models.Category) *dto.CategoryD
 		Description: categoryEntity.Description,
 		CreatedAt:   categoryEntity.CreatedAt,
 		UpdatedAt:   categoryEntity.UpdatedAt,
+	}
+
+	return &categoryDto
+}
+
+func CategoryCreateRequestToCategoryDto(categoryRequest *request.CreateCategory) *dto.CategoryDto {
+	categoryDto := dto.CategoryDto{
+		Name:        categoryRequest.Name,
+		Description: categoryRequest.Description,
 	}
 
 	return &categoryDto
