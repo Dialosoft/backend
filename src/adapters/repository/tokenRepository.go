@@ -6,12 +6,32 @@ import (
 	"gorm.io/gorm"
 )
 
+// TokenRepository defines a set of methods for managing tokens in the system.
+// Each method provides operations related to the TokenEntity model.
 type TokenRepository interface {
+
+	// FindAllTokens retrieves all TokenEntity objects stored in the system.
+	// Returns a slice of pointers to TokenEntity and an error if something goes wrong.
 	FindAllTokens() ([]*models.TokenEntity, error)
+
+	// FindTokenByID retrieves a TokenEntity by its unique identifier (UUID).
+	// Returns a pointer to the TokenEntity if found, or an error otherwise.
 	FindTokenByID(tokenID uuid.UUID) (*models.TokenEntity, error)
+
+	// FindTokenByUserID retrieves a TokenEntity by the associated user's unique identifier (UUID).
+	// Returns a pointer to the TokenEntity if found, or an error otherwise.
 	FindTokenByUserID(userID uuid.UUID) (*models.TokenEntity, error)
+
+	// Save stores a new TokenEntity in the system.
+	// Returns an error if the operation fails.
 	Save(tokenEntity models.TokenEntity) error
+
+	// Update modifies an existing TokenEntity identified by its UUID.
+	// Returns an error if the update fails.
 	Update(tokenID uuid.UUID, tokenEntity models.TokenEntity) error
+
+	// Delete removes a TokenEntity identified by its UUID.
+	// Returns an error if the deletion fails.
 	Delete(tokenID uuid.UUID) error
 }
 

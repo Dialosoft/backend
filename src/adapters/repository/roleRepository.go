@@ -6,13 +6,35 @@ import (
 	"gorm.io/gorm"
 )
 
+// RoleRepository defines a set of methods for interacting with roles
+// in the system. Each method represents a CRUD action on the RoleEntity.
 type RoleRepository interface {
+	// FindAllRoles retrieves all the RoleEntity objects stored in the system.
+	// Returns a slice of pointers to RoleEntity and an error if something goes wrong.
 	FindAllRoles() ([]*models.RoleEntity, error)
+
+	// FindByID retrieves a RoleEntity by its unique identifier (UUID).
+	// Returns a pointer to the RoleEntity if found, or an error otherwise.
 	FindByID(roleID uuid.UUID) (*models.RoleEntity, error)
+
+	// FindByType retrieves a RoleEntity by its type (string).
+	// Returns a pointer to the RoleEntity if found, or an error otherwise.
 	FindByType(roleType string) (*models.RoleEntity, error)
+
+	// Create inserts a new RoleEntity into the system.
+	// Returns the UUID of the created role and an error if the creation fails.
 	Create(newRole models.RoleEntity) (uuid.UUID, error)
+
+	// Update modifies an existing RoleEntity identified by its UUID.
+	// Returns an error if the update fails.
 	Update(roleID uuid.UUID, updatedRole models.RoleEntity) error
+
+	// Delete marks a RoleEntity as deleted by its UUID.
+	// Returns an error if the deletion fails.
 	Delete(roleID uuid.UUID) error
+
+	// Restore restores a previously deleted RoleEntity by its UUID.
+	// Returns an error if the restoration fails.
 	Restore(roleID uuid.UUID) error
 }
 
