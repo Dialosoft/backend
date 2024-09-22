@@ -26,24 +26,34 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	roleRepository := repository.NewRoleRepository(db)
 	tokenRepository := repository.NewTokenRepository(db)
 	cacheRepository := repository.NewRedisRepository(redisConn)
+	forumRepository := repository.NewForumRepository(db)
+	categoryRepository := repository.NewCategoryRepository(db)
 
 	// Services
 	userService := services.NewUserService(userRepository, roleRepository)
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheRepository, generalConfig.JWTKey)
+	forumService := services.NewForumService(forumRepository)
+	categoryService := services.NewCategoryService(categoryRepository)
 
 	// Middlewares
-	authMiddleware := middleware.NewAuthMiddleware(authService, generalConfig.JWTKey)
+	securityMiddleware := middleware.NewSecurityMiddleware(authService, generalConfig.JWTKey)
 
 	// Controllers
 	userController := controller.NewUserController(userService)
 	authController := controller.NewAuthController(authService)
+	forumController := controller.NewForumController(forumService)
+	categoryController := controller.NewCategoryController(categoryService)
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)
 	authRouter := router.NewAuthRouter(authController)
+	forumRouter := router.NewForumRouter(forumController)
+	categoryRouter := router.NewCategoryRouter(categoryController)
 
-	userRouter.SetupUserRoutes(api, authMiddleware, defaultRoles)
-	authRouter.SetupAuthRoutes(api, authMiddleware)
+	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
+	authRouter.SetupAuthRoutes(api, securityMiddleware)
+	forumRouter.SetupForumRoutes(api, securityMiddleware, defaultRoles)
+	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, defaultRoles)
 
 	return app
 }
