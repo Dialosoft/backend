@@ -9,7 +9,7 @@ import (
 
 type RoleDto struct {
 	ID         uuid.UUID      `json:"id"`
-	RoleType   string         `json:"username"`
+	RoleType   string         `json:"roleType"`
 	Permission int            `json:"permission"`
 	AdminRole  bool           `json:"adminRole"`
 	ModRole    bool           `json:"modRole"`
