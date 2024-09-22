@@ -93,7 +93,7 @@ func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 }
 
 func (uc *UserController) UpdateUser(c fiber.Ctx) error {
-	var req request.UpdateUserRequest
+	var req request.NewUser
 
 	id := c.Params("id")
 	if id == "" {
@@ -109,9 +109,7 @@ func (uc *UserController) UpdateUser(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	userDto := mapper.UserUpdateRequestToUserDto(&req)
-
-	err = uc.UserService.UpdateUser(userUUID, *userDto)
+	err = uc.UserService.UpdateUser(userUUID, req)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return response.ErrNotFound(c)

@@ -2,8 +2,10 @@ package services
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
+	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 )
 
@@ -29,7 +31,7 @@ type UserService interface {
 
 	// UpdateUser modifies an existing user identified by their UUID based on the provided UserDto.
 	// Returns an error if the update fails.
-	UpdateUser(userID uuid.UUID, updatedUser dto.UserDto) error
+	UpdateUser(userID uuid.UUID, req request.NewUser) error
 
 	// DeleteUser marks a user as deleted by their UUID.
 	// Returns an error if the deletion fails.
@@ -106,10 +108,42 @@ func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, e
 }
 
 // UpdateUser implements UserService.
-func (service *userServiceImpl) UpdateUser(userID uuid.UUID, updatedUser dto.UserDto) error {
-	userDto := mapper.UserDtoToUserEntity(&updatedUser)
+func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.NewUser) error {
+	var roleEntity *models.RoleEntity
 
-	if err := service.repository.Update(userID, *userDto); err != nil {
+	userEntity, err := service.repository.FindByID(userID)
+	if err != nil {
+		return err
+	}
+
+	if req.Username != nil && *req.Username != "" {
+		userEntity.Username = *req.Username
+	}
+
+	if req.Locked != nil {
+		userEntity.Locked = *req.Locked
+	}
+
+	if req.Disable != nil {
+		userEntity.Disable = *req.Disable
+	}
+
+	if req.RoleID != nil {
+		roleUUID, err := uuid.Parse(*req.RoleID)
+		if err != nil {
+			return err
+		}
+
+		roleEntity, err = service.roleRepository.FindByID(roleUUID)
+		if err != nil {
+			return err
+		}
+
+		userEntity.RoleID = roleEntity.ID
+		userEntity.Role = *roleEntity
+	}
+
+	if err := service.repository.Update(userID, *userEntity); err != nil {
 		return err
 	}
 
