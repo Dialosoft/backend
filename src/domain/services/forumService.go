@@ -4,14 +4,13 @@ import (
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
-	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 )
 
 type ForumService interface {
-	GetAllForums() ([]*models.Forum, error)
-	GetForumByID(id uuid.UUID) (*models.Forum, error)
-	GetForumByName(name string) (*models.Forum, error)
+	GetAllForums() ([]*dto.ForumDto, error)
+	GetForumByID(id uuid.UUID) (*dto.ForumDto, error)
+	GetForumByName(name string) (*dto.ForumDto, error)
 	CreateForum(forumDto dto.ForumDto) (uuid.UUID, error)
 	UpdateForum(id uuid.UUID, forumDto dto.ForumDto) error
 	DeleteForum(id uuid.UUID) error
@@ -44,33 +43,40 @@ func (service *forumServiceImpl) DeleteForum(id uuid.UUID) error {
 }
 
 // GetAllForums implements ForumService.
-func (service *forumServiceImpl) GetAllForums() ([]*models.Forum, error) {
+func (service *forumServiceImpl) GetAllForums() ([]*dto.ForumDto, error) {
+	var forumsDtos []*dto.ForumDto
+
 	forums, err := service.forumRepository.FindAll()
 	if err != nil {
 		return nil, err
 	}
 
-	return forums, nil
+	for _, v := range forums {
+		forumDto := mapper.ForumEntityToForumDto(v)
+		forumsDtos = append(forumsDtos, forumDto)
+	}
+
+	return forumsDtos, nil
 }
 
 // GetForumByID implements ForumService.
-func (service *forumServiceImpl) GetForumByID(id uuid.UUID) (*models.Forum, error) {
+func (service *forumServiceImpl) GetForumByID(id uuid.UUID) (*dto.ForumDto, error) {
 	forum, err := service.forumRepository.FindByID(id)
 	if err != nil {
 		return nil, err
 	}
 
-	return forum, nil
+	return mapper.ForumEntityToForumDto(forum), nil
 }
 
 // GetForumByName implements ForumService.
-func (service *forumServiceImpl) GetForumByName(name string) (*models.Forum, error) {
+func (service *forumServiceImpl) GetForumByName(name string) (*dto.ForumDto, error) {
 	forum, err := service.forumRepository.FindByName(name)
 	if err != nil {
 		return nil, err
 	}
 
-	return forum, nil
+	return mapper.ForumEntityToForumDto(forum), nil
 }
 
 // RestoreForum implements ForumService.
