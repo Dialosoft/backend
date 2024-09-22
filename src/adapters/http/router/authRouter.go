@@ -10,8 +10,8 @@ type AuthRouter struct {
 	AuthController *controller.AuthController
 }
 
-func NewAuthRouter(authRouter *controller.AuthController) *AuthRouter {
-	return &AuthRouter{AuthController: authRouter}
+func NewAuthRouter(authController *controller.AuthController) *AuthRouter {
+	return &AuthRouter{AuthController: authController}
 }
 
 func (r *AuthRouter) SetupAuthRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware) {
