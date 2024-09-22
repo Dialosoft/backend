@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -152,9 +153,14 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 
 // RefreshToken implements AuthService.
 func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error) {
+	var userEntity *models.UserEntity
 	claims, err := jsonWebToken.ValidateJWT(refreshToken, service.jwtKey)
 	if err != nil {
 		return "", errorsUtils.ErrRefreshTokenExpiredOrInvalid
+	}
+
+	if service.IsTokenBlacklisted(refreshToken) {
+		return "", errorsUtils.ErrUnauthorizedAcces
 	}
 
 	userID, err := claims.GetSubject()
@@ -162,41 +168,68 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 		return "", err
 	}
 
-	var roleID string
-	if roleIDClaim, ok := claims["roleID"].(string); ok {
-		roleID = roleIDClaim
-	}
-
-	if roleID == "" {
-		return "", errorsUtils.ErrRoleIDInRefreshToken
-	}
-
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
 		return "", errorsUtils.ErrInvalidUUID
 	}
 
-	roleUUID, err := uuid.Parse(roleID)
-	if err != nil {
-		return "", errorsUtils.ErrInvalidUUID
+	jtiString, ok := claims["jti"].(string)
+	if !ok {
+		return "", errorsUtils.ErrInternalServer
 	}
 
-	accesToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userUUID, roleUUID)
+	cacheKey := fmt.Sprintf("refresh:%s", jtiString)
+	userData, err := service.cacheRepository.Get(context.Background(), cacheKey)
+	if err != nil {
+		userEntity, err = service.userRepository.FindByID(userUUID)
+		if err != nil {
+			return "", errorsUtils.ErrNotFound
+		}
+
+		json, err := json.Marshal(userEntity)
+		if err != nil {
+			return "", errorsUtils.ErrInternalServer
+		}
+
+		err = service.cacheRepository.Set(context.Background(), cacheKey, string(json), time.Hour*24)
+		if err != nil {
+			return "", errorsUtils.ErrInternalServer
+		}
+	} else {
+		err = json.Unmarshal([]byte(userData), &userEntity)
+		if err != nil {
+			return "", errorsUtils.ErrInternalServer
+		}
+	}
+
+	if userEntity.Locked {
+		return "", errorsUtils.ErrUnauthorizedAcces
+	}
+	if userEntity.DeletedAt.Valid {
+		return "", gorm.ErrRecordNotFound
+	}
+	if userEntity.Disable {
+		return "", errorsUtils.ErrUnauthorizedAcces
+	}
+
+	accessToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userUUID, userEntity.RoleID)
 	if err != nil {
 		return "", err
 	}
 
-	return accesToken, nil
+	return accessToken, nil
 }
 
 // InvalidateToken implements AuthService.
 func (service *authServiceImpl) InvalidateRefreshToken(token string) error {
 	expiration := time.Hour * 720
-	return service.cacheRepository.Set(context.Background(), fmt.Sprintf("blacklist:%s", token), "true", expiration)
+	cacheKey := fmt.Sprintf("blacklist:%s", token)
+	return service.cacheRepository.Set(context.Background(), cacheKey, "true", expiration)
 }
 
 func (service *authServiceImpl) IsTokenBlacklisted(token string) bool {
-	is, err := service.cacheRepository.Exists(context.Background(), fmt.Sprintf("blacklist:%s", token))
+	cacheKey := fmt.Sprintf("blacklist:%s", token)
+	is, err := service.cacheRepository.Exists(context.Background(), cacheKey)
 	if err != nil {
 		log.Println("ERROR:", err)
 		return false
