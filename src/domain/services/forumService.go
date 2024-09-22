@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ type ForumService interface {
 	GetForumByID(id uuid.UUID) (*dto.ForumDto, error)
 	GetForumByName(name string) (*dto.ForumDto, error)
 	CreateForum(forumDto dto.ForumDto) (uuid.UUID, error)
-	UpdateForum(id uuid.UUID, forumDto dto.ForumDto) error
+	UpdateForum(id uuid.UUID, req request.NewForum) error
 	DeleteForum(id uuid.UUID) error
 	RestoreForum(id uuid.UUID) error
 }
@@ -94,33 +95,35 @@ func (service *forumServiceImpl) RestoreForum(id uuid.UUID) error {
 }
 
 // UpdateForum implements ForumService.
-func (service *forumServiceImpl) UpdateForum(id uuid.UUID, forumDto dto.ForumDto) error {
+func (service *forumServiceImpl) UpdateForum(id uuid.UUID, req request.NewForum) error {
 	forum, err := service.forumRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
 
 	{
-		if forumDto.Name != "" {
-			forum.Name = forumDto.Name
+		if req.Name != nil {
+			forum.Name = *req.Name
 		}
 
-		if forumDto.Description != "" {
-			forum.Description = forumDto.Description
+		if req.Description != nil {
+			forum.Description = *req.Description
 		}
 
-		forum.IsActive = forumDto.IsActive
-
-		if forumDto.Type != "" {
-			forum.Type = forumDto.Type
+		if req.IsActive != nil {
+			forum.IsActive = *req.IsActive
 		}
 
-		if forumDto.PostCount != 0 {
-			forum.PostCount = forumDto.PostCount
+		if req.Type != nil {
+			forum.Type = *req.Type
 		}
 
-		if forumDto.CategoryID != "" {
-			forum.CategoryID = forumDto.CategoryID
+		if req.PostCount != nil {
+			forum.PostCount = *req.PostCount
+		}
+
+		if req.CategoryID != nil {
+			forum.CategoryID = *req.CategoryID
 		}
 	}
 

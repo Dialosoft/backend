@@ -30,10 +30,10 @@ func CategoryEntityToCategoryDto(categoryEntity *models.Category) *dto.CategoryD
 	return &categoryDto
 }
 
-func CategoryCreateRequestToCategoryDto(categoryRequest *request.CreateCategory) *dto.CategoryDto {
+func CategoryCreateRequestToCategoryDto(categoryRequest *request.NewCategory) *dto.CategoryDto {
 	categoryDto := dto.CategoryDto{
-		Name:        categoryRequest.Name,
-		Description: categoryRequest.Description,
+		Name:        *categoryRequest.Name,
+		Description: *categoryRequest.Description,
 	}
 
 	return &categoryDto

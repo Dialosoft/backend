@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
@@ -13,7 +14,7 @@ type CategoryService interface {
 	GetCategoryByID(id uuid.UUID) (*dto.CategoryDto, error)
 	GetCategoryByName(name string) (*dto.CategoryDto, error)
 	CreateCategory(categoryDto dto.CategoryDto) (uuid.UUID, error)
-	UpdateCategory(id uuid.UUID, name string, description string) error
+	UpdateCategory(id uuid.UUID, req request.NewCategory) error
 	DeleteCategory(id uuid.UUID) error
 	RestoreCategory(id uuid.UUID) error
 }
@@ -95,21 +96,21 @@ func (service *categoryServiceImpl) RestoreCategory(id uuid.UUID) error {
 }
 
 // UpdateCategoryDescription implements CategoryService.
-func (service *categoryServiceImpl) UpdateCategory(id uuid.UUID, name string, description string) error {
-	category, err := service.categoryRepository.FindByID(id)
+func (service *categoryServiceImpl) UpdateCategory(id uuid.UUID, req request.NewCategory) error {
+	existingCategory, err := service.categoryRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
 
-	if name != "" {
-		category.Name = name
+	if req.Name != nil {
+		existingCategory.Name = *req.Name
 	}
 
-	if description != "" {
-		category.Description = description
+	if req.Description != nil {
+		existingCategory.Description = *req.Description
 	}
 
-	err = service.categoryRepository.Update(*category)
+	err = service.categoryRepository.Update(*existingCategory)
 	if err != nil {
 		return err
 	}
