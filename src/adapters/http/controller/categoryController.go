@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
@@ -86,7 +87,12 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
-	categoryUUID, err := ac.CategoryService.CreateCategory(req)
+	categoryDto := dto.CategoryDto{
+		Name:        *req.Name,
+		Description: *req.Description,
+	}
+
+	categoryUUID, err := ac.CategoryService.CreateCategory(categoryDto)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) ||
 			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {

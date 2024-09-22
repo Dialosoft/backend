@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/google/uuid"
@@ -30,9 +31,9 @@ type RoleService interface {
 	// Returns the UUID of the created role and an error if the creation fails.
 	CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error)
 
-	// UpdateRole modifies an existing role identified by its UUID based on the provided RoleDto.
+	// UpdateRole modifies an existing role identified by its UUID based on the provided request.
 	// Returns an error if the update fails.
-	UpdateRole(roleID uuid.UUID, updatedRole dto.RoleDto) error
+	UpdateRole(roleID uuid.UUID, req request.NewRole) error
 
 	// DeleteRole marks a role as deleted by its UUID.
 	// Returns an error if the deletion fails.
@@ -111,19 +112,35 @@ func (service *roleServiceImpl) GetRoleByType(roleType string) (*dto.RoleDto, er
 func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error) {
 	roleEntity := mapper.RoleDtoToRoleEntity(&newRole)
 
-	id, err := service.repository.Create(*roleEntity)
+	roleUUID, err := service.repository.Create(*roleEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return id, nil
+	return roleUUID, nil
 }
 
 // UpdateRole implements RoleService.
-func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, updatedRole dto.RoleDto) error {
-	roleEntity := mapper.RoleDtoToRoleEntity(&updatedRole)
+func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole) error {
+	existingRole, err := service.repository.FindByID(roleID)
+	if err != nil {
+		return err
+	}
 
-	return service.repository.Update(roleID, *roleEntity)
+	if req.RoleType != nil {
+		existingRole.RoleType = *req.RoleType
+	}
+	if req.Permission != nil {
+		existingRole.Permission = *req.Permission
+	}
+	if req.AdminRole != nil {
+		existingRole.AdminRole = *req.AdminRole
+	}
+	if req.ModRole != nil {
+		existingRole.ModRole = *req.ModRole
+	}
+
+	return service.repository.Update(roleID, *existingRole)
 }
 
 // DeleteRole implements RoleService.
