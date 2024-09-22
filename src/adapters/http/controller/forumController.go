@@ -76,15 +76,15 @@ func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 }
 
 func (fc *ForumController) CreateForum(c fiber.Ctx) error {
-	var req request.CreateForum
+	var req request.NewForum
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ErrBadRequest(c)
 	}
 
 	forumDto := dto.ForumDto{
-		Name:        req.Name,
-		Description: req.Description,
-		Type:        req.Type,
+		Name:        *req.Name,
+		Description: *req.Description,
+		Type:        *req.Type,
 	}
 
 	forumUUID, err := fc.ForumService.CreateForum(forumDto)
@@ -102,7 +102,7 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 }
 
 func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
-	var req request.UpdateForum
+	var req request.NewForum
 
 	id := c.Params("id")
 	if id == "" {
@@ -114,13 +114,7 @@ func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
 		return response.ErrUUIDParse(c)
 	}
 
-	forumDto := dto.ForumDto{
-		Name:        req.Name,
-		Description: req.Description,
-		Type:        req.Type,
-	}
-
-	err = fc.ForumService.UpdateForum(forumUUID, forumDto)
+	err = fc.ForumService.UpdateForum(forumUUID, req)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return response.ErrNotFound(c)

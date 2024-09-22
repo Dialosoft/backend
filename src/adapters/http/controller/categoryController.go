@@ -6,7 +6,6 @@ import (
 
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
-	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
@@ -78,13 +77,16 @@ func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
 }
 
 func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
-	var req request.CreateCategory
+	var req request.NewCategory
 	if err := c.Bind().Body(&req); err != nil {
 		return response.ErrBadRequest(c)
 	}
 
-	categoryDto := mapper.CategoryCreateRequestToCategoryDto(&req)
-	categoryUUID, err := ac.CategoryService.CreateCategory(*categoryDto)
+	if req.Name == nil || req.Description == nil {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	categoryUUID, err := ac.CategoryService.CreateCategory(req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) ||
 			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
@@ -99,7 +101,7 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 }
 
 func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
-	var req request.UpdateCategory
+	var req request.NewCategory
 
 	id := c.Params("id")
 	if id == "" {
@@ -115,7 +117,7 @@ func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	err = ac.CategoryService.UpdateCategory(categoryUUID, req.Name, req.Description)
+	err = ac.CategoryService.UpdateCategory(categoryUUID, req)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return response.ErrNotFound(c)
