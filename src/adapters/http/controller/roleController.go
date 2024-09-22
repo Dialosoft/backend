@@ -83,7 +83,7 @@ func (rc *RoleController) CreateNewRole(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	if req.RoleType == nil {
+	if *req.RoleType == "" {
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 

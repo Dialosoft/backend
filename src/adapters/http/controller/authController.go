@@ -46,7 +46,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 
 	return response.Standard(c, "Successfully registered", response.RegisterResponse{
 		UserID:       userID.String(),
-		Token:        token,
+		AccesToken:   token,
 		RefreshToken: refreshToken,
 	})
 }
@@ -69,7 +69,7 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 	}
 
 	return response.Standard(c, "Successfully logged in", response.LoginResponse{
-		Token:        accesToken,
+		AccesToken:   accesToken,
 		RefreshToken: refreshToken,
 	})
 }
@@ -83,7 +83,8 @@ func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
 
 	accesToken, err := ac.AuthService.RefreshToken(req.Refresh)
 	if err != nil {
-		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound || err == errorsUtils.ErrRefreshTokenExpiredOrInvalid {
+		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound ||
+			err == errorsUtils.ErrRefreshTokenExpiredOrInvalid || err == errorsUtils.ErrNotFound {
 			logger.Error(err.Error())
 			return response.ErrUnauthorized(c)
 		} else if err == errorsUtils.ErrRoleIDInRefreshToken {
