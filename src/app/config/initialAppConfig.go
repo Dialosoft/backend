@@ -34,6 +34,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheRepository, generalConfig.JWTKey)
 	forumService := services.NewForumService(forumRepository)
 	categoryService := services.NewCategoryService(categoryRepository)
+	roleService := services.NewRoleRepository(roleRepository)
 
 	// Middlewares
 	securityMiddleware := middleware.NewSecurityMiddleware(authService, generalConfig.JWTKey)
@@ -43,17 +44,20 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	authController := controller.NewAuthController(authService)
 	forumController := controller.NewForumController(forumService)
 	categoryController := controller.NewCategoryController(categoryService)
+	roleController := controller.NewRoleController(roleService)
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)
 	authRouter := router.NewAuthRouter(authController)
 	forumRouter := router.NewForumRouter(forumController)
 	categoryRouter := router.NewCategoryRouter(categoryController)
+	roleRouter := router.NewRoleRouter(roleController)
 
 	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
 	forumRouter.SetupForumRoutes(api, securityMiddleware, defaultRoles)
 	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, defaultRoles)
+	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
 
 	return app
 }
