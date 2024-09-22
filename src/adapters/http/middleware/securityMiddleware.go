@@ -6,6 +6,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/utils/jsonWebToken"
+	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
@@ -22,12 +23,12 @@ func NewSecurityMiddleware(authService services.AuthService, jwtKey string) *Sec
 
 func (sm *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
-		accesTokenHeader := c.Get("Authorization")
-		if accesTokenHeader == "" {
+		accessTokenHeader := c.Get("Authorization")
+		if accessTokenHeader == "" {
 			return response.ErrUnauthorizedHeader(c)
 		}
 
-		accessTokenParts := strings.Split(accesTokenHeader, " ")
+		accessTokenParts := strings.Split(accessTokenHeader, " ")
 		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
 			return response.ErrUnauthorizedInvalidHeader(c)
 		}
@@ -37,10 +38,11 @@ func (sm *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 		claimsAcess, err := jsonWebToken.ValidateJWT(accesToken, sm.JwtKey)
 		if err != nil {
 			if err == jwt.ErrTokenExpired {
+				logger.Error(err.Error())
 				return response.ErrExpiredAccessToken(c)
-			} else {
-				return response.PersonalizedErr(c, "token is not valid", fiber.StatusUnauthorized)
 			}
+			logger.Error(err.Error())
+			return response.PersonalizedErr(c, "token is not valid", fiber.StatusUnauthorized)
 		}
 
 		userID, ok := claimsAcess["sub"].(string)
