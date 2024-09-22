@@ -1,13 +1,10 @@
 package request
 
-type CreateForum struct {
-	Name        string `json:"name" validate:"required"`
-	Description string `json:"description,omitempty"`
-	Type        string `json:"type" validate:"required"`
-}
-
-type UpdateForum struct {
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-	Type        string `json:"type,omitempty"`
+type NewForum struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
+	Type        *string `json:"type"`
+	IsActive    *bool   `json:"isActive"`
+	PostCount   *uint32 `json:"postCount"`
+	CategoryID  *string `json:"categoryId" validate:"required"`
 }
