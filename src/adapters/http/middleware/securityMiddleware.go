@@ -16,7 +16,7 @@ type SecurityMiddleware struct {
 	JwtKey      string
 }
 
-func NewAuthMiddleware(authService services.AuthService, jwtKey string) *SecurityMiddleware {
+func NewSecurityMiddleware(authService services.AuthService, jwtKey string) *SecurityMiddleware {
 	return &SecurityMiddleware{AuthService: authService, JwtKey: jwtKey}
 }
 
