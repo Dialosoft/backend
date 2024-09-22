@@ -127,7 +127,7 @@ func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole
 		return err
 	}
 
-	if req.RoleType != nil {
+	if req.RoleType != nil || *req.RoleType == "" {
 		existingRole.RoleType = *req.RoleType
 	}
 	if req.Permission != nil {

@@ -23,4 +23,8 @@ var (
 	// Error indicating the roleID is empty in the refresh token
 	// Occurs when attempting to refresh and the refresh token does not contain a roleID
 	ErrRoleIDInRefreshToken = errors.New("the roleID is empty in the refreshToken when trying to refresh")
+
+	ErrNotFound = errors.New("not found")
+
+	ErrInternalServer = errors.New("internal server error")
 )
