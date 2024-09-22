@@ -1,6 +1,8 @@
 package response
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/gofiber/fiber/v3"
+)
 
 type StandardResponse struct {
 	Message string      `json:"message"`

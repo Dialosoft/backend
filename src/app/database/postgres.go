@@ -49,8 +49,6 @@ func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration)
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
-	log.Println("se entro en la funcion")
-
 	for {
 		select {
 		case <-ticker.C:

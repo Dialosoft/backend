@@ -31,7 +31,7 @@ func (fc *ForumController) GetAllForums(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", forumsDto))
+	return response.Standard(c, "OK", forumsDto)
 }
 
 func (fc *ForumController) GetForumByID(c fiber.Ctx) error {
@@ -54,7 +54,7 @@ func (fc *ForumController) GetForumByID(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", forumDto))
+	return response.Standard(c, "OK", forumDto)
 }
 
 func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
@@ -72,7 +72,7 @@ func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", forumDto))
+	return response.Standard(c, "OK", forumDto)
 }
 
 func (fc *ForumController) CreateForum(c fiber.Ctx) error {
@@ -96,9 +96,9 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.StandardCreated(c, "CREATED", fiber.Map{
+	return response.StandardCreated(c, "CREATED", fiber.Map{
 		"id": forumUUID.String(),
-	}))
+	})
 }
 
 func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
@@ -122,7 +122,7 @@ func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "UPDATED", nil))
+	return response.Standard(c, "UPDATED", nil)
 }
 
 func (fc *ForumController) DeleteForum(c fiber.Ctx) error {
@@ -140,7 +140,7 @@ func (fc *ForumController) DeleteForum(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "DELETED", nil))
+	return response.Standard(c, "DELETED", nil)
 }
 
 func (fc *ForumController) RestoreForum(c fiber.Ctx) error {
@@ -157,5 +157,5 @@ func (fc *ForumController) RestoreForum(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "RESTORED", nil))
+	return response.Standard(c, "RESTORED", nil)
 }

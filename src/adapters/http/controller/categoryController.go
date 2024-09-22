@@ -33,7 +33,7 @@ func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", categoriesDtos))
+	return response.Standard(c, "OK", categoriesDtos)
 }
 
 func (ac *CategoryController) GetCategoryByID(c fiber.Ctx) error {
@@ -56,7 +56,7 @@ func (ac *CategoryController) GetCategoryByID(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", categoryDto))
+	return response.Standard(c, "OK", categoryDto)
 }
 
 func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
@@ -74,7 +74,7 @@ func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", categoryDto))
+	return response.Standard(c, "OK", categoryDto)
 }
 
 func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
@@ -101,9 +101,9 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.StandardCreated(c, "CREATED", fiber.Map{
+	return response.StandardCreated(c, "CREATED", fiber.Map{
 		"id": categoryUUID.String(),
-	}))
+	})
 }
 
 func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
@@ -131,7 +131,7 @@ func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "UPDATED", nil))
+	return response.Standard(c, "UPDATED", nil)
 }
 
 func (ac *CategoryController) DeleteCategory(c fiber.Ctx) error {
@@ -149,7 +149,7 @@ func (ac *CategoryController) DeleteCategory(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "DELETED", nil))
+	return response.Standard(c, "DELETED", nil)
 }
 
 func (ac *CategoryController) RestoreCategory(c fiber.Ctx) error {
@@ -166,5 +166,5 @@ func (ac *CategoryController) RestoreCategory(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "RESTORED", nil))
+	return response.Standard(c, "RESTORED", nil)
 }

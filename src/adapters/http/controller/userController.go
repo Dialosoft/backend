@@ -119,7 +119,7 @@ func (uc *UserController) UpdateUser(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "UPDATED", nil))
+	return response.Standard(c, "UPDATED", nil)
 }
 
 func (uc *UserController) DeleteUser(c fiber.Ctx) error {
@@ -137,7 +137,7 @@ func (uc *UserController) DeleteUser(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "DELETED", nil))
+	return response.Standard(c, "DELETED", nil)
 }
 
 func (uc *UserController) RestoreUser(c fiber.Ctx) error {
@@ -155,5 +155,5 @@ func (uc *UserController) RestoreUser(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "RESTORED", nil))
+	return response.Standard(c, "RESTORED", nil)
 }

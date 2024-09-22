@@ -25,7 +25,7 @@ func NewRoleController(roleService services.RoleService) *RoleController {
 func (rc *RoleController) GetAllRoles(c fiber.Ctx) error {
 	rolesDtos, err := rc.RoleService.GetAllRoles()
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if err == gorm.ErrRecordNotFound || len(rolesDtos) == 0 {
 			logger.Error(err.Error())
 			return response.ErrNotFound(c)
 		}
@@ -33,7 +33,7 @@ func (rc *RoleController) GetAllRoles(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", rolesDtos))
+	return response.Standard(c, "OK", rolesDtos)
 }
 
 func (rc *RoleController) GetRoleByID(c fiber.Ctx) error {
@@ -56,7 +56,7 @@ func (rc *RoleController) GetRoleByID(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", roleDto))
+	return response.Standard(c, "OK", roleDto)
 }
 
 func (rc *RoleController) GetRoleByType(c fiber.Ctx) error {
@@ -74,7 +74,7 @@ func (rc *RoleController) GetRoleByType(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "OK", roleDto))
+	return response.Standard(c, "OK", roleDto)
 }
 
 func (rc *RoleController) CreateNewRole(c fiber.Ctx) error {
@@ -103,9 +103,9 @@ func (rc *RoleController) CreateNewRole(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.StandardCreated(c, "CREATED", fiber.Map{
+	return response.StandardCreated(c, "CREATED", fiber.Map{
 		"id": roleUUID.String(),
-	}))
+	})
 }
 
 func (rc *RoleController) UpdateRole(c fiber.Ctx) error {
@@ -133,7 +133,7 @@ func (rc *RoleController) UpdateRole(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "UPDATED", nil))
+	return response.Standard(c, "UPDATED", nil)
 }
 
 func (rc *RoleController) DeleteRole(c fiber.Ctx) error {
@@ -154,7 +154,7 @@ func (rc *RoleController) DeleteRole(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "DELETED", nil))
+	return response.Standard(c, "DELETED", nil)
 }
 
 func (rc *RoleController) RestoreRole(c fiber.Ctx) error {
@@ -171,5 +171,5 @@ func (rc *RoleController) RestoreRole(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(response.Standard(c, "RESTORED", nil))
+	return response.Standard(c, "RESTORED", nil)
 }
