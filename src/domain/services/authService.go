@@ -1,10 +1,7 @@
 package services
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
@@ -32,15 +29,7 @@ type AuthService interface {
 
 	// RefreshToken refreshes the access token using the provided refresh token.
 	// Returns a new access token and an error if the operation fails.
-	RefreshToken(token string) (string, error)
-
-	// InvalidateRefreshToken invalidates a refresh token, preventing it from being used again.
-	// Returns an error if the invalidation fails.
-	InvalidateRefreshToken(token string) error
-
-	// IsTokenBlacklisted checks if the provided token has been blacklisted.
-	// Returns true if the token is blacklisted, false otherwise.
-	IsTokenBlacklisted(token string) bool
+	RefreshToken(refreshToken string) (string, error)
 
 	// GetRoleInformationByRoleID retrieves role information based on the provided role ID.
 	// Returns the role information as a string and an error if the retrieval fails.
@@ -51,8 +40,13 @@ type authServiceImpl struct {
 	userRepository  repository.UserRepository
 	roleRepository  repository.RoleRepository
 	tokenRepository repository.TokenRepository
-	cacheRepository repository.RedisRepository
+	cacheService    CacheService
 	jwtKey          string
+}
+
+// GetRoleInformationByRoleID implements AuthService.
+func (service *authServiceImpl) GetRoleInformationByRoleID(roleID string) (string, error) {
+	panic("unimplemented")
 }
 
 // Register implements AuthService.
@@ -83,7 +77,9 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 		return uuid.UUID{}, "", "", err
 	}
 
-	refreshToken, err := service.getOrSaveRefreshToken(*userEntity)
+	fmt.Println(userEntity)
+
+	refreshToken, err := service.getOrSaveRefreshToken(userID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
@@ -103,7 +99,7 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 		return "", "", errorsUtils.ErrUnauthorizedAcces
 	}
 
-	refreshToken, err := service.getOrSaveRefreshToken(*userEntity)
+	refreshToken, err := service.getOrSaveRefreshToken(userEntity.ID)
 	if err != nil {
 		return "", "", err
 	}
@@ -119,12 +115,13 @@ func (service *authServiceImpl) Login(username string, password string) (string,
 // RefreshToken implements AuthService.
 func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error) {
 	var userEntity *models.UserEntity
+
 	claims, err := jsonWebToken.ValidateJWT(refreshToken, service.jwtKey)
 	if err != nil {
 		return "", errorsUtils.ErrRefreshTokenExpiredOrInvalid
 	}
 
-	if service.IsTokenBlacklisted(refreshToken) {
+	if service.cacheService.IsTokenBlacklisted(refreshToken) {
 		return "", errorsUtils.ErrUnauthorizedAcces
 	}
 
@@ -138,27 +135,15 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 		return "", errorsUtils.ErrInvalidUUID
 	}
 
-	cacheKey := fmt.Sprintf("user:%s", userUUID.String())
-	userData, err := service.cacheRepository.Get(context.Background(), cacheKey)
+	userEntity, err = service.cacheService.GetUserInfoByID(userUUID)
 	if err != nil {
 		userEntity, err = service.userRepository.FindByID(userUUID)
 		if err != nil {
-			return "", errorsUtils.ErrNotFound
+			return "", err
 		}
-		userEntity.Password = "" // delete the password hash, no needed
-		json, err := json.Marshal(userEntity)
+		err = service.cacheService.SetUserInfoByID(userUUID, userEntity)
 		if err != nil {
-			return "", errorsUtils.ErrInternalServer
-		}
-
-		err = service.cacheRepository.Set(context.Background(), cacheKey, string(json), time.Hour*24)
-		if err != nil {
-			return "", errorsUtils.ErrInternalServer
-		}
-	} else {
-		err = json.Unmarshal([]byte(userData), &userEntity)
-		if err != nil {
-			return "", errorsUtils.ErrInternalServer
+			return "", err
 		}
 	}
 
@@ -180,71 +165,19 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 	return accessToken, nil
 }
 
-// InvalidateToken implements AuthService.
-func (service *authServiceImpl) InvalidateRefreshToken(token string) error {
-	expiration := time.Hour * 720
-	cacheKey := fmt.Sprintf("blacklist:%s", token)
-	err := service.cacheRepository.Set(context.Background(), cacheKey, "true", expiration)
-	if err != nil {
-		logger.Error(err.Error())
-		return err
-	}
-
-	return nil
-}
-
-func (service *authServiceImpl) IsTokenBlacklisted(token string) bool {
-	cacheKey := fmt.Sprintf("blacklist:%s", token)
-	is, err := service.cacheRepository.Exists(context.Background(), cacheKey)
-	if err != nil {
-		logger.Error(err.Error())
-		return false
-	}
-	return is
-}
-
-func (service *authServiceImpl) GetRoleInformationByRoleID(roleID string) (string, error) {
-	var roleModel *models.RoleEntity
-	roleUUID, err := uuid.Parse(roleID)
-	if err != nil {
-		logger.Error(err.Error())
-		return "", err
-	}
-
-	key, err := service.cacheRepository.Get(context.Background(), roleID)
-	if err != nil || key == "" {
-		roleModel, err = service.roleRepository.FindByID(roleUUID)
-		if err != nil {
-			logger.Error(err.Error())
-			return "", err
-		}
-
-		err = service.cacheRepository.Set(context.Background(), roleModel.ID.String(), "true", time.Hour*48)
-		if err != nil {
-			logger.Error(err.Error())
-			return "", err
-		}
-
-		return roleModel.RoleType, nil
-	}
-
-	return key, nil
-}
-
-func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEntity) (string, error) {
+func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string, error) {
 	var refreshToken string
-	cacheKey := fmt.Sprintf("refreshToken:%s", userEntity.ID)
 
-	refreshToken, err := service.cacheRepository.Get(context.Background(), cacheKey)
+	refreshToken, err := service.cacheService.GetRefreshTokenByID(userID)
 	if err != nil {
 		logger.Error(err.Error())
 	}
 
 	if refreshToken == "" {
-		tokenEntity, err := service.tokenRepository.FindTokenByUserID(userEntity.ID)
+		tokenEntity, err := service.tokenRepository.FindTokenByUserID(userID)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
+				_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 				if err != nil {
 					logger.Error(err.Error())
 					return "", err
@@ -256,7 +189,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 					return "", err
 				}
 
-				err = service.cacheRepository.Set(context.Background(), cacheKey, newTokenEntity.Token, time.Hour*120) // 5 days
+				err = service.cacheService.SetRefreshTokenByID(userID, newTokenEntity.Token)
 				if err != nil {
 					logger.Error(err.Error())
 					return "", err
@@ -269,7 +202,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 				return "", err
 			}
 		} else {
-			err = service.cacheRepository.Set(context.Background(), cacheKey, tokenEntity.Token, time.Hour*120) // 5 days
+			err = service.cacheService.SetRefreshTokenByID(userID, tokenEntity.Token) // 5 days
 			if err != nil {
 				logger.Error(err.Error())
 				return "", err
@@ -282,8 +215,8 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 			logger.Error(err.Error())
 		}
 
-		if service.IsTokenBlacklisted(refreshToken) || validatErr != nil {
-			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userEntity.ID)
+		if service.cacheService.IsTokenBlacklisted(refreshToken) || validatErr != nil {
+			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 			if err != nil {
 				logger.Error(err.Error())
 				return "", err
@@ -309,7 +242,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 					return "", err
 				}
 
-				err = service.cacheRepository.Delete(context.Background(), cacheKey)
+				err = service.cacheService.DeleteRefreshTokenByID(userID)
 				if err != nil {
 					logger.Error(err.Error())
 				}
@@ -321,7 +254,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 				return "", err
 			}
 
-			err = service.cacheRepository.Set(context.Background(), cacheKey, newTokenEntity.Token, time.Hour*120) // 5 days
+			err = service.cacheService.SetRefreshTokenByID(userID, newTokenEntity.Token) // 5 days
 			if err != nil {
 				logger.Error(err.Error())
 				return "", err
@@ -337,12 +270,12 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userEntity models.UserEnti
 func NewAuthService(userRepository repository.UserRepository,
 	roleRepository repository.RoleRepository,
 	tokenRepository repository.TokenRepository,
-	cacheRepository repository.RedisRepository,
+	cacheService CacheService,
 	jwtKey string) AuthService {
 	return &authServiceImpl{
 		userRepository:  userRepository,
 		roleRepository:  roleRepository,
 		tokenRepository: tokenRepository,
-		cacheRepository: cacheRepository,
+		cacheService:    cacheService,
 		jwtKey:          jwtKey}
 }
