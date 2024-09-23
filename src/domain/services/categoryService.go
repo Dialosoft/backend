@@ -9,13 +9,35 @@ import (
 	"github.com/google/uuid"
 )
 
+// CategoryService defines the methods for managing categories in the system.
 type CategoryService interface {
+	// GetAllCategories retrieves a list of all available categories.
+	// Returns a slice of CategoryDto or an error if something goes wrong.
 	GetAllCategories() ([]*dto.CategoryDto, error)
+
+	// GetCategoryByID retrieves a specific category by its unique ID.
+	// Returns the CategoryDto or an error if the category is not found.
 	GetCategoryByID(id uuid.UUID) (*dto.CategoryDto, error)
+
+	// GetCategoryByName retrieves a specific category by its name.
+	// Returns the CategoryDto or an error if the category is not found.
 	GetCategoryByName(name string) (*dto.CategoryDto, error)
+
+	// CreateCategory adds a new category based on the provided CategoryDto.
+	// Returns the UUID of the newly created category or an error if creation fails.
 	CreateCategory(categoryDto dto.CategoryDto) (uuid.UUID, error)
+
+	// UpdateCategory updates an existing category's information by its ID.
+	// The updated data is provided via the NewCategory request structure.
+	// Returns an error if the update fails or the category is not found.
 	UpdateCategory(id uuid.UUID, req request.NewCategory) error
+
+	// DeleteCategory removes a category by its ID.
+	// Returns an error if the deletion fails or the category is not found.
 	DeleteCategory(id uuid.UUID) error
+
+	// RestoreCategory restores a previously deleted category by its ID.
+	// Returns an error if the restoration fails or the category is not found.
 	RestoreCategory(id uuid.UUID) error
 }
 

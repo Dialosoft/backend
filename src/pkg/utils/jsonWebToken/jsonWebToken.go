@@ -9,6 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// GenerateAccessJWT generates a signed JWT access token using the given secret key.
+// It includes claims such as the user ID, role ID, expiration time (5 minutes), and issued at time.
+// Returns the signed JWT as a string or an error if the signing process fails.
 func GenerateAccessJWT(secretKey string, id uuid.UUID, roleID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"iss": "dialosoft-api",
@@ -27,6 +30,9 @@ func GenerateAccessJWT(secretKey string, id uuid.UUID, roleID uuid.UUID) (string
 	return signedToken, nil
 }
 
+// GenerateRefreshToken generates a refresh token and returns the token along with a TokenEntity.
+// The refresh token has an expiration time of 720 hours (30 days) and is signed using the provided secret key.
+// Returns the signed refresh token, a TokenEntity containing metadata, or an error if token creation fails.
 func GenerateRefreshToken(secretKey string, userID uuid.UUID) (string, models.TokenEntity, error) {
 	tokenID := uuid.New()
 	claims := jwt.MapClaims{
@@ -54,6 +60,9 @@ func GenerateRefreshToken(secretKey string, userID uuid.UUID) (string, models.To
 	return refreshToken, tokenEntity, nil
 }
 
+// ValidateJWT validates the given JWT token string using the provided secret key.
+// It checks if the token's signing method is HMAC and verifies the token's expiration time.
+// Returns the token claims if valid, or an error if the token is invalid or expired.
 func ValidateJWT(tokenString, secretKey string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

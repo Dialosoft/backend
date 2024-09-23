@@ -12,13 +12,29 @@ import (
 	"github.com/google/uuid"
 )
 
+// CacheService defines the methods for managing user-related data and tokens in a cache.
 type CacheService interface {
+	// InvalidateRefreshToken invalidates the given refresh token by marking it as unusable.
 	InvalidateRefreshToken(token string) error
+
+	// IsTokenBlacklisted checks if the given token has been blacklisted and is no longer valid.
 	IsTokenBlacklisted(token string) bool
+
+	// SetUserInfoByID stores user information in the cache associated with the given user ID.
 	SetUserInfoByID(userID uuid.UUID, userEntity *models.UserEntity) error
+
+	// GetUserInfoByID retrieves user information from the cache based on the provided user ID.
+	// Returns the user entity or an error if not found.
 	GetUserInfoByID(userID uuid.UUID) (*models.UserEntity, error)
+
+	// SetRefreshTokenByID stores a refresh token in the cache, associated with the given user ID.
 	SetRefreshTokenByID(userID uuid.UUID, token string) error
+
+	// GetRefreshTokenByID retrieves a refresh token from the cache based on the provided user ID.
+	// Returns the token or an error if not found.
 	GetRefreshTokenByID(userID uuid.UUID) (string, error)
+
+	// DeleteRefreshTokenByID removes the refresh token from the cache associated with the given user ID.
 	DeleteRefreshTokenByID(userID uuid.UUID) error
 }
 

@@ -8,13 +8,35 @@ import (
 	"github.com/google/uuid"
 )
 
+// ForumService defines the methods for managing forums in the system.
 type ForumService interface {
+	// GetAllForums retrieves a list of all available forums.
+	// Returns a slice of ForumDto or an error if something goes wrong.
 	GetAllForums() ([]*dto.ForumDto, error)
+
+	// GetForumByID retrieves a specific forum by its unique ID.
+	// Returns the ForumDto or an error if the forum is not found.
 	GetForumByID(id uuid.UUID) (*dto.ForumDto, error)
+
+	// GetForumByName retrieves a specific forum by its name.
+	// Returns the ForumDto or an error if the forum is not found.
 	GetForumByName(name string) (*dto.ForumDto, error)
+
+	// CreateForum adds a new forum based on the provided ForumDto.
+	// Returns the UUID of the newly created forum or an error if creation fails.
 	CreateForum(forumDto dto.ForumDto) (uuid.UUID, error)
+
+	// UpdateForum updates an existing forum's information by its ID.
+	// The updated data is provided via the NewForum request structure.
+	// Returns an error if the update fails or the forum is not found.
 	UpdateForum(id uuid.UUID, req request.NewForum) error
+
+	// DeleteForum removes a forum by its ID.
+	// Returns an error if the deletion fails or the forum is not found.
 	DeleteForum(id uuid.UUID) error
+
+	// RestoreForum restores a previously deleted forum by its ID.
+	// Returns an error if the restoration fails or the forum is not found.
 	RestoreForum(id uuid.UUID) error
 }
 
