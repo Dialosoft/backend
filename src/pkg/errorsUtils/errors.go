@@ -27,4 +27,6 @@ var (
 	ErrNotFound = errors.New("not found")
 
 	ErrInternalServer = errors.New("internal server error")
+
+	ErrTokenBlacklisted = errors.New("token is blacklisted")
 )
