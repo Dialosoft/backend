@@ -16,7 +16,7 @@ func NewRoleRouter(roleController *controller.RoleController) *RoleRouter {
 }
 
 func (r *RoleRouter) SetupRoleRouter(api fiber.Router, middlewares *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
-	roleGroup := api.Group("roles")
+	roleGroup := api.Group("/roles")
 
 	{
 		roleGroup.Get("/get-all-roles", r.RoleController.GetAllRoles)
