@@ -16,7 +16,7 @@ func NewCategoryRouter(categoryController *controller.CategoryController) *Categ
 }
 
 func (r *CategoryRouter) SetupCategoryRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
-	categoryGroup := api.Group("categories")
+	categoryGroup := api.Group("/categories")
 
 	{
 		categoryGroup.Get("/get-all-categories", r.CategoryController.GetAllCategories)

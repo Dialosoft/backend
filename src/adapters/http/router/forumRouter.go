@@ -16,7 +16,7 @@ func NewForumRouter(forumController *controller.ForumController) *ForumRouter {
 }
 
 func (r *ForumRouter) SetupForumRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
-	forumGroup := api.Group("forums")
+	forumGroup := api.Group("/forums")
 
 	{
 		forumGroup.Get("/get-all-forums", r.ForumController.GetAllForums)
