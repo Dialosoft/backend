@@ -45,6 +45,12 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	forumController := controller.NewForumController(forumService)
 	categoryController := controller.NewCategoryController(categoryService)
 	roleController := controller.NewRoleController(roleService)
+	managementController := controller.NewManagamentController(
+		forumService,
+		categoryService,
+		roleService,
+		userService,
+		authService)
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)
@@ -52,12 +58,14 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	forumRouter := router.NewForumRouter(forumController)
 	categoryRouter := router.NewCategoryRouter(categoryController)
 	roleRouter := router.NewRoleRouter(roleController)
+	managementRouter := router.NewManagementRouter(managementController)
 
 	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
 	forumRouter.SetupForumRoutes(api, securityMiddleware, defaultRoles)
 	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, defaultRoles)
 	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
+	managementRouter.SetupManagementRoutes(api, securityMiddleware, defaultRoles)
 
 	return app
 }
