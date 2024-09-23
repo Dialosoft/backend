@@ -14,7 +14,8 @@ type ManagementController struct {
 	CategoryService services.CategoryService
 	RoleService     services.RoleService
 	UserService     services.UserService
-	authService     services.AuthService
+	AuthService     services.AuthService
+	CacheService    services.CacheService
 }
 
 func (mc *ManagementController) ChangeUserRole(c fiber.Ctx) error {
@@ -23,8 +24,11 @@ func (mc *ManagementController) ChangeUserRole(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	id := c.Params("id")
-	userUUID, err := uuid.Parse(id)
+	if req.RoleID == "" || req.UserID == "" {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	userUUID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		logger.Error(err.Error())
 		return response.ErrUUIDParse(c)
@@ -34,8 +38,18 @@ func (mc *ManagementController) ChangeUserRole(c fiber.Ctx) error {
 		RoleID: &req.RoleID,
 	}
 
-	err = mc.UserService.UpdateUser(userUUID, newUserRequest)
+	if err := mc.UserService.UpdateUser(userUUID, newUserRequest); err != nil {
+		logger.Error(err.Error())
+		return response.ErrInternalServer(c)
+	}
+
+	refreshToken, err := mc.CacheService.GetRefreshTokenByID(userUUID)
 	if err != nil {
+		logger.Error(err.Error())
+		return response.ErrInternalServer(c)
+	}
+
+	if err := mc.CacheService.InvalidateRefreshToken(refreshToken); err != nil {
 		logger.Error(err.Error())
 		return response.ErrInternalServer(c)
 	}
@@ -48,13 +62,16 @@ func NewManagamentController(
 	categoryService services.CategoryService,
 	roleService services.RoleService,
 	userService services.UserService,
-	authService services.AuthService) *ManagementController {
+	AuthService services.AuthService,
+	CacheService services.CacheService,
+) *ManagementController {
 
 	return &ManagementController{
 		ForumService:    forumService,
 		CategoryService: categoryService,
 		RoleService:     roleService,
 		UserService:     userService,
-		authService:     authService,
+		AuthService:     AuthService,
+		CacheService:    CacheService,
 	}
 }

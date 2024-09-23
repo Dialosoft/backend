@@ -13,23 +13,26 @@ import (
 )
 
 type SecurityMiddleware struct {
-	AuthService services.AuthService
-	JwtKey      string
+	AuthService  services.AuthService
+	CacheService services.CacheService
+	JwtKey       string
 }
 
-func NewSecurityMiddleware(authService services.AuthService, jwtKey string) *SecurityMiddleware {
-	return &SecurityMiddleware{AuthService: authService, JwtKey: jwtKey}
+func NewSecurityMiddleware(authService services.AuthService, cacheService services.CacheService, jwtKey string) *SecurityMiddleware {
+	return &SecurityMiddleware{AuthService: authService, CacheService: cacheService, JwtKey: jwtKey}
 }
 
 func (sm *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		accessTokenHeader := c.Get("Authorization")
 		if accessTokenHeader == "" {
+			logger.Error("refresh token empty")
 			return response.ErrUnauthorizedHeader(c)
 		}
 
 		accessTokenParts := strings.Split(accessTokenHeader, " ")
 		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
+			logger.Error("bad access token")
 			return response.ErrUnauthorizedInvalidHeader(c)
 		}
 
@@ -47,11 +50,13 @@ func (sm *SecurityMiddleware) GetAndVerifyAccesToken() fiber.Handler {
 
 		userID, ok := claimsAcess["sub"].(string)
 		if !ok {
+			logger.Error("Error in token: claims")
 			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
 		}
 
 		roleID, ok := claimsAcess["rid"].(string)
 		if !ok {
+			logger.Error("Error in token: claims")
 			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
 		}
 
@@ -66,15 +71,17 @@ func (sm *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshToken := c.Get("X-Refresh-Token")
 		if refreshToken == "" {
+			logger.Info("refresh token empty")
 			return response.ErrUnauthorizedHeader(c)
 		}
 
 		_, err := jsonWebToken.ValidateJWT(refreshToken, sm.JwtKey)
 		if err != nil {
+			logger.Error(err.Error())
 			return response.ErrUnauthorized(c)
 		}
 
-		if sm.AuthService.IsTokenBlacklisted(refreshToken) {
+		if sm.CacheService.IsTokenBlacklisted(refreshToken) {
 			return response.PersonalizedErr(c, "Refresh Token has been invalidated", fiber.StatusUnauthorized)
 		}
 

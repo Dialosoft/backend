@@ -30,14 +30,15 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	categoryRepository := repository.NewCategoryRepository(db)
 
 	// Services
+	cacheService := services.NewCacheService(cacheRepository)
 	userService := services.NewUserService(userRepository, roleRepository)
-	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheRepository, generalConfig.JWTKey)
+	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheService, generalConfig.JWTKey)
 	forumService := services.NewForumService(forumRepository)
 	categoryService := services.NewCategoryService(categoryRepository)
 	roleService := services.NewRoleRepository(roleRepository)
 
 	// Middlewares
-	securityMiddleware := middleware.NewSecurityMiddleware(authService, generalConfig.JWTKey)
+	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey)
 
 	// Controllers
 	userController := controller.NewUserController(userService)
@@ -50,7 +51,8 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 		categoryService,
 		roleService,
 		userService,
-		authService)
+		authService,
+		cacheService)
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)
