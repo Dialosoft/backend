@@ -23,16 +23,16 @@ func (r *ForumRouter) SetupForumRoutes(api fiber.Router, middlewares *middleware
 		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByID)
 		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByName)
 		forumGroup.Post("/create-new-forum", r.ForumController.CreateForum,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		forumGroup.Put("/update-forum/:id", r.ForumController.UpdateForum,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		forumGroup.Delete("/delete-forum/:id", r.ForumController.DeleteForum,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		forumGroup.Put("/restore-forum/:id", r.ForumController.RestoreForum,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 	}
 }

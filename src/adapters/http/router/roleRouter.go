@@ -23,16 +23,16 @@ func (r *RoleRouter) SetupRoleRouter(api fiber.Router, middlewares *middleware.S
 		roleGroup.Get("/get-role-by-id/:id", r.RoleController.GetRoleByID)
 		roleGroup.Get("/get-role-by-type/:type", r.RoleController.GetRoleByType)
 		roleGroup.Post("/create-new-role", r.RoleController.CreateNewRole,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		roleGroup.Put("/update-role/:id", r.RoleController.UpdateRole,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		roleGroup.Delete("/delete-role/:id", r.RoleController.DeleteRole,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		roleGroup.Put("/restore-role/:id", r.RoleController.RestoreRole,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 	}
 }

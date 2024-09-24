@@ -23,16 +23,16 @@ func (r *CategoryRouter) SetupCategoryRoutes(api fiber.Router, middlewares *midd
 		categoryGroup.Get("/get-category-by-id/:id", r.CategoryController.GetCategoryByID)
 		categoryGroup.Get("/get-category-by-name/:name", r.CategoryController.GetCategoryByName)
 		categoryGroup.Post("/create-new-category", r.CategoryController.CreateNewCategory,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		categoryGroup.Put("/update-category/:id", r.CategoryController.UpdateCategory, middlewares.VerifyRefreshToken(),
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		categoryGroup.Delete("/delete-category/:id", r.CategoryController.DeleteCategory,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		categoryGroup.Put("/restore-category/:id", r.CategoryController.RestoreCategory,
-			middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 	}
 }

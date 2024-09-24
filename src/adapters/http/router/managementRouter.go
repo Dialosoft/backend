@@ -20,12 +20,12 @@ func (r *ManagementRouter) SetupManagementRoutes(api fiber.Router, middlewares *
 
 	{
 		managementGroup.Post("/change-user-role", r.ManagementController.ChangeUserRole,
-			middlewares.GetAndVerifyAccesToken(),
+			middlewares.GetAndVerifyAccessToken(),
 			middlewares.VerifyRefreshToken(),
 			middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
 		managementGroup.Get("/test", func(c fiber.Ctx) error {
 			return c.SendString("pudiste!")
-		}, middlewares.GetAndVerifyAccesToken(), middlewares.VerifyRefreshToken())
+		}, middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken())
 	}
 }
