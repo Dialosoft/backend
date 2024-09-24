@@ -26,10 +26,24 @@ func (fc *ForumController) GetAllForums(c fiber.Ctx) error {
 	forumsDto, err := fc.ForumService.GetAllForums()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("No forums found", map[string]interface{}{
+				"route":  c.Path(),
+				"method": c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error retrieving all forums", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forums retrieved successfully", map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+		"count":  len(forumsDto),
+	})
 
 	return response.Standard(c, "OK", forumsDto)
 }
@@ -37,22 +51,46 @@ func (fc *ForumController) GetAllForums(c fiber.Ctx) error {
 func (fc *ForumController) GetForumByID(c fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		logger.Error("empty parameters or arguments")
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	forumUUID, err := uuid.Parse(id)
 	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
 		return response.ErrUUIDParse(c)
 	}
 
 	forumDto, err := fc.ForumService.GetForumByID(forumUUID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Forum not found", map[string]interface{}{
+				"forumID": id,
+				"route":   c.Path(),
+				"method":  c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error retrieving forum by ID", map[string]interface{}{
+			"forumID": id,
+			"route":   c.Path(),
+			"method":  c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum retrieved successfully", map[string]interface{}{
+		"forumID": id,
+		"route":   c.Path(),
+		"method":  c.Method(),
+	})
 
 	return response.Standard(c, "OK", forumDto)
 }
@@ -60,17 +98,36 @@ func (fc *ForumController) GetForumByID(c fiber.Ctx) error {
 func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 	name := c.Params("name")
 	if name == "" {
-		logger.Error("empty parameters or arguments")
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	forumDto, err := fc.ForumService.GetForumByName(name)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Forum not found", map[string]interface{}{
+				"forumName": name,
+				"route":     c.Path(),
+				"method":    c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error retrieving forum by name", map[string]interface{}{
+			"forumName": name,
+			"route":     c.Path(),
+			"method":    c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum retrieved successfully", map[string]interface{}{
+		"forumName": name,
+		"route":     c.Path(),
+		"method":    c.Method(),
+	})
 
 	return response.Standard(c, "OK", forumDto)
 }
@@ -78,6 +135,10 @@ func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 	var req request.NewForum
 	if err := c.Bind().Body(&req); err != nil {
+		logger.CaptureError(err, "Failed to parse CreateForum request", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
 		return response.ErrBadRequest(c)
 	}
 
@@ -89,12 +150,27 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 
 	forumUUID, err := fc.ForumService.CreateForum(forumDto)
 	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) ||
-			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			logger.Warn("Forum creation conflict", map[string]interface{}{
+				"forumDto": forumDto,
+				"route":    c.Path(),
+				"method":   c.Method(),
+			})
 			return response.ErrConflict(c)
 		}
+		logger.CaptureError(err, "Error creating new forum", map[string]interface{}{
+			"forumDto": forumDto,
+			"route":    c.Path(),
+			"method":   c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum created successfully", map[string]interface{}{
+		"forumID": forumUUID.String(),
+		"route":   c.Path(),
+		"method":  c.Method(),
+	})
 
 	return response.StandardCreated(c, "CREATED", fiber.Map{
 		"id": forumUUID.String(),
@@ -106,21 +182,46 @@ func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
 
 	id := c.Params("id")
 	if id == "" {
-		return response.ErrBadRequest(c)
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	forumUUID, err := uuid.Parse(id)
 	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
 		return response.ErrUUIDParse(c)
 	}
 
 	err = fc.ForumService.UpdateForum(forumUUID, req)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Forum not found for update", map[string]interface{}{
+				"forumID": id,
+				"route":   c.Path(),
+				"method":  c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error updating forum", map[string]interface{}{
+			"forumID": id,
+			"route":   c.Path(),
+			"method":  c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum updated successfully", map[string]interface{}{
+		"forumID": id,
+		"route":   c.Path(),
+		"method":  c.Method(),
+	})
 
 	return response.Standard(c, "UPDATED", nil)
 }
@@ -130,15 +231,36 @@ func (fc *ForumController) DeleteForum(c fiber.Ctx) error {
 
 	forumUUID, err := uuid.Parse(id)
 	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
 		return response.ErrUUIDParse(c)
 	}
 
 	if err = fc.ForumService.DeleteForum(forumUUID); err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Forum not found for deletion", map[string]interface{}{
+				"forumID": id,
+				"route":   c.Path(),
+				"method":  c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error deleting forum", map[string]interface{}{
+			"forumID": id,
+			"route":   c.Path(),
+			"method":  c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum deleted successfully", map[string]interface{}{
+		"forumID": id,
+		"route":   c.Path(),
+		"method":  c.Method(),
+	})
 
 	return response.Standard(c, "DELETED", nil)
 }
@@ -147,15 +269,36 @@ func (fc *ForumController) RestoreForum(c fiber.Ctx) error {
 	id := c.Params("id")
 	forumUUID, err := uuid.Parse(id)
 	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
 		return response.ErrUUIDParse(c)
 	}
 
 	if err = fc.ForumService.RestoreForum(forumUUID); err != nil {
 		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Forum not found for restoration", map[string]interface{}{
+				"forumID": id,
+				"route":   c.Path(),
+				"method":  c.Method(),
+			})
 			return response.ErrNotFound(c)
 		}
+		logger.CaptureError(err, "Error restoring forum", map[string]interface{}{
+			"forumID": id,
+			"route":   c.Path(),
+			"method":  c.Method(),
+		})
 		return response.ErrInternalServer(c)
 	}
+
+	logger.Info("Forum restored successfully", map[string]interface{}{
+		"forumID": id,
+		"route":   c.Path(),
+		"method":  c.Method(),
+	})
 
 	return response.Standard(c, "RESTORED", nil)
 }
