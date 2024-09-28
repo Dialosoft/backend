@@ -29,7 +29,17 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 		return Connection{}, err
 	}
 
-	err = db.AutoMigrate(models.UserEntity{}, models.RoleEntity{}, models.TokenEntity{})
+	err = db.AutoMigrate(
+		models.UserEntity{},
+		models.RoleEntity{},
+		models.TokenEntity{},
+		models.Category{},
+		models.Forum{},
+		models.Post{},
+		models.Comment{},
+		models.PostLikes{},
+		models.CommentVotes{},
+	)
 	if err != nil {
 		return Connection{}, err
 	}

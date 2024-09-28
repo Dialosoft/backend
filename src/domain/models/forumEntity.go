@@ -13,7 +13,6 @@ type Forum struct {
 	Description string         `gorm:"type:varchar(255)" json:"description"`
 	IsActive    bool           `gorm:"default:true" json:"is_active"`
 	Type        string         `gorm:"type:varchar(100);not null" json:"type"`
-	PostCount   uint32         `gorm:"default:0" json:"post_count"`
 	CategoryID  string         `gorm:"not null" json:"category_id"`
 	Category    Category       `gorm:"foreignKey:CategoryID;references:ID" json:"category"`
 	CreatedAt   time.Time      `gorm:"autoCreateTime" json:"created_at"`

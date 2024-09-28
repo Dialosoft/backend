@@ -9,7 +9,7 @@ import (
 
 type Comment struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	UserID    string         `json:"userID"`
+	UserID    uuid.UUID      `json:"userID"`
 	User      UserEntity     `gorm:"foreignKey:UserID" json:"user"`
 	PostID    uuid.UUID      `gorm:"type:uuid;index" json:"postId"`
 	CommentID *uuid.UUID     `gorm:"type:uuid;index" json:"commentId"`

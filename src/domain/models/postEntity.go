@@ -9,7 +9,7 @@ import (
 
 type Post struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
-	UserID    string         `json:"userId"`
+	UserID    uuid.UUID      `json:"userId"`
 	User      UserEntity     `gorm:"foreignKey:UserID" json:"user"`
 	Title     string         `gorm:"type:varchar(255)" json:"title"`
 	Content   string         `gorm:"type:text" json:"content"`

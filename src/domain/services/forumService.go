@@ -140,10 +140,6 @@ func (service *forumServiceImpl) UpdateForum(id uuid.UUID, req request.NewForum)
 			forum.Type = *req.Type
 		}
 
-		if req.PostCount != nil {
-			forum.PostCount = *req.PostCount
-		}
-
 		if req.CategoryID != nil {
 			forum.CategoryID = *req.CategoryID
 		}
