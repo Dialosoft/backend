@@ -5,4 +5,4 @@ Repository for refactoring the Dialosoft software backend, to use Golang and fur
 
 Responsible: [@Flussen](https://github.com/Flussen)
 Start date: 08/09/2024
-Progress: 10%
+Progress: 25%
