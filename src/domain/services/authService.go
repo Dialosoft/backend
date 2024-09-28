@@ -1,8 +1,6 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
@@ -77,8 +75,6 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 		return uuid.UUID{}, "", "", err
 	}
 
-	fmt.Println(userEntity)
-
 	refreshToken, err := service.getOrSaveRefreshToken(userID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
@@ -147,14 +143,11 @@ func (service *authServiceImpl) RefreshToken(refreshToken string) (string, error
 		}
 	}
 
-	if userEntity.Locked {
+	if userEntity.Banned {
 		return "", errorsUtils.ErrUnauthorizedAcces
 	}
 	if userEntity.DeletedAt.Valid {
 		return "", gorm.ErrRecordNotFound
-	}
-	if userEntity.Disable {
-		return "", errorsUtils.ErrUnauthorizedAcces
 	}
 
 	accessToken, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userUUID, userEntity.RoleID)

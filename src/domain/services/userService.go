@@ -121,11 +121,7 @@ func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.NewUser
 	}
 
 	if req.Locked != nil {
-		userEntity.Locked = *req.Locked
-	}
-
-	if req.Disable != nil {
-		userEntity.Disable = *req.Disable
+		userEntity.Banned = *req.Locked
 	}
 
 	if req.RoleID != nil {
