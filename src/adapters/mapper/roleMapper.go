@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"github.com/Dialosoft/src/adapters/dto"
+	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/models"
 )
 
@@ -37,4 +38,30 @@ func RoleEntityToRoleDto(roleEntity *models.RoleEntity) *dto.RoleDto {
 	}
 
 	return &roleDto
+}
+
+func RoleEntityToRoleResponse(roleEntity *models.RoleEntity) response.RoleResponse {
+	return response.RoleResponse{
+		ID:         roleEntity.ID,
+		RoleType:   roleEntity.RoleType,
+		Permission: roleEntity.Permission,
+		AdminRole:  roleEntity.AdminRole,
+		ModRole:    roleEntity.ModRole,
+		CreatedAt:  roleEntity.CreatedAt,
+		UpdatedAt:  roleEntity.UpdatedAt,
+		DeletedAt:  roleEntity.DeletedAt,
+	}
+}
+
+func RoleResponseToRoleEntity(roleResponse *response.RoleResponse) *models.RoleEntity {
+	return &models.RoleEntity{
+		ID:         roleResponse.ID,
+		RoleType:   roleResponse.RoleType,
+		Permission: roleResponse.Permission,
+		AdminRole:  roleResponse.AdminRole,
+		ModRole:    roleResponse.ModRole,
+		CreatedAt:  roleResponse.CreatedAt,
+		UpdatedAt:  roleResponse.UpdatedAt,
+		DeletedAt:  roleResponse.DeletedAt,
+	}
 }

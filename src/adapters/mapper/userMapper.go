@@ -3,6 +3,7 @@ package mapper
 import (
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
+	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/models"
 )
 
@@ -48,4 +49,35 @@ func UserUpdateRequestToUserDto(userRequest *request.UpdateUserRequest) *dto.Use
 	}
 
 	return &userDto
+}
+
+func UserEntityToUserResponse(userEntity *models.UserEntity) response.UserResponse {
+	return response.UserResponse{
+		ID:          userEntity.ID,
+		Username:    userEntity.Username,
+		Email:       userEntity.Email,
+		Name:        userEntity.Name,
+		Description: userEntity.Description,
+		Banned:      userEntity.Banned,
+		Role:        RoleEntityToRoleResponse(&userEntity.Role),
+		CreatedAt:   userEntity.CreatedAt,
+		UpdatedAt:   userEntity.UpdatedAt,
+		DeletedAt:   userEntity.DeletedAt,
+	}
+}
+
+func UserResponseToUserEntity(userResponse *response.UserResponse) *models.UserEntity {
+	return &models.UserEntity{
+		ID:          userResponse.ID,
+		Username:    userResponse.Username,
+		Email:       userResponse.Email,
+		Name:        userResponse.Name,
+		Description: userResponse.Description,
+		Banned:      userResponse.Banned,
+		RoleID:      userResponse.Role.ID,
+		Role:        *RoleResponseToRoleEntity(&userResponse.Role),
+		CreatedAt:   userResponse.CreatedAt,
+		UpdatedAt:   userResponse.UpdatedAt,
+		DeletedAt:   userResponse.DeletedAt,
+	}
 }
