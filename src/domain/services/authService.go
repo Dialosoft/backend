@@ -170,7 +170,9 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 
 	refreshToken, err := service.cacheService.GetRefreshTokenByID(userID)
 	if err != nil {
-		logger.Error(err.Error())
+		logger.CaptureError(err, "Error in cache: GetRefreshTokenByID", map[string]interface{}{
+			"userID": userID,
+		})
 	}
 
 	if refreshToken == "" {
@@ -179,32 +181,27 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 			if err == gorm.ErrRecordNotFound {
 				_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 				if err != nil {
-					logger.Error(err.Error())
 					return "", err
 				}
 
 				err = service.tokenRepository.Save(newTokenEntity)
 				if err != nil {
-					logger.Error(err.Error())
 					return "", err
 				}
 
 				err = service.cacheService.SetRefreshTokenByID(userID, newTokenEntity.Token)
 				if err != nil {
-					logger.Error(err.Error())
 					return "", err
 				}
 
 				refreshToken = newTokenEntity.Token
 
 			} else {
-				logger.Error(err.Error())
 				return "", err
 			}
 		} else {
 			err = service.cacheService.SetRefreshTokenByID(userID, tokenEntity.Token) // 5 days
 			if err != nil {
-				logger.Error(err.Error())
 				return "", err
 			}
 			refreshToken = tokenEntity.Token
@@ -212,13 +209,11 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 	} else {
 		claims, validatErr := jsonWebToken.ValidateJWT(refreshToken, service.jwtKey)
 		if err != nil {
-			logger.Error(err.Error())
 		}
 
 		if service.cacheService.IsTokenBlacklisted(refreshToken) || validatErr != nil {
 			_, newTokenEntity, err := jsonWebToken.GenerateRefreshToken(service.jwtKey, userID)
 			if err != nil {
-				logger.Error(err.Error())
 				return "", err
 			}
 
@@ -229,7 +224,6 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 
 			jtiUUID, err := uuid.Parse(jti)
 			if err != nil {
-				logger.Error(err.Error())
 				return "", errorsUtils.ErrInvalidUUID
 			}
 
@@ -238,25 +232,22 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 
 				err = service.tokenRepository.Delete(jtiUUID)
 				if err != nil {
-					logger.Error(err.Error())
 					return "", err
 				}
 
 				err = service.cacheService.DeleteRefreshTokenByID(userID)
 				if err != nil {
-					logger.Error(err.Error())
+					return "", err
 				}
 			}
 
 			err = service.tokenRepository.Save(newTokenEntity)
 			if err != nil {
-				logger.Error(err.Error())
 				return "", err
 			}
 
 			err = service.cacheService.SetRefreshTokenByID(userID, newTokenEntity.Token) // 5 days
 			if err != nil {
-				logger.Error(err.Error())
 				return "", err
 			}
 

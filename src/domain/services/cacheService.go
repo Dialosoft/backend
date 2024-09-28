@@ -8,7 +8,6 @@ import (
 
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/google/uuid"
 )
 
@@ -79,7 +78,6 @@ func (service *cacheServiceImpl) InvalidateRefreshToken(token string) error {
 	cacheKey := fmt.Sprintf("blacklist:%s", token)
 	err := service.cacheRepository.Set(context.Background(), cacheKey, "true", expiration)
 	if err != nil {
-		logger.Error(err.Error())
 		return err
 	}
 
@@ -91,7 +89,6 @@ func (service *cacheServiceImpl) IsTokenBlacklisted(token string) bool {
 	cacheKey := fmt.Sprintf("blacklist:%s", token)
 	is, err := service.cacheRepository.Exists(context.Background(), cacheKey)
 	if err != nil {
-		logger.Error(err.Error())
 		return false
 	}
 	return is

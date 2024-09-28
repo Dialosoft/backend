@@ -92,17 +92,26 @@ func checkOldAndBlockedTokens(db *gorm.DB) {
 
 	err := db.Where("blocked = ? OR created_at < ?", true, thirtyDaysAgo).Find(&tokens).Error
 	if err != nil {
-		logger.Error(err.Error())
+		logger.CaptureError(err, "error in checkOldAndBlockedTokens", nil)
 		return
 	}
 
 	if len(tokens) > 0 {
 		for _, token := range tokens {
-			logger.Info(fmt.Sprintf("Deleting token ID: %d, Blocked: %v, Created At: %s\n", token.ID, token.Blocked, token.CreatedAt))
+			logger.Info(
+				fmt.Sprintf("Deleting token ID: %d, Blocked: %v, Created At: %s", token.ID, token.Blocked, token.CreatedAt),
+				map[string]interface{}{"tokenID": token.ID, "blocked": token.Blocked, "createdAt": token.CreatedAt},
+			)
 			if err := db.Delete(&token).Error; err != nil {
-				logger.Error(fmt.Sprintf("Error deleting token ID: %d, error: %v\n", token.ID, err))
+				logger.Error(
+					"Error deleting token",
+					map[string]interface{}{"tokenID": token.ID, "error": err.Error()},
+				)
 			} else {
-				logger.Info(fmt.Sprintf("Successfully deleted token ID: %d", token.ID))
+				logger.Info(
+					fmt.Sprintf("Successfully deleted token ID: %d", token.ID),
+					map[string]interface{}{"tokenID": token.ID},
+				)
 			}
 		}
 	}
