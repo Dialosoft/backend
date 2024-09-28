@@ -66,7 +66,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 
 	return response.Standard(c, "Successfully registered", response.RegisterResponse{
 		UserID:       userID.String(),
-		AccesToken:   token,
+		AccessToken:  token,
 		RefreshToken: refreshToken,
 	})
 }
@@ -82,7 +82,7 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	accesToken, refreshToken, err := ac.AuthService.Login(req.Username, req.Password)
+	accessToken, refreshToken, err := ac.AuthService.Login(req.Username, req.Password)
 	if err != nil {
 		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound {
 			logger.Warn("Unauthorized login attempt", map[string]interface{}{
@@ -108,7 +108,7 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 	})
 
 	return response.Standard(c, "Successfully logged in", response.LoginResponse{
-		AccesToken:   accesToken,
+		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	})
 }
@@ -124,7 +124,7 @@ func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	accesToken, err := ac.AuthService.RefreshToken(req.Refresh)
+	accessToken, err := ac.AuthService.RefreshToken(req.Refresh)
 	if err != nil {
 		if err == errorsUtils.ErrUnauthorizedAcces || err == gorm.ErrRecordNotFound ||
 			err == errorsUtils.ErrRefreshTokenExpiredOrInvalid || err == errorsUtils.ErrNotFound {
@@ -150,6 +150,6 @@ func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
 	})
 
 	return response.Standard(c, "successfully refreshed", fiber.Map{
-		"accesToken": accesToken,
+		"accessToken": accessToken,
 	})
 }
