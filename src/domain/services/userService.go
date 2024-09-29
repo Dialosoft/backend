@@ -1,6 +1,15 @@
 package services
 
 import (
+	"fmt"
+	"image"
+	"image/jpeg"
+	_ "image/png"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
@@ -40,6 +49,8 @@ type UserService interface {
 	// RestoreUser restores a previously deleted user by their UUID.
 	// Returns an error if the restoration fails.
 	RestoreUser(userID uuid.UUID) error
+
+	ProcessAvatar(userID uuid.UUID, fileHeader *multipart.FileHeader, file multipart.File) error
 }
 
 type userServiceImpl struct {
@@ -154,6 +165,44 @@ func (service *userServiceImpl) DeleteUser(userID uuid.UUID) error {
 // RestoreUser implements UserService.
 func (service *userServiceImpl) RestoreUser(userID uuid.UUID) error {
 	return service.repository.Restore(userID)
+}
+
+func (service *userServiceImpl) ProcessAvatar(userID uuid.UUID, fileHeader *multipart.FileHeader, file multipart.File) error {
+	err := os.MkdirAll("./images/avatars", os.ModePerm)
+	if err != nil {
+		return err
+	}
+
+	filePath := filepath.Join("./images/avatars", fmt.Sprintf("%s.jpg", userID))
+	err = saveCompressedAvatarToFile(filePath, file)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func saveCompressedAvatarToFile(filePath string, avatar io.Reader) error {
+	img, _, err := image.Decode(avatar)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	outFile, err := os.Create(filePath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	var opt jpeg.Options
+	opt.Quality = 50
+	err = jpeg.Encode(outFile, img, &opt)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func NewUserService(userRepository repository.UserRepository, roleRepository repository.RoleRepository) UserService {

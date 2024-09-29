@@ -305,3 +305,75 @@ func (uc *UserController) RestoreUser(c fiber.Ctx) error {
 
 	return response.Standard(c, "RESTORED", nil)
 }
+
+func (uc *UserController) ChangeUserAvatar(c fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	userUUID, err := uuid.Parse(id)
+	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
+		return response.ErrUUIDParse(c)
+	}
+
+	fileHeader, err := c.FormFile("avatar")
+	if err != nil {
+		logger.Error("Failed to retrieve file from multipart form", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrBadRequest(c)
+	}
+
+	if fileHeader.Size > 5*1024*1024 {
+		logger.Warn("File size too large", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+			"size":   fileHeader.Size,
+		})
+		return response.PersonalizedErr(c, "File size exceeds the 5MB limit", fiber.StatusRequestEntityTooLarge)
+	}
+
+	if fileHeader.Header.Get("Content-Type") != "image/png" && fileHeader.Header.Get("Content-Type") != "image/jpeg" {
+		logger.Warn("Invalid file type", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+			"type":   fileHeader.Header.Get("Content-Type"),
+		})
+		return response.PersonalizedErr(c, "Only PNG and JPEG formats are allowed", fiber.StatusUnsupportedMediaType)
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		logger.Error("Failed to open file", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrInternalServer(c)
+	}
+	defer file.Close()
+
+	err = uc.UserService.ProcessAvatar(userUUID, fileHeader, file)
+	if err != nil {
+		logger.Error("Failed to process avatar upload", map[string]interface{}{
+			"user_id": userUUID.String(),
+			"route":   c.Path(),
+			"method":  c.Method(),
+			"error":   err.Error(),
+		})
+		return response.ErrInternalServer(c)
+	}
+
+	// Respuesta exitosa
+	return response.Standard(c, "Avatar uploaded successfully", nil)
+}
