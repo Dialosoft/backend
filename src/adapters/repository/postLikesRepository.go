@@ -9,6 +9,7 @@ import (
 type PostLikesRepository interface {
 	FindAllByPostID(postID uuid.UUID) ([]*models.PostLikes, error)
 	FindAllByUserIDAndPostID(postID uuid.UUID, userID uuid.UUID) ([]*models.PostLikes, error)
+	FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error)
 	Save(postID uuid.UUID, userID uuid.UUID) error
 	Remove(postID uuid.UUID, userID uuid.UUID) error
 }
@@ -31,6 +32,14 @@ func (repo *postLikesRepositoryImpl) FindAllByPostID(postID uuid.UUID) ([]*model
 func (repo *postLikesRepositoryImpl) FindAllByUserIDAndPostID(postID uuid.UUID, userID uuid.UUID) ([]*models.PostLikes, error) {
 	var postLikes []*models.PostLikes
 	if err := repo.db.Find(&postLikes, "post_id = ? AND user_id = ?", postID, userID).Error; err != nil {
+		return nil, err
+	}
+	return postLikes, nil
+}
+
+func (repo *postLikesRepositoryImpl) FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error) {
+	var postLikes []*models.PostLikes
+	if err := repo.db.Find(&postLikes, "user_id = ?", userID).Error; err != nil {
 		return nil, err
 	}
 	return postLikes, nil
