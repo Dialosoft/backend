@@ -28,6 +28,8 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	cacheRepository := repository.NewRedisRepository(redisConn)
 	forumRepository := repository.NewForumRepository(db)
 	categoryRepository := repository.NewCategoryRepository(db)
+	postRepository := repository.NewPostRepository(db)
+	postLikesRepository := repository.NewPostLikesRepository(db)
 
 	// Services
 	cacheService := services.NewCacheService(cacheRepository)
@@ -36,6 +38,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	forumService := services.NewForumService(forumRepository)
 	categoryService := services.NewCategoryService(categoryRepository)
 	roleService := services.NewRoleRepository(roleRepository)
+	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
 	// Middlewares
 	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey)
@@ -46,6 +49,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	forumController := controller.NewForumController(forumService)
 	categoryController := controller.NewCategoryController(categoryService)
 	roleController := controller.NewRoleController(roleService)
+	postController := controller.NewPostController(postService)
 	managementController := controller.NewManagamentController(
 		forumService,
 		categoryService,
@@ -61,6 +65,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	categoryRouter := router.NewCategoryRouter(categoryController)
 	roleRouter := router.NewRoleRouter(roleController)
 	managementRouter := router.NewManagementRouter(managementController)
+	postRouter := router.NewPostRouter(postController)
 
 	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
@@ -68,6 +73,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, defaultRoles)
 	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
 	managementRouter.SetupManagementRoutes(api, securityMiddleware, defaultRoles)
+	postRouter.SetupPostRoutes(api, securityMiddleware, defaultRoles)
 
 	return app
 }

@@ -14,12 +14,13 @@ type PostService interface {
 	GetPostByID(postID uuid.UUID) (*response.PostResponse, error)
 	GetPostsByUserID(userID uuid.UUID) ([]response.PostResponse, error)
 	CreateNewPost(UserID uuid.UUID, post request.NewPost) (response.PostResponse, error)
-	UpdatePostTitle(postID uuid.UUID, userID uuid.UUID, title string) error
-	UpdatePostContent(postID uuid.UUID, userID uuid.UUID, content string) error
+	UpdatePostTitle(postID uuid.UUID, title string) error
+	UpdatePostContent(postID uuid.UUID, content string) error
 	DeletePost(postID uuid.UUID) error
 	RestorePost(postID uuid.UUID) error
 	LikePost(postID uuid.UUID, userID uuid.UUID) error
 	UnlikePost(postID uuid.UUID, userID uuid.UUID) error
+	GetPostLikesByUserID(userID uuid.UUID) ([]uuid.UUID, error)
 }
 
 type postServiceImpl struct {
@@ -36,12 +37,10 @@ func (service *postServiceImpl) CreateNewPost(UserID uuid.UUID, post request.New
 	}
 
 	postEntity := models.Post{
-		UserID:   userEntity.ID,
-		User:     *userEntity,
-		Title:    post.Title,
-		Content:  post.Content,
-		Views:    post.Views,
-		Comments: post.Comments,
+		UserID:  userEntity.ID,
+		User:    *userEntity,
+		Title:   post.Title,
+		Content: post.Content,
 	}
 
 	newPostEntity, err := service.postRepository.Create(postEntity)
@@ -94,7 +93,7 @@ func (service *postServiceImpl) GetPostsByUserID(userID uuid.UUID) ([]response.P
 }
 
 // UpdatePost implements PostService.
-func (service *postServiceImpl) UpdatePostTitle(postID uuid.UUID, userID uuid.UUID, title string) error {
+func (service *postServiceImpl) UpdatePostTitle(postID uuid.UUID, title string) error {
 
 	modelPost, err := service.postRepository.FindByID(postID)
 	if err != nil {
@@ -109,7 +108,7 @@ func (service *postServiceImpl) UpdatePostTitle(postID uuid.UUID, userID uuid.UU
 }
 
 // UpdatePost implements PostService.
-func (service *postServiceImpl) UpdatePostContent(postID uuid.UUID, userID uuid.UUID, content string) error {
+func (service *postServiceImpl) UpdatePostContent(postID uuid.UUID, content string) error {
 	modelPost, err := service.postRepository.FindByID(postID)
 	if err != nil {
 		return err
@@ -140,6 +139,21 @@ func (service *postServiceImpl) DeletePost(postID uuid.UUID) error {
 // RestorePost implements PostService.
 func (service *postServiceImpl) RestorePost(postID uuid.UUID) error {
 	return service.postRepository.Restore(postID)
+}
+
+func (service *postServiceImpl) GetPostLikesByUserID(userID uuid.UUID) ([]uuid.UUID, error) {
+	var postsIDs []uuid.UUID
+
+	posts, err := service.postLikesRepo.FindAllByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, post := range posts {
+		postsIDs = append(postsIDs, post.PostID)
+	}
+
+	return postsIDs, nil
 }
 
 func NewPostService(postRepository repository.PostRepository, postLikesRepo repository.PostLikesRepository, userRepository repository.UserRepository) PostService {
