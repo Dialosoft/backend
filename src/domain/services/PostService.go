@@ -7,12 +7,15 @@ import (
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type PostService interface {
-	GetAllPosts() ([]response.PostResponse, error)
+	GetAllPosts(limit, offset int) ([]response.PostResponse, error)
 	GetPostByID(postID uuid.UUID) (*response.PostResponse, error)
 	GetPostsByUserID(userID uuid.UUID) ([]response.PostResponse, error)
+	GetAllPostsAndReturnSimpleResponse(limit, offset int) ([]response.SimplePostResponse, error)
+	GetLikeCount(postID uuid.UUID) (int64, error)
 	CreateNewPost(UserID uuid.UUID, post request.NewPost) (response.PostResponse, error)
 	UpdatePostTitle(postID uuid.UUID, title string) error
 	UpdatePostContent(postID uuid.UUID, content string) error
@@ -51,9 +54,9 @@ func (service *postServiceImpl) CreateNewPost(UserID uuid.UUID, post request.New
 }
 
 // GetAllPosts implements PostService.
-func (service *postServiceImpl) GetAllPosts() ([]response.PostResponse, error) {
+func (service *postServiceImpl) GetAllPosts(limit, offset int) ([]response.PostResponse, error) {
 	var postResponses []response.PostResponse
-	postsModels, err := service.postRepository.FindAll()
+	postsModels, err := service.postRepository.FindAll(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +93,31 @@ func (service *postServiceImpl) GetPostsByUserID(userID uuid.UUID) ([]response.P
 	}
 
 	return postResponses, nil
+}
+
+func (service *postServiceImpl) GetAllPostsAndReturnSimpleResponse(limit, offset int) ([]response.SimplePostResponse, error) {
+	var postResponses []response.SimplePostResponse
+	postsModels, err := service.postRepository.FindAll(limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, postModel := range postsModels {
+		postResponses = append(postResponses, response.SimplePostResponse{
+			ID:        postModel.ID.String(),
+			UserID:    postModel.UserID.String(),
+			Title:     postModel.Title,
+			CreatedAt: postModel.CreatedAt.String(),
+			UpdatedAt: postModel.UpdatedAt.String(),
+			DeletedAt: postModel.DeletedAt,
+		})
+	}
+
+	return postResponses, nil
+}
+
+func (service *postServiceImpl) GetLikeCount(postID uuid.UUID) (int64, error) {
+	return service.postRepository.GetLikeCount(postID)
 }
 
 // UpdatePost implements PostService.
@@ -151,6 +179,10 @@ func (service *postServiceImpl) GetPostLikesByUserID(userID uuid.UUID) ([]uuid.U
 
 	for _, post := range posts {
 		postsIDs = append(postsIDs, post.PostID)
+	}
+
+	if postsIDs == nil {
+		return nil, gorm.ErrRecordNotFound
 	}
 
 	return postsIDs, nil
