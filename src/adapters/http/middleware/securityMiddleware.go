@@ -22,6 +22,10 @@ func NewSecurityMiddleware(authService services.AuthService, cacheService servic
 	return &SecurityMiddleware{AuthService: authService, CacheService: cacheService, JwtKey: jwtKey}
 }
 
+// GetAndVerifyAccessToken retrieves the access token from the Authorization header,
+// checks its format, and verifies the token. If the token is invalid, expired, or missing,
+// appropriate error responses are returned. If valid, the user's ID and role are extracted
+// from the token and stored in the request context for further use.
 func (sm *SecurityMiddleware) GetAndVerifyAccessToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		accessTokenHeader := c.Get("Authorization")
@@ -90,6 +94,9 @@ func (sm *SecurityMiddleware) GetAndVerifyAccessToken() fiber.Handler {
 	}
 }
 
+// VerifyRefreshToken checks the presence of a refresh token in the X-Refresh-Token header,
+// validates it using JWT, and checks if the token has been blacklisted. If the token is invalid
+// or blacklisted, an error response is returned. If valid, the request proceeds.
 func (sm *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshToken := c.Get("X-Refresh-Token")
@@ -127,6 +134,9 @@ func (sm *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	}
 }
 
+// RoleRequiredByName ensures that the user has the required role by name to access the route.
+// It retrieves the user's role from the context and compares it with the required role.
+// If the role doesn't match or is missing, an error is returned.
 func (sm *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
@@ -176,6 +186,9 @@ func (sm *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Hand
 	}
 }
 
+// RoleRequiredByID ensures that the user has the required role by ID to access the route.
+// It retrieves the user's role from the context and compares it with the required role ID.
+// If the role doesn't match or is missing, an error is returned.
 func (sm *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		roleID := c.Locals("roleID")
@@ -208,6 +221,9 @@ func (sm *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Hand
 	}
 }
 
+// AuthorizeSelfUserID checks if the user is authorized to access or modify their own resources.
+// It compares the user ID from the token (accessToken) with the ID in the request parameters.
+// If the IDs do not match, an unauthorized error is returned.
 func (sm *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		userID := c.Locals("userID")
