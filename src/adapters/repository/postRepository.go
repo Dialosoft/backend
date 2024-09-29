@@ -2,12 +2,13 @@ package repository
 
 import (
 	"github.com/Dialosoft/src/domain/models"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type PostRepository interface {
-	FindAll() ([]*models.Post, error)
+	FindAll(limit, offset int) ([]*models.Post, error)
 	FindByID(ID uuid.UUID) (*models.Post, error)
 	FindByUserID(userID uuid.UUID) ([]*models.Post, error)
 	GetLikeCount(postID uuid.UUID) (int64, error)
@@ -22,13 +23,13 @@ type postRepositoryImpl struct {
 }
 
 // FindAll implements PostRepository.
-func (repo *postRepositoryImpl) FindAll() ([]*models.Post, error) {
+func (repo *postRepositoryImpl) FindAll(limit, offset int) ([]*models.Post, error) {
 	var posts []*models.Post
-	if err := repo.db.Preload("users").Find(&posts).Error; err != nil {
+	if err := repo.db.Preload("User").Preload("User.Role").Limit(limit).Offset(offset).Find(&posts).Error; err != nil {
 		return nil, err
 	}
 	if len(posts) == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, errorsUtils.ErrNoPostsObtained
 	}
 
 	return posts, nil
@@ -37,7 +38,7 @@ func (repo *postRepositoryImpl) FindAll() ([]*models.Post, error) {
 // FindByID implements PostRepository.
 func (repo *postRepositoryImpl) FindByID(ID uuid.UUID) (*models.Post, error) {
 	var post models.Post
-	if err := repo.db.Preload("users").Where("id = ?", ID.String()).First(&post).Error; err != nil {
+	if err := repo.db.Preload("User").Preload("User.Role").Where("id = ?", ID.String()).First(&post).Error; err != nil {
 		return nil, err
 	}
 
@@ -47,7 +48,7 @@ func (repo *postRepositoryImpl) FindByID(ID uuid.UUID) (*models.Post, error) {
 // FindByUserID implements PostRepository.
 func (repo *postRepositoryImpl) FindByUserID(userID uuid.UUID) ([]*models.Post, error) {
 	var posts []*models.Post
-	if err := repo.db.Preload("users").Where("user_id = ?", userID.String()).Find(&posts).Error; err != nil {
+	if err := repo.db.Preload("User").Preload("User.Role").Where("user_id = ?", userID.String()).Find(&posts).Error; err != nil {
 		return nil, err
 	}
 

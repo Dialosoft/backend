@@ -18,3 +18,12 @@ type PostResponse struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `json:"deletedAt"`
 }
+
+type SimplePostResponse struct {
+	ID        string         `json:"id"`
+	UserID    string         `json:"userID"`
+	Title     string         `json:"title"`
+	CreatedAt string         `json:"createdAt"`
+	UpdatedAt string         `json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `json:"deletedAt"`
+}

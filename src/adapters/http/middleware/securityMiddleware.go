@@ -222,7 +222,7 @@ func (sm *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Hand
 }
 
 // AuthorizeSelfUserID checks if the user is authorized to access or modify their own resources.
-// It compares the user ID from the token (accessToken) with the ID in the request parameters.
+// It compares the user ID from the token (accessToken) with the ID in the request parameters /:id.
 // If the IDs do not match, an unauthorized error is returned.
 func (sm *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 	return func(c fiber.Ctx) error {

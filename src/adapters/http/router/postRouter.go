@@ -23,15 +23,17 @@ func (r *PostRouter) SetupPostRoutes(api fiber.Router, middlewares *middleware.S
 
 	{
 		postGroup.Get("/get-all-posts", r.PostController.GetAllPosts)
+		postGroup.Get("/get-all-posts-simple", r.PostController.GetAllPostsAndReturnSimpleResponse)
 		postGroup.Get("/get-post-by-id/:id", r.PostController.GetPostByID)
 		postGroup.Get("/get-posts-by-user-id/:userID", r.PostController.GetPostsByUserID)
-		postGroup.Post("/create-new-post", r.PostController.CreateNewPost, middlewares.AuthorizeSelfUserID())
+		postGroup.Get("/get-like-count/:id", r.PostController.GetPostNumberOfLikes)
+		postGroup.Get("/get-post-likes-by-user-id/:userID", r.PostController.GetPostLikesByUserID)
+		postGroup.Post("/create-new-post", r.PostController.CreateNewPost)
 		postGroup.Put("/update-post-title/:id", r.PostController.UpdatePostTitle)
 		postGroup.Put("/update-post-content/:id", r.PostController.UpdatePostContent)
 		postGroup.Delete("/delete-post/:id", r.PostController.DeletePost)
 		postGroup.Put("/restore-post/:id", r.PostController.RestorePost)
-		postGroup.Put("/like-post/:id", r.PostController.LikePost)
-		postGroup.Put("/unlike-post/:id", r.PostController.UnlikePost)
-		postGroup.Get("/get-post-likes-by-user-id/:id", r.PostController.GetPostLikesByUserID)
+		postGroup.Put("/like-post", r.PostController.LikePost)
+		postGroup.Put("/unlike-post", r.PostController.UnlikePost)
 	}
 }
