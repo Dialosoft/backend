@@ -1,6 +1,10 @@
 package controller
 
 import (
+	"errors"
+	"strconv"
+	"strings"
+
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
@@ -18,7 +22,28 @@ func NewPostController(postService services.PostService) *PostController {
 }
 
 func (pc *PostController) GetAllPosts(c fiber.Ctx) error {
-	posts, err := pc.PostService.GetAllPosts()
+
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	if limit == "" {
+		limit = "10"
+	}
+	if offset == "" {
+		offset = "0"
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	posts, err := pc.PostService.GetAllPosts(limitInt, offsetInt)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return response.ErrNotFound(c)
@@ -71,6 +96,59 @@ func (pc *PostController) GetPostsByUserID(c fiber.Ctx) error {
 	}
 
 	return response.Standard(c, "OK", posts)
+}
+
+func (pc *PostController) GetAllPostsAndReturnSimpleResponse(c fiber.Ctx) error {
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	if limit == "" {
+		limit = "10"
+	}
+	if offset == "" {
+		offset = "0"
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	posts, err := pc.PostService.GetAllPostsAndReturnSimpleResponse(limitInt, offsetInt)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+	return response.Standard(c, "OK", posts)
+}
+
+func (pc *PostController) GetPostNumberOfLikes(c fiber.Ctx) error {
+	postID := c.Params("id")
+	if postID == "" {
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	postUUID, err := uuid.Parse(postID)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	likes, err := pc.PostService.GetLikeCount(postUUID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return response.ErrNotFound(c)
+		}
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "OK", likes)
 }
 
 func (pc *PostController) CreateNewPost(c fiber.Ctx) error {
@@ -186,11 +264,11 @@ func (pc *PostController) LikePost(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	userUUID, err := uuid.Parse(req.PostID)
+	userUUID, err := uuid.Parse(req.UserID)
 	if err != nil {
 		return response.ErrUUIDParse(c)
 	}
-	postUUID, err := uuid.Parse(req.UserID)
+	postUUID, err := uuid.Parse(req.PostID)
 	if err != nil {
 		return response.ErrUUIDParse(c)
 	}
@@ -199,6 +277,10 @@ func (pc *PostController) LikePost(c fiber.Ctx) error {
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return response.ErrNotFound(c)
+		}
+
+		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
+			return response.PersonalizedErr(c, "You already liked this post", fiber.StatusConflict)
 		}
 		return response.ErrInternalServer(c)
 	}
@@ -233,7 +315,7 @@ func (pc *PostController) UnlikePost(c fiber.Ctx) error {
 }
 
 func (pc *PostController) GetPostLikesByUserID(c fiber.Ctx) error {
-	postID := c.Params("id")
+	postID := c.Params("userID")
 	if postID == "" {
 		return response.ErrEmptyParametersOrArguments(c)
 	}
@@ -251,5 +333,7 @@ func (pc *PostController) GetPostLikesByUserID(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
-	return response.Standard(c, "OK", likes)
+	return response.Standard(c, "OK", fiber.Map{
+		"postsIDsLikes": likes,
+	})
 }
