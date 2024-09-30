@@ -20,6 +20,7 @@ import (
 
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
+	"github.com/Dialosoft/src/pkg/utils/devconfig"
 	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/redis/go-redis/v9"
 )
@@ -61,6 +62,11 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go database.StartTokenChecker(ctx, conn.Gorm, 24*time.Hour)
+
+	// Auto create default user
+	if err := devconfig.StartWithAdmin(conn.Gorm); err != nil {
+		log.Fatal(err)
+	}
 
 	// Api Setup
 	api := config.SetupAPI(conn.Gorm, redisConn, conf, conn.DefaultRolesIDs)
