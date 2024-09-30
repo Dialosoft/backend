@@ -9,13 +9,18 @@ import (
 )
 
 type GeneralConfig struct {
-	Host     string
-	User     string
-	Password string
-	Database string
-	Port     int
-	SSLMode  string
-	JWTKey   string
+	Host         string
+	User         string
+	Password     string
+	Database     string
+	Port         int
+	SSLMode      string
+	SMTPHost     string
+	SMTPPort     string
+	MailUsername string
+	MailPassword string
+	FromAddress  string
+	JWTKey       string
 }
 
 func GetGeneralConfig() GeneralConfig {
@@ -42,12 +47,17 @@ func GetGeneralConfig() GeneralConfig {
 	}
 
 	return GeneralConfig{
-		Host:     os.Getenv("HOST"),
-		User:     os.Getenv("USER"),
-		Password: os.Getenv("PASSWORD"),
-		Database: os.Getenv("DATABASE"),
-		Port:     port,
-		SSLMode:  SSLMode,
-		JWTKey:   jwtKey,
+		Host:         os.Getenv("HOST"),
+		User:         os.Getenv("USER"),
+		Password:     os.Getenv("PASSWORD"),
+		Database:     os.Getenv("DATABASE"),
+		SMTPHost:     os.Getenv("SMTPHOST"),
+		SMTPPort:     os.Getenv("SMTPPORT"),
+		MailUsername: os.Getenv("MAILUSERNAME"),
+		MailPassword: os.Getenv("MAILPASSWORD"),
+		FromAddress:  os.Getenv("FROMADDRESS"),
+		Port:         port,
+		SSLMode:      SSLMode,
+		JWTKey:       jwtKey,
 	}
 }
