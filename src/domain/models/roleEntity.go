@@ -13,6 +13,7 @@ type RoleEntity struct {
 	Permission int            `json:"permission"`
 	AdminRole  bool           `json:"adminRole"`
 	ModRole    bool           `json:"modRole"`
+	UserRole   bool           `json:"userRole"`
 	CreatedAt  time.Time      `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at" gorm:"index"`

@@ -3,6 +3,7 @@ package mapper
 import (
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
+	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/models"
 )
 
@@ -37,4 +38,15 @@ func CategoryCreateRequestToCategoryDto(categoryRequest *request.NewCategory) *d
 	}
 
 	return &categoryDto
+}
+
+func CategoryEntityToCategoryResponse(categoryEntity *models.Category) response.CategoryResponse {
+	return response.CategoryResponse{
+		ID:           categoryEntity.ID,
+		Name:         categoryEntity.Name,
+		Description:  categoryEntity.Description,
+		RolesAllowed: categoryEntity.RolesAllowed,
+		CreatedAt:    categoryEntity.CreatedAt,
+		UpdatedAt:    categoryEntity.UpdatedAt,
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
@@ -23,7 +22,7 @@ func NewCategoryController(categoryService services.CategoryService) *CategoryCo
 }
 
 func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
-	categoriesDtos, err := ac.CategoryService.GetAllCategories()
+	categoriesResponses, err := ac.CategoryService.GetAllCategories()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			logger.Warn("No categories found", map[string]interface{}{
@@ -42,10 +41,37 @@ func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
 	logger.Info("Categories retrieved successfully", map[string]interface{}{
 		"route":           c.Path(),
 		"method":          c.Method(),
-		"categoriesCount": len(categoriesDtos),
+		"categoriesCount": len(categoriesResponses),
 	})
 
-	return response.Standard(c, "OK", categoriesDtos)
+	return response.Standard(c, "OK", categoriesResponses)
+}
+
+func (ac *CategoryController) GetAllCategoriesAllowedByRole(c fiber.Ctx) error {
+	roleID := c.Locals("roleID")
+	roleIDString, ok := roleID.(string)
+	if !ok {
+		logger.Error("Invalid roleID format in token", map[string]interface{}{
+			"roleID": roleID,
+			"route":  c.Path(),
+		})
+		return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
+	}
+
+	categoriesResponses, err := ac.CategoryService.GetAllCategoriesAllowedByRole(roleIDString)
+	if err != nil {
+		logger.CaptureError(err, "error ocurred", map[string]interface{}{
+			"roleID": roleID,
+			"route":  c.Path(),
+		})
+		return response.ErrInternalServer(c)
+	}
+
+	if categoriesResponses == nil {
+		return response.ErrNotFound(c)
+	}
+
+	return response.Standard(c, "OK", categoriesResponses)
 }
 
 func (ac *CategoryController) GetCategoryByID(c fiber.Ctx) error {
@@ -142,7 +168,7 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	if req.Name == nil || req.Description == nil {
+	if req.Name == nil {
 		logger.Error("Missing parameters in CreateNewCategory request", map[string]interface{}{
 			"route":  c.Path(),
 			"method": c.Method(),
@@ -150,26 +176,21 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
-	categoryDto := dto.CategoryDto{
-		Name:        *req.Name,
-		Description: *req.Description,
-	}
-
-	categoryUUID, err := ac.CategoryService.CreateCategory(categoryDto)
+	categoryUUID, err := ac.CategoryService.CreateCategory(req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) ||
 			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			logger.Warn("Category creation conflict", map[string]interface{}{
-				"categoryDto": categoryDto,
-				"route":       c.Path(),
-				"method":      c.Method(),
+				"request": req,
+				"route":   c.Path(),
+				"method":  c.Method(),
 			})
 			return response.ErrConflict(c)
 		}
 		logger.CaptureError(err, "Error creating new category", map[string]interface{}{
-			"categoryDto": categoryDto,
-			"route":       c.Path(),
-			"method":      c.Method(),
+			"request": req,
+			"route":   c.Path(),
+			"method":  c.Method(),
 		})
 		return response.ErrInternalServer(c)
 	}

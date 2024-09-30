@@ -23,10 +23,10 @@ type categoryRepositoryImpl struct {
 
 // Create implements CategoryRepository.
 func (repo *categoryRepositoryImpl) Create(category models.Category) (uuid.UUID, error) {
-	result := repo.db.Create(&category)
-	if result.Error != nil {
-		return uuid.UUID{}, result.Error
+	if err := repo.db.Create(&category).Error; err != nil {
+		return uuid.UUID{}, err
 	}
+
 	return category.ID, nil
 }
 

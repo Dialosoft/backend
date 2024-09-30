@@ -4,7 +4,6 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
@@ -132,6 +131,44 @@ func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 	return response.Standard(c, "OK", forumDto)
 }
 
+func (fc *ForumController) GetForumsByCategoryIDAndAllowed(c fiber.Ctx) error {
+	categoryID := c.Params("categoryID")
+	if categoryID == "" {
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	categoryUUID, err := uuid.Parse(categoryID)
+	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": categoryID,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
+		return response.ErrUUIDParse(c)
+	}
+
+	roleID := c.Locals("roleID")
+	roleIDString, ok := roleID.(string)
+	if !ok {
+		logger.Error("Invalid roleID format in token", map[string]interface{}{
+			"roleID": roleID,
+			"route":  c.Path(),
+		})
+		return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
+	}
+
+	forums, err := fc.ForumService.GetForumsByCategoryIDAndAllowed(categoryUUID, roleIDString)
+	if err != nil {
+		return response.ErrInternalServer(c)
+	}
+
+	return response.Standard(c, "OK", forums)
+}
+
 func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 	var req request.NewForum
 	if err := c.Bind().Body(&req); err != nil {
@@ -142,26 +179,20 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 		return response.ErrBadRequest(c)
 	}
 
-	forumDto := dto.ForumDto{
-		Name:        *req.Name,
-		Description: *req.Description,
-		Type:        *req.Type,
-	}
-
-	forumUUID, err := fc.ForumService.CreateForum(forumDto)
+	forumUUID, err := fc.ForumService.CreateForum(req)
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) || strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
 			logger.Warn("Forum creation conflict", map[string]interface{}{
-				"forumDto": forumDto,
-				"route":    c.Path(),
-				"method":   c.Method(),
+				"request": req,
+				"route":   c.Path(),
+				"method":  c.Method(),
 			})
 			return response.ErrConflict(c)
 		}
 		logger.CaptureError(err, "Error creating new forum", map[string]interface{}{
-			"forumDto": forumDto,
-			"route":    c.Path(),
-			"method":   c.Method(),
+			"request": req,
+			"route":   c.Path(),
+			"method":  c.Method(),
 		})
 		return response.ErrInternalServer(c)
 	}

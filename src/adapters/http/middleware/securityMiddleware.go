@@ -253,3 +253,61 @@ func (sm *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func (sm *SecurityMiddleware) GetRoleFromToken() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		accessTokenHeader := c.Get("Authorization")
+		if accessTokenHeader == "" {
+			logger.Warn("Authorization header missing but is not required, continue", map[string]interface{}{
+				"route": c.Path(),
+			})
+			c.Locals("roleID", "")
+			return c.Next()
+		}
+
+		accessTokenParts := strings.Split(accessTokenHeader, " ")
+		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
+			logger.Warn("Invalid authorization header format", map[string]interface{}{
+				"header": accessTokenHeader,
+				"route":  c.Path(),
+			})
+			return response.ErrUnauthorizedInvalidHeader(c)
+		}
+
+		accessToken := accessTokenParts[1]
+
+		claimsAccess, err := jsonWebToken.ValidateJWT(accessToken, sm.JwtKey)
+		if err != nil {
+			if err == jwt.ErrTokenExpired {
+				logger.Warn("Access token expired", map[string]interface{}{
+					"token": accessToken,
+					"route": c.Path(),
+				})
+				return response.ErrExpiredAccessToken(c)
+			}
+			logger.Error("Access token validation error", map[string]interface{}{
+				"error": err.Error(),
+				"route": c.Path(),
+			})
+			return response.PersonalizedErr(c, "Token is not valid", fiber.StatusUnauthorized)
+		}
+
+		roleID, ok := claimsAccess["rid"].(string)
+		if !ok {
+			logger.Error("RoleID claim missing in token", map[string]interface{}{
+				"token": accessToken,
+				"route": c.Path(),
+			})
+			return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
+		}
+
+		c.Locals("roleID", roleID)
+
+		logger.Info("Role obteneid successfully", map[string]interface{}{
+			"roleID": roleID,
+			"route":  c.Path(),
+		})
+
+		return c.Next()
+	}
+}

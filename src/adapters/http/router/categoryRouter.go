@@ -22,6 +22,7 @@ func (r *CategoryRouter) SetupCategoryRoutes(api fiber.Router, middlewares *midd
 		categoryGroup.Get("/get-all-categories", r.CategoryController.GetAllCategories)
 		categoryGroup.Get("/get-category-by-id/:id", r.CategoryController.GetCategoryByID)
 		categoryGroup.Get("/get-category-by-name/:name", r.CategoryController.GetCategoryByName)
+		categoryGroup.Get("/get-all-categories-allowed-by-role", r.CategoryController.GetAllCategoriesAllowedByRole, middlewares.GetRoleFromToken())
 		categoryGroup.Post("/create-new-category", r.CategoryController.CreateNewCategory,
 			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)

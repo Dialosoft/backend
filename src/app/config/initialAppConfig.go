@@ -36,7 +36,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	userService := services.NewUserService(userRepository, roleRepository)
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheService, generalConfig.JWTKey)
 	forumService := services.NewForumService(forumRepository)
-	categoryService := services.NewCategoryService(categoryRepository)
+	categoryService := services.NewCategoryService(categoryRepository, roleRepository)
 	roleService := services.NewRoleRepository(roleRepository)
 	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
