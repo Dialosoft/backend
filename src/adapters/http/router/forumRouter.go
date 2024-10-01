@@ -22,6 +22,7 @@ func (r *ForumRouter) SetupForumRoutes(api fiber.Router, middlewares *middleware
 		forumGroup.Get("/get-all-forums", r.ForumController.GetAllForums)
 		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByID)
 		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByName)
+		forumGroup.Get("/get-forums-by-category-id/:categoryID", r.ForumController.GetForumsByCategoryIDAndAllowed, middlewares.GetRoleFromToken())
 		forumGroup.Post("/create-new-forum", r.ForumController.CreateForum,
 			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)

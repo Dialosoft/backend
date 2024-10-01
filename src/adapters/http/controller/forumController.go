@@ -7,6 +7,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/Dialosoft/src/pkg/utils/devconfig"
 	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -166,6 +167,10 @@ func (fc *ForumController) GetForumsByCategoryIDAndAllowed(c fiber.Ctx) error {
 		return response.ErrInternalServer(c)
 	}
 
+	if forums == nil {
+		return response.ErrNotFound(c)
+	}
+
 	return response.Standard(c, "OK", forums)
 }
 
@@ -177,6 +182,11 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 			"method": c.Method(),
 		})
 		return response.ErrBadRequest(c)
+	}
+
+	err := devconfig.SetDefaultValues(&req)
+	if err != nil {
+		return response.ErrInternalServer(c)
 	}
 
 	forumUUID, err := fc.ForumService.CreateForum(req)
