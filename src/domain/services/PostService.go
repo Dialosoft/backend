@@ -10,20 +10,49 @@ import (
 	"gorm.io/gorm"
 )
 
+// PostService provides an interface for managing posts in the system.
 type PostService interface {
+	// GetAllPosts retrieves a list of posts with pagination options.
+	// limit specifies the maximum number of posts, and offset skips the given number of posts.
 	GetAllPosts(limit, offset int) ([]response.PostResponse, error)
+
+	// GetPostByID fetches a post based on its unique postID.
 	GetPostByID(postID uuid.UUID) (*response.PostResponse, error)
+
+	// GetPostsByUserID fetches all posts created by a specific user.
 	GetPostsByUserID(userID uuid.UUID) ([]response.PostResponse, error)
+
+	// GetAllPostsByForum retrieves posts from a specific forum with pagination options.
 	GetAllPostsByForum(forumID uuid.UUID, limit, offset int) ([]response.PostResponse, error)
+
+	// GetAllPostsAndReturnSimpleResponse retrieves posts with simplified response data and pagination options.
 	GetAllPostsAndReturnSimpleResponse(limit, offset int) ([]response.SimplePostResponse, error)
+
+	// GetLikeCount returns the number of likes for a specific post.
 	GetLikeCount(postID uuid.UUID) (int64, error)
+
+	// CreateNewPost creates a new post by a user.
 	CreateNewPost(UserID uuid.UUID, post request.NewPost) (response.PostResponse, error)
+
+	// UpdatePostTitle updates the title of a post identified by its postID.
 	UpdatePostTitle(postID uuid.UUID, title string) error
+
+	// UpdatePostContent updates the content of a post identified by its postID.
 	UpdatePostContent(postID uuid.UUID, content string) error
+
+	// DeletePost deletes a post identified by its postID.
 	DeletePost(postID uuid.UUID) error
+
+	// RestorePost restores a previously deleted post identified by its postID.
 	RestorePost(postID uuid.UUID) error
+
+	// LikePost allows a user to like a post identified by postID.
 	LikePost(postID uuid.UUID, userID uuid.UUID) error
+
+	// UnlikePost allows a user to remove their like from a post identified by postID.
 	UnlikePost(postID uuid.UUID, userID uuid.UUID) error
+
+	// GetPostLikesByUserID retrieves a list of post IDs that a user has liked.
 	GetPostLikesByUserID(userID uuid.UUID) ([]uuid.UUID, error)
 }
 
