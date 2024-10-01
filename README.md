@@ -7,24 +7,20 @@ This repository contains the second version of the Dialosoft backend, developed 
 Go 1.23+
 Docker and Docker Compose
 
-## Setup
-1.
+## Setup for Developers
 ```bash
 git clone https://github.com/Dialosoft/backend.git
 ```
-2.
 ```bash
 cd backend
 ```
-3.
 ```bash
 cp example.env .env
 ```
-4.
 ```bash
 cp example.env .env
 ```
-5.
+change the .env file with your own configurations
 ```bash
 docker-compose up --build
 ```
