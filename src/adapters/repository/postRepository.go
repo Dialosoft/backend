@@ -11,6 +11,7 @@ type PostRepository interface {
 	FindAll(limit, offset int) ([]*models.Post, error)
 	FindByID(ID uuid.UUID) (*models.Post, error)
 	FindByUserID(userID uuid.UUID) ([]*models.Post, error)
+	FindAllByForumID(forumID uuid.UUID, limit, offset int) ([]*models.Post, error)
 	GetLikeCount(postID uuid.UUID) (int64, error)
 	Create(post models.Post) (*models.Post, error)
 	Update(postID uuid.UUID, updatedPost models.Post) error
@@ -20,6 +21,20 @@ type PostRepository interface {
 
 type postRepositoryImpl struct {
 	db *gorm.DB
+}
+
+func (repo *postRepositoryImpl) FindAllByForumID(forumID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+	var posts []*models.Post
+	if err := repo.db.Preload("User").
+		Preload("User.Role").
+		Where("forum_id = ?", forumID.String()).
+		Limit(limit).
+		Offset(offset).
+		Find(&posts).Error; err != nil {
+		return nil, err
+	}
+
+	return posts, nil
 }
 
 // FindAll implements PostRepository.

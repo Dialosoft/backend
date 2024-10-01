@@ -14,6 +14,7 @@ type PostService interface {
 	GetAllPosts(limit, offset int) ([]response.PostResponse, error)
 	GetPostByID(postID uuid.UUID) (*response.PostResponse, error)
 	GetPostsByUserID(userID uuid.UUID) ([]response.PostResponse, error)
+	GetAllPostsByForum(forumID uuid.UUID, limit, offset int) ([]response.PostResponse, error)
 	GetAllPostsAndReturnSimpleResponse(limit, offset int) ([]response.SimplePostResponse, error)
 	GetLikeCount(postID uuid.UUID) (int64, error)
 	CreateNewPost(UserID uuid.UUID, post request.NewPost) (response.PostResponse, error)
@@ -39,8 +40,14 @@ func (service *postServiceImpl) CreateNewPost(UserID uuid.UUID, post request.New
 		return response.PostResponse{}, err
 	}
 
+	forumUUID, err := uuid.Parse(post.ForumID)
+	if err != nil {
+		return response.PostResponse{}, err
+	}
+
 	postEntity := models.Post{
 		UserID:  userEntity.ID,
+		ForumID: forumUUID,
 		User:    *userEntity,
 		Title:   post.Title,
 		Content: post.Content,
@@ -51,6 +58,20 @@ func (service *postServiceImpl) CreateNewPost(UserID uuid.UUID, post request.New
 		return response.PostResponse{}, err
 	}
 	return mapper.PostEntityToPostResponse(newPostEntity), nil
+}
+
+func (service *postServiceImpl) GetAllPostsByForum(forumID uuid.UUID, limit, offset int) ([]response.PostResponse, error) {
+	var postResponses []response.PostResponse
+	postsModels, err := service.postRepository.FindAllByForumID(forumID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, postModel := range postsModels {
+		postResponses = append(postResponses, mapper.PostEntityToPostResponse(postModel))
+	}
+
+	return postResponses, nil
 }
 
 // GetAllPosts implements PostService.

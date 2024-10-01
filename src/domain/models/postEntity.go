@@ -11,6 +11,8 @@ type Post struct {
 	ID        uuid.UUID      `gorm:"type:uuid;primaryKey;default:uuid_generate_v4()" json:"id"`
 	UserID    uuid.UUID      `gorm:"type:uuid;not null" json:"user_id"`
 	User      UserEntity     `gorm:"foreignKey:UserID" json:"user"`
+	ForumID   uuid.UUID      `gorm:"type:uuid;not null" json:"forum_id"`
+	Forum     Forum          `gorm:"foreignKey:ForumID" json:"forum"`
 	Title     string         `gorm:"type:varchar(255)" json:"title"`
 	Content   string         `gorm:"type:text" json:"content"`
 	Views     uint32         `json:"views"`

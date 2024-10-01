@@ -9,6 +9,7 @@ func PostEntityToPostResponse(postEntity *models.Post) response.PostResponse {
 	return response.PostResponse{
 		ID:        postEntity.ID,
 		User:      UserEntityToUserResponse(&postEntity.User),
+		Forum:     ForumEntityToForumResponse(&postEntity.Forum),
 		Title:     postEntity.Title,
 		Content:   postEntity.Content,
 		Views:     postEntity.Views,

@@ -10,6 +10,7 @@ import (
 type PostResponse struct {
 	ID        uuid.UUID      `json:"id"`
 	User      UserResponse   `json:"user"`
+	Forum     ForumResponse  `json:"forumID"`
 	Title     string         `json:"title"`
 	Content   string         `json:"content"`
 	Views     uint32         `json:"views"`

@@ -2,6 +2,7 @@ package request
 
 type NewPost struct {
 	UserID  string `json:"userID"`
+	ForumID string `json:"forumID"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }

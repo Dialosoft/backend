@@ -21,6 +21,45 @@ func NewPostController(postService services.PostService) *PostController {
 	return &PostController{PostService: postService}
 }
 
+func (pc *PostController) GetAllPostsByForum(c fiber.Ctx) error {
+	limit := c.Query("limit")
+	offset := c.Query("offset")
+
+	forumID := c.Params("id")
+	forumUUID, err := uuid.Parse(forumID)
+	if err != nil {
+		return response.ErrUUIDParse(c)
+	}
+
+	if limit == "" {
+		limit = "10"
+	}
+	if offset == "" {
+		offset = "0"
+	}
+
+	limitInt, err := strconv.Atoi(limit)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	offsetInt, err := strconv.Atoi(offset)
+	if err != nil {
+		return response.ErrBadRequest(c)
+	}
+
+	responses, err := pc.PostService.GetAllPostsByForum(forumUUID, limitInt, offsetInt)
+	if err != nil {
+		return response.ErrInternalServer(c)
+	}
+
+	if responses == nil {
+		return response.ErrNotFound(c)
+	}
+
+	return response.Standard(c, "OK", responses)
+}
+
 func (pc *PostController) GetAllPosts(c fiber.Ctx) error {
 
 	limit := c.Query("limit")
