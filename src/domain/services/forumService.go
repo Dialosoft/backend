@@ -22,6 +22,8 @@ type ForumService interface {
 	// Returns the ForumDto or an error if the forum is not found.
 	GetForumByName(name string) (response.ForumResponse, error)
 
+	// GetForumsByCategoryIDAndAllowed retrieves a list of forums by their category ID and user role.
+	// Returns a slice of ForumResponse or an error if something goes wrong.
 	GetForumsByCategoryIDAndAllowed(categoryID uuid.UUID, userRole string) ([]response.ForumResponse, error)
 
 	// CreateForum adds a new forum based on the provided ForumDto.

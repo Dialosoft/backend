@@ -25,6 +25,8 @@ type CategoryService interface {
 	// Returns the CategoryDto or an error if the category is not found.
 	GetCategoryByName(name string) (*dto.CategoryDto, error)
 
+	// GetAllCategoriesAllowedByRole retrieves all categories allowed by the provided role ID.
+	// Returns a slice of CategoryResponse or an error if the categories are not found.
 	GetAllCategoriesAllowedByRole(roleID string) ([]response.CategoryResponse, error)
 
 	// CreateCategory adds a new category based on the provided newCategory request.
