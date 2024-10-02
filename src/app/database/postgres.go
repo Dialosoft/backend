@@ -39,6 +39,7 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 		models.Comment{},
 		models.PostLikes{},
 		models.CommentVotes{},
+		models.RolePermissions{},
 	)
 	if err != nil {
 		return Connection{}, err
