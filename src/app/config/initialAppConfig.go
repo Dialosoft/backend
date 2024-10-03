@@ -71,7 +71,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 
 	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
-	forumRouter.SetupForumRoutes(api, securityMiddleware, defaultRoles)
+	forumRouter.SetupForumRoutes(api, securityMiddleware, permissionMiddleware)
 	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, permissionMiddleware)
 	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
 	managementRouter.SetupManagementRoutes(api, securityMiddleware, defaultRoles)
