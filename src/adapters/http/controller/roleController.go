@@ -243,6 +243,109 @@ func (rc *RoleController) UpdateRole(c fiber.Ctx) error {
 	return response.Standard(c, "UPDATED", nil)
 }
 
+func (rc *RoleController) SetRolePermissionsByRoleID(c fiber.Ctx) error {
+	var req request.NewRolePermissions
+	id := c.Params("id")
+	if id == "" {
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	roleUUID, err := uuid.Parse(id)
+	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
+		return response.ErrUUIDParse(c)
+	}
+
+	if err := c.Bind().Body(&req); err != nil {
+		logger.CaptureError(err, "Failed to bind request for updating role", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrBadRequest(c)
+	}
+
+	err = rc.RoleService.SetRolePermissionsByRoleID(roleUUID, req)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Role not found for update", map[string]interface{}{
+				"roleID": id,
+				"route":  c.Path(),
+				"method": c.Method(),
+			})
+			return response.ErrNotFound(c)
+		}
+		logger.CaptureError(err, "Error updating role", map[string]interface{}{
+			"roleID": id,
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrInternalServer(c)
+	}
+
+	logger.Info("Role updated successfully", map[string]interface{}{
+		"roleID": id,
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
+
+	return response.Standard(c, "UPDATED", nil)
+}
+
+func (rc *RoleController) GetRolePermissionsByRoleID(c fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		logger.Error("Empty parameters or arguments", map[string]interface{}{
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrEmptyParametersOrArguments(c)
+	}
+
+	roleUUID, err := uuid.Parse(id)
+	if err != nil {
+		logger.Error("Invalid UUID format", map[string]interface{}{
+			"provided-id": id,
+			"route":       c.Path(),
+			"method":      c.Method(),
+		})
+		return response.ErrUUIDParse(c)
+	}
+
+	rolePermission, err := rc.RoleService.GetRolePermissionsByRoleID(roleUUID)
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			logger.Warn("Role not found", map[string]interface{}{
+				"roleID": id,
+				"route":  c.Path(),
+				"method": c.Method(),
+			})
+			return response.ErrNotFound(c)
+		}
+		logger.CaptureError(err, "Error retrieving role by ID", map[string]interface{}{
+			"roleID": id,
+			"route":  c.Path(),
+			"method": c.Method(),
+		})
+		return response.ErrInternalServer(c)
+	}
+
+	logger.Info("Role retrieved successfully", map[string]interface{}{
+		"roleID": id,
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
+
+	return response.Standard(c, "OK", rolePermission)
+}
+
 func (rc *RoleController) DeleteRole(c fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {

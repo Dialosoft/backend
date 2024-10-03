@@ -14,7 +14,7 @@ import (
 
 // Setup for the api
 //
-// repositories -> services -> controllers -> routers
+// repositories -> services -> controllers -> routers -> Setups for routes
 func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig, defaultRoles map[string]uuid.UUID) *fiber.App {
 
 	app := fiber.New(fiber.Config{})
@@ -30,6 +30,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	categoryRepository := repository.NewCategoryRepository(db)
 	postRepository := repository.NewPostRepository(db)
 	postLikesRepository := repository.NewPostLikesRepository(db)
+	rolePermissionsRepository := repository.NewRolePermissionsRepository(db)
 
 	// Services
 	cacheService := services.NewCacheService(cacheRepository)
@@ -37,7 +38,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheService, generalConfig.JWTKey)
 	forumService := services.NewForumService(forumRepository, categoryRepository)
 	categoryService := services.NewCategoryService(categoryRepository, roleRepository)
-	roleService := services.NewRoleRepository(roleRepository)
+	roleService := services.NewRoleRepository(roleRepository, rolePermissionsRepository)
 	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
 	// Middlewares

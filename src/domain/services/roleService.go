@@ -7,6 +7,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
+	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 )
 
@@ -27,6 +28,10 @@ type RoleService interface {
 	// Returns a pointer to RoleDto if found, or an error otherwise.
 	GetRoleByType(roleType string) (*dto.RoleDto, error)
 
+	// GetRolePermissionsByRoleID retrieves a role permission by its unique identifier (UUID).
+	// Returns a pointer to RolePermissions if found, or an error otherwise.
+	GetRolePermissionsByRoleID(roleID uuid.UUID) (*models.RolePermissions, error)
+
 	// CreateNewRole creates a new role based on the provided RoleDto.
 	// Returns the UUID of the created role and an error if the creation fails.
 	CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error)
@@ -34,6 +39,10 @@ type RoleService interface {
 	// UpdateRole modifies an existing role identified by its UUID based on the provided request.
 	// Returns an error if the update fails.
 	UpdateRole(roleID uuid.UUID, req request.NewRole) error
+
+	// SetRolePermissionsByRoleID sets the permissions of a role identified by its UUID.
+	// Returns an error if the update fails.
+	SetRolePermissionsByRoleID(roleID uuid.UUID, req request.NewRolePermissions) error
 
 	// DeleteRole marks a role as deleted by its UUID.
 	// Returns an error if the deletion fails.
@@ -49,7 +58,8 @@ type RoleService interface {
 }
 
 type roleServiceImpl struct {
-	repository repository.RoleRepository
+	roleRepository            repository.RoleRepository
+	rolePermissionsRepository repository.RolePermissionsRepository
 }
 
 // GetDefaultRoles implements RoleService.
@@ -73,7 +83,7 @@ func (service *roleServiceImpl) GetDefaultRoles() (map[string]uuid.UUID, error) 
 func (service *roleServiceImpl) GetAllRoles() ([]*dto.RoleDto, error) {
 	var rolesDtos []*dto.RoleDto
 
-	rolesEntities, err := service.repository.FindAllRoles()
+	rolesEntities, err := service.roleRepository.FindAllRoles()
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +98,7 @@ func (service *roleServiceImpl) GetAllRoles() ([]*dto.RoleDto, error) {
 
 // GetRoleByID implements RoleService.
 func (service *roleServiceImpl) GetRoleByID(roleID uuid.UUID) (*dto.RoleDto, error) {
-	roleEntity, err := service.repository.FindByID(roleID)
+	roleEntity, err := service.roleRepository.FindByID(roleID)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +109,7 @@ func (service *roleServiceImpl) GetRoleByID(roleID uuid.UUID) (*dto.RoleDto, err
 
 // GetRoleByType implements RoleService.
 func (service *roleServiceImpl) GetRoleByType(roleType string) (*dto.RoleDto, error) {
-	roleEntity, err := service.repository.FindByType(roleType)
+	roleEntity, err := service.roleRepository.FindByType(roleType)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +122,21 @@ func (service *roleServiceImpl) GetRoleByType(roleType string) (*dto.RoleDto, er
 func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error) {
 	roleEntity := mapper.RoleDtoToRoleEntity(&newRole)
 
-	roleUUID, err := service.repository.Create(*roleEntity)
+	rolePermissionEntity := models.RolePermissions{
+		RoleID:            roleEntity.ID,
+		CanCreateCategory: newRole.AdminRole,
+		CanCreateForum:    newRole.AdminRole,
+		CanCreateNewRoles: newRole.AdminRole,
+		CanManageRoles:    newRole.AdminRole,
+		CanManageUsers:    newRole.AdminRole,
+	}
+
+	roleUUID, err := service.roleRepository.Create(*roleEntity)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
+	_, err = service.rolePermissionsRepository.Save(rolePermissionEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -122,7 +146,7 @@ func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, e
 
 // UpdateRole implements RoleService.
 func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole) error {
-	existingRole, err := service.repository.FindByID(roleID)
+	existingRole, err := service.roleRepository.FindByID(roleID)
 	if err != nil {
 		return err
 	}
@@ -140,19 +164,56 @@ func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole
 		existingRole.ModRole = *req.ModRole
 	}
 
-	return service.repository.Update(roleID, *existingRole)
+	return service.roleRepository.Update(roleID, *existingRole)
+}
+
+func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req request.NewRolePermissions) error {
+	rolePermissionEntity, err := service.rolePermissionsRepository.FindByRoleID(roleID)
+	if err != nil {
+		return err
+	}
+	if req.CanCreateCategory != nil {
+		rolePermissionEntity.CanCreateCategory = *req.CanCreateCategory
+	}
+	if req.CanCreateForum != nil {
+		rolePermissionEntity.CanCreateForum = *req.CanCreateForum
+	}
+	if req.CanCreateNewRoles != nil {
+		rolePermissionEntity.CanCreateNewRoles = *req.CanCreateNewRoles
+	}
+	if req.CanManageRoles != nil {
+		rolePermissionEntity.CanManageRoles = *req.CanManageRoles
+	}
+	if req.CanManageUsers != nil {
+		rolePermissionEntity.CanManageUsers = *req.CanManageUsers
+	}
+
+	_, err = service.rolePermissionsRepository.Save(*rolePermissionEntity)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (service *roleServiceImpl) GetRolePermissionsByRoleID(roleID uuid.UUID) (*models.RolePermissions, error) {
+	rolePermission, err := service.rolePermissionsRepository.FindByRoleID(roleID)
+	if err != nil {
+		return nil, err
+	}
+	return rolePermission, nil
 }
 
 // DeleteRole implements RoleService.
 func (service *roleServiceImpl) DeleteRole(roleID uuid.UUID) error {
-	return service.repository.Delete(roleID)
+	return service.roleRepository.Delete(roleID)
 }
 
 // RestoreRole implements RoleService.
 func (service *roleServiceImpl) RestoreRole(roleID uuid.UUID) error {
-	return service.repository.Restore(roleID)
+	return service.roleRepository.Restore(roleID)
 }
 
-func NewRoleRepository(roleRepository repository.RoleRepository) RoleService {
-	return &roleServiceImpl{repository: roleRepository}
+func NewRoleRepository(roleRepository repository.RoleRepository, rolePermissionsRepository repository.RolePermissionsRepository) RoleService {
+	return &roleServiceImpl{roleRepository: roleRepository, rolePermissionsRepository: rolePermissionsRepository}
 }
