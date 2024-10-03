@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"fmt"
+
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -17,6 +19,7 @@ type rolePermissionsRepositoryImpl struct {
 
 // FindByRoleID implements RolePermissionsRepository.
 func (repo *rolePermissionsRepositoryImpl) FindByRoleID(roleID uuid.UUID) (*models.RolePermissions, error) {
+	fmt.Println("entra a FindByRoleID (repository)")
 	var rolePermission models.RolePermissions
 	if err := repo.db.First(&rolePermission, "role_id = ?", roleID.String()).Error; err != nil {
 		return nil, err

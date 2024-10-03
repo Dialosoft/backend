@@ -2,7 +2,6 @@ package database
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -46,7 +45,7 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 	}
 
 	defaultRoles, err := createDefaultRoles(db)
-	if err != nil {
+	if err != nil && err != gorm.ErrRecordNotFound {
 		return Connection{}, err
 	}
 
@@ -73,27 +72,87 @@ func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration)
 
 func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 	roleMap := make(map[string]uuid.UUID)
+
 	roles := []models.RoleEntity{
 		{RoleType: "user", Permission: 1, AdminRole: false, ModRole: false},
 		{RoleType: "moderator", Permission: 2, AdminRole: false, ModRole: true},
 		{RoleType: "administrator", Permission: 3, AdminRole: true, ModRole: false},
 	}
 
-	for _, role := range roles {
-		var existingRole models.RoleEntity
-		result := db.Where("role_type = ?", role.RoleType).First(&existingRole)
+	roleTypes := make([]string, len(roles))
+	for i, role := range roles {
+		roleTypes[i] = role.RoleType
+	}
 
-		if result.Error != nil && errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			if err := db.Create(&role).Error; err != nil {
-				return nil, fmt.Errorf("failed to create role %s: %w", role.RoleType, err)
+	var existingRoles []models.RoleEntity
+	if err := db.Where("role_type IN ?", roleTypes).Find(&existingRoles).Error; err != nil {
+		return nil, err
+	}
+
+	existingRoleMap := make(map[string]models.RoleEntity)
+	for _, role := range existingRoles {
+		existingRoleMap[role.RoleType] = role
+		roleMap[role.RoleType] = role.ID
+	}
+
+	err := db.Transaction(func(tx *gorm.DB) error {
+		for _, role := range roles {
+			if existingRole, exists := existingRoleMap[role.RoleType]; !exists {
+				if err := tx.Create(&role).Error; err != nil {
+					return fmt.Errorf("failed to create role %s: %w", role.RoleType, err)
+				}
+				roleMap[role.RoleType] = role.ID
+			} else {
+				role.ID = existingRole.ID
+				if err := tx.Save(&role).Error; err != nil {
+					return fmt.Errorf("failed to update role %s: %w", role.RoleType, err)
+				}
+				roleMap[role.RoleType] = existingRole.ID
 			}
-			roleMap[role.RoleType] = role.ID
-		} else {
-			roleMap[existingRole.RoleType] = existingRole.ID
+
+			rolePermissions := getRolePermissions(role.RoleType, role.ID)
+			if err := tx.Where("role_id = ?", role.ID).Assign(rolePermissions).FirstOrCreate(&models.RolePermissions{}).Error; err != nil {
+				return fmt.Errorf("failed to create or update role permissions for %s: %w", role.RoleType, err)
+			}
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return roleMap, nil
+}
+
+func getRolePermissions(roleType string, roleID uuid.UUID) models.RolePermissions {
+	switch roleType {
+	case "user":
+		return models.RolePermissions{
+			RoleID:              roleID,
+			CanManageCategories: false,
+			CanManageForums:     false,
+			CanManageRoles:      false,
+			CanManageUsers:      false,
+		}
+	case "moderator":
+		return models.RolePermissions{
+			RoleID:              roleID,
+			CanManageCategories: false,
+			CanManageForums:     false,
+			CanManageRoles:      false,
+			CanManageUsers:      true,
+		}
+	case "administrator":
+		return models.RolePermissions{
+			RoleID:              roleID,
+			CanManageCategories: true,
+			CanManageForums:     true,
+			CanManageRoles:      true,
+			CanManageUsers:      true,
+		}
+	default:
+		return models.RolePermissions{}
+	}
 }
 
 func checkOldAndBlockedTokens(db *gorm.DB) {

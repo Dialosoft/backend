@@ -18,8 +18,8 @@ type PermissionMiddleware struct {
 	JwtKey       string
 }
 
-func NewPermissionMiddleware(authService services.AuthService, cacheService services.CacheService, RoleService services.RoleService, jwtKey string) *PermissionMiddleware {
-	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, JwtKey: jwtKey}
+func NewPermissionMiddleware(authService services.AuthService, cacheService services.CacheService, roleService services.RoleService, jwtKey string) *PermissionMiddleware {
+	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, RoleService: roleService, JwtKey: jwtKey}
 }
 
 func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
@@ -96,7 +96,7 @@ func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 
 func (sm *PermissionMiddleware) processBeforeCheckPermissionHelper(c fiber.Ctx) (*models.RolePermissions, error) {
 	roleID := c.Locals("roleID")
-	if roleID == "" {
+	if roleID == "" || roleID == nil {
 		logger.Warn("RoleID missing in context", map[string]interface{}{
 			"route": c.Path(),
 		})

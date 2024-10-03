@@ -193,6 +193,7 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 }
 
 func (service *roleServiceImpl) GetRolePermissionsByRoleID(roleID uuid.UUID) (*models.RolePermissions, error) {
+	fmt.Println("entra a GetRolePermissionsByRoleID (service)")
 	rolePermission, err := service.rolePermissionsRepository.FindByRoleID(roleID)
 	if err != nil {
 		return nil, err
