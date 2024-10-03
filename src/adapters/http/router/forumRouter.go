@@ -4,7 +4,6 @@ import (
 	"github.com/Dialosoft/src/adapters/http/controller"
 	"github.com/Dialosoft/src/adapters/http/middleware"
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 )
 
 type ForumRouter struct {
@@ -15,25 +14,30 @@ func NewForumRouter(forumController *controller.ForumController) *ForumRouter {
 	return &ForumRouter{ForumController: forumController}
 }
 
-func (r *ForumRouter) SetupForumRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
+func (r *ForumRouter) SetupForumRoutes(api fiber.Router, securityMiddleware *middleware.SecurityMiddleware, permissionMiddleware *middleware.PermissionMiddleware) {
 	forumGroup := api.Group("/forums")
+	forumProtected := forumGroup.Group("/protected",
+		securityMiddleware.GetAndVerifyAccessToken(),
+		securityMiddleware.VerifyRefreshToken(),
+		securityMiddleware.GetRoleFromToken(),
+		permissionMiddleware.CanManageForums() /* permission middleware for forums */)
 
 	{
-		forumGroup.Get("/get-all-forums", r.ForumController.GetAllForums)
-		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByID)
-		forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByName)
-		forumGroup.Get("/get-forums-by-category-id/:categoryID", r.ForumController.GetForumsByCategoryIDAndAllowed, middlewares.GetRoleFromToken())
-		forumGroup.Post("/create-new-forum", r.ForumController.CreateForum,
-			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
-		)
-		forumGroup.Put("/update-forum/:id", r.ForumController.UpdateForum,
-			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
-		)
-		forumGroup.Delete("/delete-forum/:id", r.ForumController.DeleteForum,
-			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
-		)
-		forumGroup.Put("/restore-forum/:id", r.ForumController.RestoreForum,
-			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
-		)
+		// public
+
+		forumGroup.Get("/get-forums-by-category-id/:categoryID", r.ForumController.GetForumsByCategoryIDAndAllowed)
+	}
+
+	{
+		// protected routes by authenticated users and with permission
+
+		// forumGroup.Get("/get-all-forums", r.ForumController.GetAllForums)
+		// forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByID)
+		// forumGroup.Get("/get-forum-by-id/:id", r.ForumController.GetForumByName)
+
+		forumProtected.Post("/create-new-forum", r.ForumController.CreateForum)
+		forumProtected.Put("/update-forum/:id", r.ForumController.UpdateForum)
+		forumProtected.Delete("/delete-forum/:id", r.ForumController.DeleteForum)
+		forumProtected.Put("/restore-forum/:id", r.ForumController.RestoreForum)
 	}
 }

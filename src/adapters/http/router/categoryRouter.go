@@ -20,7 +20,7 @@ func (r *CategoryRouter) SetupCategoryRoutes(api fiber.Router, securityMiddlewar
 		securityMiddleware.GetAndVerifyAccessToken(),
 		securityMiddleware.VerifyRefreshToken(),
 		securityMiddleware.GetRoleFromToken(),
-		permissionMiddleware.CanManageRoles())
+		permissionMiddleware.CanManageCategories() /* permission middleware for categories */)
 
 	{
 		// public
