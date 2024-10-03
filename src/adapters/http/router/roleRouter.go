@@ -22,6 +22,10 @@ func (r *RoleRouter) SetupRoleRouter(api fiber.Router, middlewares *middleware.S
 		roleGroup.Get("/get-all-roles", r.RoleController.GetAllRoles)
 		roleGroup.Get("/get-role-by-id/:id", r.RoleController.GetRoleByID)
 		roleGroup.Get("/get-role-by-type/:type", r.RoleController.GetRoleByType)
+		roleGroup.Get("/get-role-permissions-by-id/:id", r.RoleController.GetRolePermissionsByRoleID)
+		roleGroup.Put("/set-role-permissions-by-id/:id", r.RoleController.SetRolePermissionsByRoleID,
+			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
+		)
 		roleGroup.Post("/create-new-role", r.RoleController.CreateNewRole,
 			middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken(), middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
 		)
