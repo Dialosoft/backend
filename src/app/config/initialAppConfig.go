@@ -43,6 +43,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 
 	// Middlewares
 	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey)
+	permissionMiddleware := middleware.NewPermissionMiddleware(authService, cacheService, roleService, generalConfig.JWTKey)
 
 	// Controllers
 	userController := controller.NewUserController(userService)
@@ -71,7 +72,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
 	forumRouter.SetupForumRoutes(api, securityMiddleware, defaultRoles)
-	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, defaultRoles)
+	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, permissionMiddleware)
 	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
 	managementRouter.SetupManagementRoutes(api, securityMiddleware, defaultRoles)
 	postRouter.SetupPostRoutes(api, securityMiddleware, defaultRoles)

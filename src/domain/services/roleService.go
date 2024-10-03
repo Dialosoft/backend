@@ -123,12 +123,11 @@ func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, e
 	roleEntity := mapper.RoleDtoToRoleEntity(&newRole)
 
 	rolePermissionEntity := models.RolePermissions{
-		RoleID:            roleEntity.ID,
-		CanCreateCategory: newRole.AdminRole,
-		CanCreateForum:    newRole.AdminRole,
-		CanCreateNewRoles: newRole.AdminRole,
-		CanManageRoles:    newRole.AdminRole,
-		CanManageUsers:    newRole.AdminRole,
+		RoleID:              roleEntity.ID,
+		CanManageCategories: newRole.AdminRole,
+		CanManageForums:     newRole.AdminRole,
+		CanManageRoles:      newRole.AdminRole,
+		CanManageUsers:      newRole.AdminRole,
 	}
 
 	roleUUID, err := service.roleRepository.Create(*roleEntity)
@@ -172,14 +171,11 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 	if err != nil {
 		return err
 	}
-	if req.CanCreateCategory != nil {
-		rolePermissionEntity.CanCreateCategory = *req.CanCreateCategory
+	if req.CanManageCategories != nil {
+		rolePermissionEntity.CanManageCategories = *req.CanManageCategories
 	}
-	if req.CanCreateForum != nil {
-		rolePermissionEntity.CanCreateForum = *req.CanCreateForum
-	}
-	if req.CanCreateNewRoles != nil {
-		rolePermissionEntity.CanCreateNewRoles = *req.CanCreateNewRoles
+	if req.CanManageForums != nil {
+		rolePermissionEntity.CanManageForums = *req.CanManageForums
 	}
 	if req.CanManageRoles != nil {
 		rolePermissionEntity.CanManageRoles = *req.CanManageRoles
