@@ -6,6 +6,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -16,11 +17,10 @@ import (
 //
 // repositories -> services -> controllers -> routers -> Setups for routes
 func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig, defaultRoles map[string]uuid.UUID) *fiber.App {
-
 	app := fiber.New(fiber.Config{})
 
 	api := app.Group("/dialosoft-api/v1")
-
+	validate := validator.New()
 	// Repositories
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
@@ -47,7 +47,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 
 	// Controllers
 	userController := controller.NewUserController(userService)
-	authController := controller.NewAuthController(authService)
+	authController := controller.NewAuthController(authService, validate)
 	forumController := controller.NewForumController(forumService)
 	categoryController := controller.NewCategoryController(categoryService)
 	roleController := controller.NewRoleController(roleService)
