@@ -8,8 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
+// RolePermissionsRepository defines a set of methods for managing role permissions in the system.
 type RolePermissionsRepository interface {
+	// FindByRoleID retrieves the permissions of a role by its unique identifier (UUID).
+	// Returns a pointer to the RolePermissionsEntity if found, or an error otherwise.
 	FindByRoleID(roleID uuid.UUID) (*models.RolePermissions, error)
+
+	// Save inserts a new role permissions into the database.
+	// Returns the UUID of the newly created role permissions and an error if the operation fails.
 	Save(rolePermissions models.RolePermissions) (uuid.UUID, error)
 }
 

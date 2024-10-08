@@ -8,17 +8,52 @@ import (
 	"gorm.io/gorm"
 )
 
+// ForumRepository defines a set of methods for managing forums in the system.
+// Each method provides operations related to the ForumEntity model.
 type ForumRepository interface {
+
+	// FindAll retrieves all forums from the database.
+	// Returns a slice of pointers to ForumEntity and an error if something goes wrong.
 	FindAll() ([]*models.Forum, error)
+
+	// FindAllWithDeleted retrieves all forums from the database, including deleted ones.
+	// Returns a slice of pointers to ForumEntity and an error if something goes wrong.
 	FindAllWithDeleted() ([]*models.Forum, error)
+
+	// FindByID retrieves a forum by its unique identifier (UUID).
+	// Returns a pointer to the ForumEntity if found, or an error otherwise.
 	FindByID(uuid uuid.UUID) (*models.Forum, error)
+
+	// FindByIDWithDeleted retrieves a forum by its unique identifier (UUID), including the associated category.
+	// Returns a pointer to the ForumEntity if found, or an error otherwise.
 	FindByIDWithDeleted(uuid uuid.UUID) (*models.Forum, error)
+
+	// FindByName retrieves a forum by its name.
+	// Returns a pointer to the ForumEntity if found, or an error otherwise.
 	FindByName(name string) (*models.Forum, error)
+
+	// FindAllByCategoryID retrieves all forums by their category ID.
+	// Returns a slice of ForumEntity pointers and an error if something goes wrong.
 	FindAllByCategoryID(categoryID uuid.UUID) ([]models.Forum, error)
+
+	// Create inserts a new forum into the database.
+	// Returns the UUID of the newly created forum and an error if the operation fails.
 	Create(forum models.Forum) (uuid.UUID, error)
+
+	// Update modifies an existing forum in the database identified by its ID.
+	// Returns an error if the update fails or the forum is not found.
 	Update(forum models.Forum) error
+
+	// UpdateCategoryOwner updates the category owner of a forum identified by its ID.
+	// Returns an error if the update fails or the forum is not found.
 	UpdateCategoryOwner(id uuid.UUID, categoryID uuid.UUID) error
+
+	// Delete removes a forum from the database identified by its ID.
+	// Returns an error if the deletion fails or the forum is not found.
 	Delete(uuid uuid.UUID) error
+
+	// Restore restores a previously deleted forum in the database identified by its ID.
+	// Returns an error if the restoration fails or the forum is not found.
 	Restore(uuid uuid.UUID) error
 }
 
