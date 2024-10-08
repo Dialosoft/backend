@@ -7,7 +7,6 @@ import (
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -15,7 +14,7 @@ import (
 // Setup for the api
 //
 // repositories -> services -> controllers -> routers -> Setups for routes
-func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig, defaultRoles map[string]uuid.UUID) *fiber.App {
+func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig) *fiber.App {
 
 	app := fiber.New(fiber.Config{})
 

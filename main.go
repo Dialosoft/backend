@@ -69,7 +69,7 @@ func main() {
 	}
 
 	// Api Setup
-	api := config.SetupAPI(conn.Gorm, redisConn, conf, conn.DefaultRolesIDs)
+	api := config.SetupAPI(conn.Gorm, redisConn, conf)
 
 	if err := api.Listen(":8080"); err != nil {
 		log.Fatal(err)
