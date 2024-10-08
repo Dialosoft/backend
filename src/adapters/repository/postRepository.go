@@ -8,14 +8,41 @@ import (
 )
 
 type PostRepository interface {
+
+	// FindAll retrieves all posts from the database.
+	// Returns a slice of pointers to PostEntity and an error if something goes wrong.
 	FindAll(limit, offset int) ([]*models.Post, error)
+
+	// FindByID retrieves a post by its unique identifier (UUID).
+	// Returns a pointer to the PostEntity if found, or an error otherwise.
 	FindByID(ID uuid.UUID) (*models.Post, error)
+
+	// FindByUserID retrieves all posts created by a specific user.
+	// Returns a slice of pointers to PostEntity and an error if something goes wrong.
 	FindByUserID(userID uuid.UUID) ([]*models.Post, error)
+
+	// FindAllByForumID retrieves all posts from a specific forum.
+	// Returns a slice of pointers to PostEntity and an error if something goes wrong.
 	FindAllByForumID(forumID uuid.UUID, limit, offset int) ([]*models.Post, error)
+
+	// GetLikeCount returns the number of likes for a specific post.
+	// Returns the number of likes and an error if the operation fails.
 	GetLikeCount(postID uuid.UUID) (int64, error)
+
+	// Create inserts a new post into the database.
+	// Returns the pointer to the newly created post and an error if the operation fails.
 	Create(post models.Post) (*models.Post, error)
+
+	// Update modifies an existing post in the database identified by its ID.
+	// Returns an error if the update fails or the post is not found.
 	Update(postID uuid.UUID, updatedPost models.Post) error
+
+	// Delete removes a post from the database identified by its ID.
+	// Returns an error if the deletion fails or the post is not found.
 	Delete(postID uuid.UUID) error
+
+	// Restore restores a previously deleted post in the database identified by its ID.
+	// Returns an error if the restoration fails or the post is not found.
 	Restore(postID uuid.UUID) error
 }
 
