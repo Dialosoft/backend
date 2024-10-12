@@ -1,6 +1,8 @@
 
 # Dialosoft Golang API
 
+Version: 0.1.2
+
 This repository contains the second version of the Dialosoft backend, developed using Golang. The aim of this project is to refactor the previous version by creating a simplified and scalable architecture using a unified API with.
 
 ## Prerequisites

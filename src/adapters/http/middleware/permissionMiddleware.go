@@ -22,6 +22,7 @@ func NewPermissionMiddleware(authService services.AuthService, cacheService serv
 	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, RoleService: roleService, JwtKey: jwtKey}
 }
 
+// CanManageCategories checks if the user has the permission to manage categories.
 func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -40,6 +41,7 @@ func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
 	}
 }
 
+// CanManageForums checks if the user has the permission to manage forums.
 func (sm *PermissionMiddleware) CanManageForums() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -58,6 +60,7 @@ func (sm *PermissionMiddleware) CanManageForums() fiber.Handler {
 	}
 }
 
+// CanManageRoles checks if the user has the permission to manage roles.
 func (sm *PermissionMiddleware) CanManageRoles() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -76,6 +79,7 @@ func (sm *PermissionMiddleware) CanManageRoles() fiber.Handler {
 	}
 }
 
+// CanManageUsers checks if the user has the permission to manage users.
 func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -84,6 +88,25 @@ func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 		}
 
 		if rolePermission.CanManageUsers {
+			return c.Next()
+		}
+
+		logger.Warn("Insufficient role permissions", map[string]interface{}{
+			"route": c.Path(),
+		})
+		return response.ErrForbidden(c)
+	}
+}
+
+// CanManagePosts checks if the user has the permission to manage posts.
+func (sm *PermissionMiddleware) CanManagePosts() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
+		if err != nil {
+			return err
+		}
+
+		if rolePermission.CanManagePosts {
 			return c.Next()
 		}
 

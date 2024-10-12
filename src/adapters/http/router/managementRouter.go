@@ -4,7 +4,6 @@ import (
 	"github.com/Dialosoft/src/adapters/http/controller"
 	"github.com/Dialosoft/src/adapters/http/middleware"
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 )
 
 type ManagementRouter struct {
@@ -15,17 +14,21 @@ func NewManagementRouter(managementController *controller.ManagementController) 
 	return &ManagementRouter{ManagementController: managementController}
 }
 
-func (r *ManagementRouter) SetupManagementRoutes(api fiber.Router, middlewares *middleware.SecurityMiddleware, defaultRoles map[string]uuid.UUID) {
-	managementGroup := api.Group("/management")
+func (r *ManagementRouter) SetupManagementRoutes(api fiber.Router, securityMiddleware *middleware.SecurityMiddleware, permissionMiddleware *middleware.PermissionMiddleware) {
+	managementGroup := api.Group("/management",
+		securityMiddleware.GetAndVerifyAccessToken(),
+		securityMiddleware.VerifyRefreshToken(),
+		securityMiddleware.GetRoleFromToken(),
+		permissionMiddleware.CanManageUsers(), /* permission middleware for Users */
+		permissionMiddleware.CanManageRoles(), /* permission middleware for Roles */
+	)
+
+	/*
+		Here cannot add public routes, because the user must be authenticated to access them
+		and the permission middleware will check the role permissions !!!
+	*/
 
 	{
-		managementGroup.Post("/change-user-role", r.ManagementController.ChangeUserRole,
-			middlewares.GetAndVerifyAccessToken(),
-			middlewares.VerifyRefreshToken(),
-			middlewares.RoleRequiredByID(defaultRoles["administrator"].String()),
-		)
-		managementGroup.Get("/test", func(c fiber.Ctx) error {
-			return c.SendString("pudiste!")
-		}, middlewares.GetAndVerifyAccessToken(), middlewares.VerifyRefreshToken())
+		managementGroup.Post("/change-user-role", r.ManagementController.ChangeUserRole)
 	}
 }
