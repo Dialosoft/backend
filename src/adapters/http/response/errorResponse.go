@@ -1,9 +1,17 @@
 package response
 
-import "github.com/gofiber/fiber/v3"
+import (
+	"github.com/go-playground/validator/v10"
+	"github.com/gofiber/fiber/v3"
+)
 
 type StandardError struct {
 	ErrorMessage string `json:"error"`
+}
+
+type ValidatorError struct {
+	ErrorMessage string            `json:"error"`
+	Fields       map[string]string `json:"fields"`
 }
 
 func ErrInternalServer(c fiber.Ctx) error {
@@ -79,6 +87,22 @@ func ErrUUIDParse(c fiber.Ctx) error {
 func ErrEmptyParametersOrArguments(c fiber.Ctx) error {
 	err := StandardError{
 		ErrorMessage: "One of the parameters or arguments is empty",
+	}
+	return c.Status(fiber.StatusBadRequest).JSON(err)
+}
+
+func RegisterValidatiorErr(c fiber.Ctx, errs error) error {
+	err := ValidatorError{
+		ErrorMessage: "Credential validation failed",
+		Fields:       make(map[string]string),
+	}
+	validatorMesssages := map[string]string{
+		"Username": "Must be greater than 4 and less than 15",
+		"Email":    "Invalid email",
+		"Password": "Must be greater than 6",
+	}
+	for _, error := range errs.(validator.ValidationErrors) {
+		err.Fields[error.Field()] = validatorMesssages[error.Field()]
 	}
 	return c.Status(fiber.StatusBadRequest).JSON(err)
 }
