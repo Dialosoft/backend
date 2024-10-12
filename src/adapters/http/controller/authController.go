@@ -10,16 +10,18 @@ import (
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/Dialosoft/src/pkg/utils/logger"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )
 
 type AuthController struct {
 	AuthService services.AuthService
+	Validator   *validator.Validate
 }
 
-func NewAuthController(authService services.AuthService) *AuthController {
-	return &AuthController{AuthService: authService}
+func NewAuthController(authService services.AuthService, validator *validator.Validate) *AuthController {
+	return &AuthController{AuthService: authService, Validator: validator}
 }
 
 func (ac *AuthController) Register(c fiber.Ctx) error {
@@ -31,6 +33,14 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 			"method":        c.Method(),
 		})
 		return response.ErrBadRequest(c)
+	}
+	if err := ac.Validator.Struct(req); err != nil {
+		logger.CaptureError(err, "Failed validator for RegisterRequest in Controller", map[string]interface{}{
+			"request-tried": req,
+			"route":         c.Path(),
+			"method":        c.Method(),
+		})
+		return response.PersonalizedErr(c, "validate information error", fiber.StatusBadRequest)
 	}
 	userDto := dto.UserDto{
 		Username: req.Username,
