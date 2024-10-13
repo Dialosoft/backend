@@ -1,6 +1,7 @@
 package response
 
 import (
+	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -14,7 +15,12 @@ func Standard(c fiber.Ctx, message string, data interface{}) error {
 		Message: message,
 		Data:    data,
 	}
-
+	logger.Info(message, map[string]interface{}{
+		"response": data,
+		"message":  message,
+		"route":    c.Path(),
+		"method":   c.Method(),
+	})
 	return c.Status(fiber.StatusOK).JSON(std)
 }
 

@@ -1,5 +1,5 @@
 
-# Dialosoft Golang API
+# Dialosoft Golang API (Under construction)
 
 Version: 0.1.2
 
@@ -15,9 +15,6 @@ git clone https://github.com/Dialosoft/backend.git
 ```
 ```bash
 cd backend
-```
-```bash
-cp example.env .env
 ```
 ```bash
 cp example.env .env
