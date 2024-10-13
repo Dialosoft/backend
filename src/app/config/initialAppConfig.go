@@ -42,23 +42,24 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
 	// Middlewares
-	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey)
-	permissionMiddleware := middleware.NewPermissionMiddleware(authService, cacheService, roleService, generalConfig.JWTKey)
+	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey, "Middleware/SecurityMiddleware")
+	permissionMiddleware := middleware.NewPermissionMiddleware(authService, cacheService, roleService, generalConfig.JWTKey, "Middleware/PermissionMiddleware")
 
 	// Controllers
-	userController := controller.NewUserController(userService)
+	userController := controller.NewUserController(userService, "Controller/UserController")
 	authController := controller.NewAuthController(authService, "Controller/AuthController")
-	forumController := controller.NewForumController(forumService)
+	forumController := controller.NewForumController(forumService, "Controller/ForumController")
 	categoryController := controller.NewCategoryController(categoryService, "Controller/CategoryController")
-	roleController := controller.NewRoleController(roleService)
-	postController := controller.NewPostController(postService)
+	roleController := controller.NewRoleController(roleService, "Controller/RoleController")
+	postController := controller.NewPostController(postService, "Controller/PostController")
 	managementController := controller.NewManagamentController(
 		forumService,
 		categoryService,
 		roleService,
 		userService,
 		authService,
-		cacheService)
+		cacheService,
+		"Controller/ManagementController")
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)

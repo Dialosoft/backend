@@ -84,31 +84,69 @@ func ErrUnauthorized(c fiber.Ctx, data interface{}, err error, layer string) err
 	return c.Status(fiber.StatusUnauthorized).JSON(response)
 }
 
-func ErrExpiredAccessToken(c fiber.Ctx) error {
+func ErrExpiredAccessToken(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "AccessToken expired",
 	}
+	logger.Warn(fmt.Sprintf("(%s) Unauthorized | AccessToken expired", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
-func ErrForbidden(c fiber.Ctx) error {
+func ErrInvalidToken(c fiber.Ctx, layer string) error {
+	err := StandardError{
+		ErrorMessage: "Invalid token",
+	}
+	logger.Warn(fmt.Sprintf("(%s) Unauthorized | Invalid token", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
+	return c.Status(fiber.StatusUnauthorized).JSON(err)
+}
+
+func ErrTokenIsBlacklisted(c fiber.Ctx, layer string) error {
+	response := StandardError{
+		ErrorMessage: "Token is blacklisted",
+	}
+	logger.Warn(fmt.Sprintf("(%s) Unauthorized | Token is blacklisted", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
+	return c.Status(fiber.StatusUnauthorized).JSON(response)
+}
+
+func ErrForbidden(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "FORBIDDEN",
 	}
+	logger.Warn(fmt.Sprintf("(%s) Forbidden | insufficient permissions", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
 	return c.Status(fiber.StatusForbidden).JSON(err)
 }
 
-func ErrUnauthorizedHeader(c fiber.Ctx) error {
+func ErrUnauthorizedHeader(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "Authorization Header is missing",
 	}
+	logger.Warn(fmt.Sprintf("(%s) Unauthorized | Authorization Header is missing", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
-func ErrUnauthorizedInvalidHeader(c fiber.Ctx) error {
+func ErrUnauthorizedInvalidHeader(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "Invalid authorization header format",
 	}
+	logger.Warn(fmt.Sprintf("(%s) Unauthorized | Invalid authorization header format", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 

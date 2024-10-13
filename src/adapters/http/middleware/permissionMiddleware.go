@@ -4,6 +4,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
@@ -23,6 +24,7 @@ func NewPermissionMiddleware(authService services.AuthService, cacheService serv
 	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, RoleService: roleService, JwtKey: jwtKey, Layer: Layer}
 }
 
+// CanManageCategories checks if the user has the permission to manage categories.
 func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -34,13 +36,11 @@ func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
 			return c.Next()
 		}
 
-		logger.Warn("Insufficient role permissions", map[string]interface{}{
-			"route": c.Path(),
-		})
-		return response.ErrForbidden(c)
+		return response.ErrForbidden(c, sm.Layer)
 	}
 }
 
+// CanManageForums checks if the user has the permission to manage forums.
 func (sm *PermissionMiddleware) CanManageForums() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -52,13 +52,11 @@ func (sm *PermissionMiddleware) CanManageForums() fiber.Handler {
 			return c.Next()
 		}
 
-		logger.Warn("Insufficient role permissions", map[string]interface{}{
-			"route": c.Path(),
-		})
-		return response.ErrForbidden(c)
+		return response.ErrForbidden(c, sm.Layer)
 	}
 }
 
+// CanManageRoles checks if the user has the permission to manage roles.
 func (sm *PermissionMiddleware) CanManageRoles() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -70,13 +68,11 @@ func (sm *PermissionMiddleware) CanManageRoles() fiber.Handler {
 			return c.Next()
 		}
 
-		logger.Warn("Insufficient role permissions", map[string]interface{}{
-			"route": c.Path(),
-		})
-		return response.ErrForbidden(c)
+		return response.ErrForbidden(c, sm.Layer)
 	}
 }
 
+// CanManageUsers checks if the user has the permission to manage users.
 func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
@@ -88,54 +84,40 @@ func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 			return c.Next()
 		}
 
-		logger.Warn("Insufficient role permissions", map[string]interface{}{
-			"route": c.Path(),
-		})
-		return response.ErrForbidden(c)
+		return response.ErrForbidden(c, sm.Layer)
 	}
 }
 
+// processBeforeCheckPermissionHelper is fuction helper to checks if the user has the permission to access the resource.
+// It retrieves the role permissions for the user based on their role ID and checks if the user has the required permission.
+// If the user has the required permission, it returns the role permissions.
+// If the user does not have the required permission, it returns an error.
 func (sm *PermissionMiddleware) processBeforeCheckPermissionHelper(c fiber.Ctx) (*models.RolePermissions, error) {
 	roleID := c.Locals("roleID")
 	if roleID == "" || roleID == nil {
-		logger.Warn("RoleID missing in context", map[string]interface{}{
-			"route": c.Path(),
-		})
 		return nil, response.ErrEmptyParametersOrArguments(c)
 	}
 
 	roleIDString, ok := roleID.(string)
 	if !ok {
-		logger.Error("Invalid roleID format in token", map[string]interface{}{
-			"roleID": roleID,
-			"route":  c.Path(),
-		})
-		return nil, response.ErrInternalServer(c)
+		return nil, response.ErrInternalServer(c, errorsUtils.ErrInternalServer, nil, sm.Layer)
 	}
 
 	roleUUID, err := uuid.Parse(roleIDString)
 	if err != nil {
-		logger.Error("Invalid UUID format", map[string]interface{}{
-			"provided-id": roleIDString,
-			"route":       c.Path(),
-		})
-		return nil, response.ErrUUIDParse(c)
+		return nil, response.ErrUUIDParse(c, roleIDString)
 	}
 
 	rolePermission, err := sm.RoleService.GetRolePermissionsByRoleID(roleUUID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Role not found", map[string]interface{}{
-				"roleID": roleIDString,
-				"route":  c.Path(),
-			})
-			return nil, response.ErrNotFound(c)
+			return nil, response.ErrNotFound(c, sm.Layer)
 		}
 		logger.Error("Error retrieving role information", map[string]interface{}{
 			"roleID": roleIDString,
 			"route":  c.Path(),
 		})
-		return nil, response.ErrInternalServer(c)
+		return nil, response.ErrInternalServer(c, err, nil, sm.Layer)
 	}
 
 	return rolePermission, nil
