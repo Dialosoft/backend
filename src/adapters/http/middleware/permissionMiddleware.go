@@ -103,7 +103,7 @@ func (sm *PermissionMiddleware) CanManagePosts() fiber.Handler {
 		logger.Warn("Insufficient role permissions", map[string]interface{}{
 			"route": c.Path(),
 		})
-		return response.ErrForbidden(c)
+		return response.ErrForbidden(c, sm.Layer)
 	}
 }
 

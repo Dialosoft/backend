@@ -6,7 +6,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"

@@ -10,13 +10,15 @@ import (
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/Dialosoft/src/pkg/utils/logger"
-	"github.com/go-playground/validator/v10"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
+)
 
 type AuthController struct {
 	AuthService services.AuthService
 	Layer       string
+	Validator   *validator.Validate
 }
 
 func NewAuthController(authService services.AuthService, validator *validator.Validate, layer string) *AuthController {
