@@ -15,35 +15,21 @@ import (
 
 type CategoryController struct {
 	CategoryService services.CategoryService
+	Layer           string
 }
 
-func NewCategoryController(categoryService services.CategoryService) *CategoryController {
-	return &CategoryController{CategoryService: categoryService}
+func NewCategoryController(categoryService services.CategoryService, layer string) *CategoryController {
+	return &CategoryController{CategoryService: categoryService, Layer: layer}
 }
 
 func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
 	categoriesResponses, err := ac.CategoryService.GetAllCategories()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("No categories found", map[string]interface{}{
-				"route":  c.Path(),
-				"method": c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error retrieving categories", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, categoriesResponses, ac.Layer)
 	}
-
-	logger.Info("Categories retrieved successfully", map[string]interface{}{
-		"route":           c.Path(),
-		"method":          c.Method(),
-		"categoriesCount": len(categoriesResponses),
-	})
-
 	return response.Standard(c, "OK", categoriesResponses)
 }
 
@@ -60,15 +46,11 @@ func (ac *CategoryController) GetAllCategoriesAllowedByRole(c fiber.Ctx) error {
 
 	categoriesResponses, err := ac.CategoryService.GetAllCategoriesAllowedByRole(roleIDString)
 	if err != nil {
-		logger.CaptureError(err, "error ocurred", map[string]interface{}{
-			"roleID": roleID,
-			"route":  c.Path(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, categoriesResponses, ac.Layer)
 	}
 
 	if categoriesResponses == nil {
-		return response.ErrNotFound(c)
+		return response.ErrNotFound(c, ac.Layer)
 	}
 
 	return response.Standard(c, "OK", categoriesResponses)
@@ -77,46 +59,21 @@ func (ac *CategoryController) GetAllCategoriesAllowedByRole(c fiber.Ctx) error {
 func (ac *CategoryController) GetCategoryByID(c fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
-		logger.Error("Empty parameters or arguments", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	uuid, err := uuid.Parse(id)
 	if err != nil {
-		logger.Error("Invalid UUID format", map[string]interface{}{
-			"provided-id": id,
-			"route":       c.Path(),
-			"method":      c.Method(),
-		})
-		return response.ErrUUIDParse(c)
+		return response.ErrUUIDParse(c, id)
 	}
 
 	categoryDto, err := ac.CategoryService.GetCategoryByID(uuid)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Category not found", map[string]interface{}{
-				"categoryID": id,
-				"route":      c.Path(),
-				"method":     c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error retrieving category by ID", map[string]interface{}{
-			"categoryID": id,
-			"route":      c.Path(),
-			"method":     c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, categoryDto, ac.Layer)
 	}
-
-	logger.Info("Category retrieved successfully", map[string]interface{}{
-		"categoryID": id,
-		"route":      c.Path(),
-		"method":     c.Method(),
-	})
 
 	return response.Standard(c, "OK", categoryDto)
 }
@@ -124,36 +81,16 @@ func (ac *CategoryController) GetCategoryByID(c fiber.Ctx) error {
 func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
 	name := c.Params("name")
 	if name == "" {
-		logger.Error("Empty parameters or arguments", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	categoryDto, err := ac.CategoryService.GetCategoryByName(name)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Category not found", map[string]interface{}{
-				"categoryName": name,
-				"route":        c.Path(),
-				"method":       c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error retrieving category by name", map[string]interface{}{
-			"categoryName": name,
-			"route":        c.Path(),
-			"method":       c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, categoryDto, ac.Layer)
 	}
-
-	logger.Info("Category retrieved successfully", map[string]interface{}{
-		"categoryName": name,
-		"route":        c.Path(),
-		"method":       c.Method(),
-	})
 
 	return response.Standard(c, "OK", categoryDto)
 }
@@ -161,18 +98,11 @@ func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
 func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 	var req request.NewCategory
 	if err := c.Bind().Body(&req); err != nil {
-		logger.CaptureError(err, "Failed to parse CreateNewCategory request", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
-		return response.ErrBadRequest(c)
+		body := string(c.Body())
+		return response.ErrBadRequest(c, body, err, ac.Layer)
 	}
 
 	if req.Name == nil {
-		logger.Error("Missing parameters in CreateNewCategory request", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
@@ -180,26 +110,10 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 	if err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) ||
 			strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			logger.Warn("Category creation conflict", map[string]interface{}{
-				"request": req,
-				"route":   c.Path(),
-				"method":  c.Method(),
-			})
-			return response.ErrConflict(c)
+			return response.ErrConflict(c, err, req, ac.Layer)
 		}
-		logger.CaptureError(err, "Error creating new category", map[string]interface{}{
-			"request": req,
-			"route":   c.Path(),
-			"method":  c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, req, ac.Layer)
 	}
-
-	logger.Info("Category created successfully", map[string]interface{}{
-		"categoryID": categoryUUID.String(),
-		"route":      c.Path(),
-		"method":     c.Method(),
-	})
 
 	return response.StandardCreated(c, "CREATED", fiber.Map{
 		"id": categoryUUID.String(),
@@ -211,54 +125,25 @@ func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
 
 	id := c.Params("id")
 	if id == "" {
-		logger.Error("Empty parameters or arguments", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
 		return response.ErrEmptyParametersOrArguments(c)
 	}
 
 	categoryUUID, err := uuid.Parse(id)
 	if err != nil {
-		logger.Error("Invalid UUID format", map[string]interface{}{
-			"provided-id": id,
-			"route":       c.Path(),
-			"method":      c.Method(),
-		})
-		return response.ErrUUIDParse(c)
+		return response.ErrUUIDParse(c, id)
 	}
 
 	if err := c.Bind().Body(&req); err != nil {
-		logger.CaptureError(err, "Failed to parse UpdateCategory request", map[string]interface{}{
-			"route":  c.Path(),
-			"method": c.Method(),
-		})
-		return response.ErrBadRequest(c)
+		return response.ErrBadRequest(c, string(c.Body()), err, ac.Layer)
 	}
 
 	err = ac.CategoryService.UpdateCategory(categoryUUID, req)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Category not found for update", map[string]interface{}{
-				"categoryID": id,
-				"route":      c.Path(),
-				"method":     c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error updating category", map[string]interface{}{
-			"categoryID": id,
-			"route":      c.Path(),
-			"method":     c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, req, ac.Layer)
 	}
-
-	logger.Info("Category updated successfully", map[string]interface{}{
-		"categoryID": id,
-		"route":      c.Path(),
-		"method":     c.Method(),
-	})
 
 	return response.Standard(c, "UPDATED", nil)
 }
@@ -268,36 +153,15 @@ func (ac *CategoryController) DeleteCategory(c fiber.Ctx) error {
 
 	categoryUUID, err := uuid.Parse(id)
 	if err != nil {
-		logger.Error("Invalid UUID format", map[string]interface{}{
-			"provided-id": id,
-			"route":       c.Path(),
-			"method":      c.Method(),
-		})
-		return response.ErrUUIDParse(c)
+		return response.ErrUUIDParse(c, id)
 	}
 
 	if err = ac.CategoryService.DeleteCategory(categoryUUID); err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Category not found for deletion", map[string]interface{}{
-				"categoryID": id,
-				"route":      c.Path(),
-				"method":     c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error deleting category", map[string]interface{}{
-			"categoryID": id,
-			"route":      c.Path(),
-			"method":     c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, nil, ac.Layer)
 	}
-
-	logger.Info("Category deleted successfully", map[string]interface{}{
-		"categoryID": id,
-		"route":      c.Path(),
-		"method":     c.Method(),
-	})
 
 	return response.Standard(c, "DELETED", nil)
 }
@@ -306,29 +170,14 @@ func (ac *CategoryController) RestoreCategory(c fiber.Ctx) error {
 	id := c.Params("id")
 	categoryUUID, err := uuid.Parse(id)
 	if err != nil {
-		logger.Error("Invalid UUID format", map[string]interface{}{
-			"provided-id": id,
-			"route":       c.Path(),
-			"method":      c.Method(),
-		})
-		return response.ErrUUIDParse(c)
+		return response.ErrUUIDParse(c, id)
 	}
 
 	if err = ac.CategoryService.RestoreCategory(categoryUUID); err != nil {
 		if err == gorm.ErrRecordNotFound {
-			logger.Warn("Category not found for restoration", map[string]interface{}{
-				"categoryID": id,
-				"route":      c.Path(),
-				"method":     c.Method(),
-			})
-			return response.ErrNotFound(c)
+			return response.ErrNotFound(c, ac.Layer)
 		}
-		logger.CaptureError(err, "Error restoring category", map[string]interface{}{
-			"categoryID": id,
-			"route":      c.Path(),
-			"method":     c.Method(),
-		})
-		return response.ErrInternalServer(c)
+		return response.ErrInternalServer(c, err, nil, ac.Layer)
 	}
 
 	logger.Info("Category restored successfully", map[string]interface{}{

@@ -23,18 +23,27 @@ func ErrInternalServer(c fiber.Ctx, err error, data interface{}, layer string) e
 	return c.Status(fiber.StatusInternalServerError).JSON(response)
 }
 
-func ErrNotFound(c fiber.Ctx) error {
+func ErrNotFound(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "NOT FOUND",
 	}
+	logger.Warn(fmt.Sprintf("(%s) Not found", layer), map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
 	return c.Status(fiber.StatusNotFound).JSON(err)
 }
 
-func ErrBadRequest(c fiber.Ctx) error {
+func ErrBadRequest(c fiber.Ctx, body string, err error, layer string) error {
 	response := StandardError{
 		ErrorMessage: "BAD REQUEST",
 	}
-	// logger.CaptureError(err, msg, fields)
+	logger.CaptureError(err, fmt.Sprintf("(%s) failed to parse | bad request!", layer), map[string]interface{}{
+		"error":  err.Error(),
+		"route":  c.Path(),
+		"method": c.Method(),
+		"body":   body,
+	})
 	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
@@ -103,18 +112,27 @@ func ErrUnauthorizedInvalidHeader(c fiber.Ctx) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
-func ErrUUIDParse(c fiber.Ctx) error {
-	err := StandardError{
+func ErrUUIDParse(c fiber.Ctx, id string) error {
+	response := StandardError{
 		ErrorMessage: "ID provided is not a valid UUID type",
 	}
-	return c.Status(fiber.StatusBadRequest).JSON(err)
+	logger.Error(response.ErrorMessage, map[string]interface{}{
+		"provided-id": id,
+		"route":       c.Path(),
+		"method":      c.Method(),
+	})
+	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
 func ErrEmptyParametersOrArguments(c fiber.Ctx) error {
-	err := StandardError{
+	response := StandardError{
 		ErrorMessage: "One of the parameters or arguments is empty",
 	}
-	return c.Status(fiber.StatusBadRequest).JSON(err)
+	logger.Error(response.ErrorMessage, map[string]interface{}{
+		"route":  c.Path(),
+		"method": c.Method(),
+	})
+	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
 func PersonalizedErr(c fiber.Ctx, message string, status int) error {
