@@ -6,11 +6,28 @@ import (
 	"gorm.io/gorm"
 )
 
+// PostLikesRepository defines a set of methods for managing post likes in the system.
+// Each method provides operations related to the PostLikesEntity model.
 type PostLikesRepository interface {
+
+	// FindAllByPostID retrieves all likes for a specific post.
+	// Returns a slice of pointers to PostLikesEntity and an error if something goes wrong.
 	FindAllByPostID(postID uuid.UUID) ([]*models.PostLikes, error)
+
+	// FindAllByUserIDAndPostID retrieves all likes for a specific post by a user.
+	// Returns a slice of pointers to PostLikesEntity and an error if something goes wrong.
 	FindAllByUserIDAndPostID(postID uuid.UUID, userID uuid.UUID) ([]*models.PostLikes, error)
+
+	// FindAllByUserID retrieves all likes for a specific user.
+	// Returns a slice of pointers to PostLikesEntity and an error if something goes wrong.
 	FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error)
+
+	// Save inserts a new like for a specific post by a user.
+	// Returns an error if the operation fails.
 	Save(postID uuid.UUID, userID uuid.UUID) error
+
+	// Remove removes a like for a specific post by a user.
+	// Returns an error if the operation fails.
 	Remove(postID uuid.UUID, userID uuid.UUID) error
 }
 

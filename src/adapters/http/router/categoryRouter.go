@@ -36,7 +36,7 @@ func (r *CategoryRouter) SetupCategoryRoutes(api fiber.Router, securityMiddlewar
 		// categoryGroup.Get("/get-category-by-name/:name", r.CategoryController.GetCategoryByName)
 
 		protectedGroup.Post("/create-new-category", r.CategoryController.CreateNewCategory)
-		protectedGroup.Put("/update-category/:id", r.CategoryController.UpdateCategory, securityMiddleware.VerifyRefreshToken())
+		protectedGroup.Put("/update-category/:id", r.CategoryController.UpdateCategory)
 		protectedGroup.Delete("/delete-category/:id", r.CategoryController.DeleteCategory)
 		protectedGroup.Put("/restore-category/:id", r.CategoryController.RestoreCategory)
 	}

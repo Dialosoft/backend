@@ -6,8 +6,8 @@ import (
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
@@ -15,12 +15,11 @@ import (
 // Setup for the api
 //
 // repositories -> services -> controllers -> routers -> Setups for routes
-func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig, defaultRoles map[string]uuid.UUID) *fiber.App {
-
+func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig) *fiber.App {
 	app := fiber.New(fiber.Config{})
 
 	api := app.Group("/dialosoft-api/v1")
-
+	validate := validator.New()
 	// Repositories
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
@@ -47,7 +46,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 
 	// Controllers
 	userController := controller.NewUserController(userService, "Controller/UserController")
-	authController := controller.NewAuthController(authService, "Controller/AuthController")
+	authController := controller.NewAuthController(authService, validate, "Controller/AuthController")
 	forumController := controller.NewForumController(forumService, "Controller/ForumController")
 	categoryController := controller.NewCategoryController(categoryService, "Controller/CategoryController")
 	roleController := controller.NewRoleController(roleService, "Controller/RoleController")
@@ -70,13 +69,13 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig,
 	managementRouter := router.NewManagementRouter(managementController)
 	postRouter := router.NewPostRouter(postController)
 
-	userRouter.SetupUserRoutes(api, securityMiddleware, defaultRoles)
+	userRouter.SetupUserRoutes(api, securityMiddleware, permissionMiddleware)
 	authRouter.SetupAuthRoutes(api, securityMiddleware)
 	forumRouter.SetupForumRoutes(api, securityMiddleware, permissionMiddleware)
 	categoryRouter.SetupCategoryRoutes(api, securityMiddleware, permissionMiddleware)
-	roleRouter.SetupRoleRouter(api, securityMiddleware, defaultRoles)
-	managementRouter.SetupManagementRoutes(api, securityMiddleware, defaultRoles)
-	postRouter.SetupPostRoutes(api, securityMiddleware, defaultRoles)
+	roleRouter.SetupRoleRouter(api, securityMiddleware, permissionMiddleware)
+	managementRouter.SetupManagementRoutes(api, securityMiddleware, permissionMiddleware)
+	postRouter.SetupPostRoutes(api, securityMiddleware, permissionMiddleware)
 
 	return app
 }

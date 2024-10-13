@@ -15,8 +15,7 @@ import (
 )
 
 type Connection struct {
-	Gorm            *gorm.DB
-	DefaultRolesIDs map[string]uuid.UUID
+	Gorm *gorm.DB
 }
 
 func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
@@ -44,14 +43,13 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 		return Connection{}, err
 	}
 
-	defaultRoles, err := createDefaultRoles(db)
+	err = createDefaultRoles(db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return Connection{}, err
 	}
 
 	return Connection{
-		Gorm:            db,
-		DefaultRolesIDs: defaultRoles,
+		Gorm: db,
 	}, nil
 }
 
@@ -70,8 +68,7 @@ func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration)
 	}
 }
 
-func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
-	roleMap := make(map[string]uuid.UUID)
+func createDefaultRoles(db *gorm.DB) error {
 
 	roles := []models.RoleEntity{
 		{RoleType: "user", Permission: 1, AdminRole: false, ModRole: false},
@@ -86,13 +83,12 @@ func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 
 	var existingRoles []models.RoleEntity
 	if err := db.Where("role_type IN ?", roleTypes).Find(&existingRoles).Error; err != nil {
-		return nil, err
+		return err
 	}
 
 	existingRoleMap := make(map[string]models.RoleEntity)
 	for _, role := range existingRoles {
 		existingRoleMap[role.RoleType] = role
-		roleMap[role.RoleType] = role.ID
 	}
 
 	err := db.Transaction(func(tx *gorm.DB) error {
@@ -101,13 +97,11 @@ func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 				if err := tx.Create(&role).Error; err != nil {
 					return fmt.Errorf("failed to create role %s: %w", role.RoleType, err)
 				}
-				roleMap[role.RoleType] = role.ID
 			} else {
 				role.ID = existingRole.ID
 				if err := tx.Save(&role).Error; err != nil {
 					return fmt.Errorf("failed to update role %s: %w", role.RoleType, err)
 				}
-				roleMap[role.RoleType] = existingRole.ID
 			}
 
 			rolePermissions := getRolePermissions(role.RoleType, role.ID)
@@ -118,10 +112,10 @@ func createDefaultRoles(db *gorm.DB) (map[string]uuid.UUID, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return roleMap, nil
+	return nil
 }
 
 func getRolePermissions(roleType string, roleID uuid.UUID) models.RolePermissions {

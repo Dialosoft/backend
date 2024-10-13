@@ -7,13 +7,37 @@ import (
 )
 
 type CategoryRepository interface {
+
+	// FindAll retrieves all categories from the database.
+	// Returns a slice of pointers to CategoryEntity and an error if something goes wrong.
 	FindAll() ([]*models.Category, error)
+
+	// FindByID retrieves a category by its unique identifier (UUID).
+	// Returns a pointer to the CategoryEntity if found, or an error otherwise.
 	FindByID(uuid uuid.UUID) (*models.Category, error)
+
+	// FindByName retrieves a category by its name.
+	// Returns a pointer to the CategoryEntity if found, or an error otherwise.
 	FindByName(name string) (*models.Category, error)
+
+	// FindAllIncludingDeleted retrieves all categories from the database, including deleted ones.
+	// Returns a slice of pointers to CategoryEntity and an error if something goes wrong.
 	FindAllIncludingDeleted() ([]*models.Category, error)
+
+	// Create inserts a new category into the database.
+	// Returns the UUID of the newly created category and an error if the operation fails.
 	Create(category models.Category) (uuid.UUID, error)
+
+	// Update modifies an existing category in the database identified by its ID.
+	// Returns an error if the update fails or the category is not found.
 	Update(category models.Category) error
+
+	// Delete removes a category from the database identified by its ID.
+	// Returns an error if the deletion fails or the category is not found.
 	Delete(uuid uuid.UUID) error
+
+	// Restore restores a previously deleted category in the database identified by its ID.
+	// Returns an error if the restoration fails or the category is not found.
 	Restore(uuid uuid.UUID) error
 }
 

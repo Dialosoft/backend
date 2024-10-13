@@ -88,6 +88,25 @@ func (sm *PermissionMiddleware) CanManageUsers() fiber.Handler {
 	}
 }
 
+// CanManagePosts checks if the user has the permission to manage posts.
+func (sm *PermissionMiddleware) CanManagePosts() fiber.Handler {
+	return func(c fiber.Ctx) error {
+		rolePermission, err := sm.processBeforeCheckPermissionHelper(c)
+		if err != nil {
+			return err
+		}
+
+		if rolePermission.CanManagePosts {
+			return c.Next()
+		}
+
+		logger.Warn("Insufficient role permissions", map[string]interface{}{
+			"route": c.Path(),
+		})
+		return response.ErrForbidden(c)
+	}
+}
+
 // processBeforeCheckPermissionHelper is fuction helper to checks if the user has the permission to access the resource.
 // It retrieves the role permissions for the user based on their role ID and checks if the user has the required permission.
 // If the user has the required permission, it returns the role permissions.
