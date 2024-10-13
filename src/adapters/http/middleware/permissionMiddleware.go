@@ -16,10 +16,11 @@ type PermissionMiddleware struct {
 	ForumService services.ForumService
 	RoleService  services.RoleService
 	JwtKey       string
+	Layer        string
 }
 
-func NewPermissionMiddleware(authService services.AuthService, cacheService services.CacheService, roleService services.RoleService, jwtKey string) *PermissionMiddleware {
-	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, RoleService: roleService, JwtKey: jwtKey}
+func NewPermissionMiddleware(authService services.AuthService, cacheService services.CacheService, roleService services.RoleService, jwtKey string, Layer string) *PermissionMiddleware {
+	return &PermissionMiddleware{AuthService: authService, CacheService: cacheService, RoleService: roleService, JwtKey: jwtKey, Layer: Layer}
 }
 
 func (sm *PermissionMiddleware) CanManageCategories() fiber.Handler {
