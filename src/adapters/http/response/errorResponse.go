@@ -17,6 +17,7 @@ type ValidatorError struct {
 	Fields       map[string]string `json:"fields"`
 }
 
+// ErrInternalServer returns an error with the message "INTERNAL SERVER ERROR"
 func ErrInternalServer(c fiber.Ctx, err error, data interface{}, layer string) error {
 	response := StandardError{
 		ErrorMessage: "INTERNAL SERVER ERROR",
@@ -29,6 +30,7 @@ func ErrInternalServer(c fiber.Ctx, err error, data interface{}, layer string) e
 	return c.Status(fiber.StatusInternalServerError).JSON(response)
 }
 
+// ErrNotFound returns an error with the message "NOT FOUND"
 func ErrNotFound(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "NOT FOUND",
@@ -40,6 +42,7 @@ func ErrNotFound(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusNotFound).JSON(err)
 }
 
+// ErrBadRequest returns an error with the message "BAD REQUEST"
 func ErrBadRequest(c fiber.Ctx, body string, err error, layer string) error {
 	response := StandardError{
 		ErrorMessage: "BAD REQUEST",
@@ -53,6 +56,7 @@ func ErrBadRequest(c fiber.Ctx, body string, err error, layer string) error {
 	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
+// ErrBadRequestParse returns an error with the message "BAD REQUEST"
 func ErrBadRequestParse(c fiber.Ctx, err error, request interface{}, layer string) error {
 	response := StandardError{
 		ErrorMessage: "BAD REQUEST",
@@ -65,6 +69,7 @@ func ErrBadRequestParse(c fiber.Ctx, err error, request interface{}, layer strin
 	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
+// ErrConflict returns an error with the message "CONFLICT"
 func ErrConflict(c fiber.Ctx, err error, request interface{}, layer string) error {
 	response := StandardError{
 		ErrorMessage: "CONFLICT",
@@ -77,6 +82,7 @@ func ErrConflict(c fiber.Ctx, err error, request interface{}, layer string) erro
 	return c.Status(fiber.StatusConflict).JSON(response)
 }
 
+// ErrUnauthorized returns an error with the message "UNAUTHORIZED"
 func ErrUnauthorized(c fiber.Ctx, data interface{}, err error, layer string) error {
 	response := StandardError{
 		ErrorMessage: "UNAUTHORIZED",
@@ -90,6 +96,7 @@ func ErrUnauthorized(c fiber.Ctx, data interface{}, err error, layer string) err
 	return c.Status(fiber.StatusUnauthorized).JSON(response)
 }
 
+// ErrExpiredAccessToken returns an error with the message "AccessToken expired"
 func ErrExpiredAccessToken(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "AccessToken expired",
@@ -101,6 +108,7 @@ func ErrExpiredAccessToken(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+// ErrInvalidToken returns an error with the message "Invalid token"
 func ErrInvalidToken(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "Invalid token",
@@ -112,6 +120,7 @@ func ErrInvalidToken(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+// ErrTokenIsBlacklisted returns an error with the message "Token is blacklisted"
 func ErrTokenIsBlacklisted(c fiber.Ctx, layer string) error {
 	response := StandardError{
 		ErrorMessage: "Token is blacklisted",
@@ -123,6 +132,7 @@ func ErrTokenIsBlacklisted(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(response)
 }
 
+// ErrForbidden returns an error with the message "FORBIDDEN"
 func ErrForbidden(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "FORBIDDEN",
@@ -134,6 +144,7 @@ func ErrForbidden(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusForbidden).JSON(err)
 }
 
+// ErrUnauthorizedHeader returns an error with the message "Authorization Header is missing"
 func ErrUnauthorizedHeader(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "Authorization Header is missing",
@@ -145,6 +156,7 @@ func ErrUnauthorizedHeader(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+// ErrUnauthorizedInvalidHeader returns an error with the message "Invalid authorization header format"
 func ErrUnauthorizedInvalidHeader(c fiber.Ctx, layer string) error {
 	err := StandardError{
 		ErrorMessage: "Invalid authorization header format",
@@ -156,6 +168,7 @@ func ErrUnauthorizedInvalidHeader(c fiber.Ctx, layer string) error {
 	return c.Status(fiber.StatusUnauthorized).JSON(err)
 }
 
+// ErrUUIDParse returns an error with the message "ID provided is not a valid UUID type"
 func ErrUUIDParse(c fiber.Ctx, id string) error {
 	response := StandardError{
 		ErrorMessage: "ID provided is not a valid UUID type",
@@ -168,6 +181,7 @@ func ErrUUIDParse(c fiber.Ctx, id string) error {
 	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
+// ErrEmptyParametersOrArguments returns an error with the message "One of the parameters or arguments is empty"
 func ErrEmptyParametersOrArguments(c fiber.Ctx) error {
 	response := StandardError{
 		ErrorMessage: "One of the parameters or arguments is empty",
@@ -179,6 +193,7 @@ func ErrEmptyParametersOrArguments(c fiber.Ctx) error {
 	return c.Status(fiber.StatusBadRequest).JSON(response)
 }
 
+// RegisterValidatiorErr returns an error with the message "Credential validation failed"
 func RegisterValidatiorErr(c fiber.Ctx, errs error) error {
 	err := ValidatorError{
 		ErrorMessage: "Credential validation failed",
@@ -195,6 +210,7 @@ func RegisterValidatiorErr(c fiber.Ctx, errs error) error {
 	return c.Status(fiber.StatusBadRequest).JSON(err)
 }
 
+// PersonalizedErr returns an error with the message "message" and the status "status"
 func PersonalizedErr(c fiber.Ctx, message string, status int) error {
 	err := StandardError{
 		ErrorMessage: message,
