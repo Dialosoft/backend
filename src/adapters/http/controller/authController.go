@@ -36,7 +36,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 			"route":         c.Path(),
 			"method":        c.Method(),
 		})
-		return response.PersonalizedErr(c, "validate information error", fiber.StatusBadRequest)
+		return response.RegisterValidatiorErr(c, err)
 	}
 	userDto := dto.UserDto{
 		Username: req.Username,
