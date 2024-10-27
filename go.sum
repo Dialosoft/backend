@@ -1,3 +1,5 @@
+github.com/Flussen/swagger-fiber-v3 v1.0.1 h1:lgR2+ADJRx7Kh4oGidsf790UVwXrgC4I7p/3SAmHimw=
+github.com/Flussen/swagger-fiber-v3 v1.0.1/go.mod h1:rHViWTgpklVFVsYkWgL8zip4QHJlKwuBax8wY0G3sPw=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/andybalholm/brotli v1.1.1 h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=
