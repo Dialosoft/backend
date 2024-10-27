@@ -9,12 +9,12 @@ import (
 )
 
 type StandardError struct {
-	ErrorMessage string `json:"error"`
+	ErrorMessage string `json:"error" example:"An error occurred"`
 }
 
 type ValidatorError struct {
-	ErrorMessage string            `json:"error"`
-	Fields       map[string]string `json:"fields"`
+	ErrorMessage string            `json:"error"  example:"Validation failed"`
+	Fields       map[string]string `json:"fields" example:"{'username': 'Username is required'}"`
 }
 
 // ErrInternalServer returns an error with the message "INTERNAL SERVER ERROR"

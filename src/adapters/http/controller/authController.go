@@ -78,6 +78,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 // @Param login body request.LoginRequest true "Login Request"
 // @Success 200 {object} response.LoginResponse
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
+// @Failure 400 {object} response.ValidatorError "Credential validation failed"
 // @Failure 401 {object} response.StandardError "UNAUTHORIZED"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"
 // @Router /auth/login [post]
@@ -107,7 +108,7 @@ func (ac *AuthController) Login(c fiber.Ctx) error {
 // @Accept  json
 // @Produce  json
 // @Param refreshToken body request.RefreshToken true "Refresh Token Request"
-// @Success 200 {object} map[string]string
+// @Success 200 {object} response.RefreshTokenResponse
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
 // @Failure 401 {object} response.StandardError "UNAUTHORIZED"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"
@@ -127,7 +128,7 @@ func (ac *AuthController) RefreshToken(c fiber.Ctx) error {
 		return response.ErrInternalServer(c, err, req, ac.Layer)
 	}
 
-	return response.Standard(c, "successfully refreshed", fiber.Map{
-		"accessToken": accessToken,
+	return response.Standard(c, "successfully refreshed", response.RefreshTokenResponse{
+		AccessToken: accessToken,
 	})
 }

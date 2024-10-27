@@ -38,7 +38,7 @@ import (
 // @license.name GPL-3.0 License
 // @license.url https://www.gnu.org/licenses/gpl-3.0.html
 // @host localhost:8080
-// @BasePath /
+// @BasePath /dialosoft-api/v1
 func main() {
 
 	var err error
