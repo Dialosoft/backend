@@ -1,0 +1,171 @@
+basePath: /
+definitions:
+  request.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  request.RefreshToken:
+    properties:
+      refreshToken:
+        type: string
+    type: object
+  request.RegisterRequest:
+    properties:
+      email:
+        type: string
+      password:
+        maxLength: 35
+        minLength: 6
+        type: string
+      username:
+        maxLength: 15
+        minLength: 4
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  response.LoginResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+    type: object
+  response.RegisterResponse:
+    properties:
+      accessToken:
+        type: string
+      refreshToken:
+        type: string
+      userID:
+        type: string
+    type: object
+  response.StandardError:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: flussen0@gmail.com
+    name: '@Flussen on github'
+  description: this is the swagger implementation for dialosoft, it is a sample docs
+    for fiber
+  license:
+    name: GPL-3.0 License
+    url: https://www.gnu.org/licenses/gpl-3.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Dialosoft Swagger API
+  version: 0.2.0
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Log in a user with username and password
+      parameters:
+      - description: Login Request
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.LoginResponse'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "401":
+          description: UNAUTHORIZED
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Log in a user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh the access token using a refresh token
+      parameters:
+      - description: Refresh Token Request
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          $ref: '#/definitions/request.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "401":
+          description: UNAUTHORIZED
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Refresh an access token
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username, email, and password
+      parameters:
+      - description: Register Request
+        in: body
+        name: register
+        required: true
+        schema:
+          $ref: '#/definitions/request.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.RegisterResponse'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Register a new user
+      tags:
+      - Auth
+swagger: "2.0"
