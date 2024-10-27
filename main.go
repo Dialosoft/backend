@@ -31,7 +31,7 @@ import (
 
 // @title Dialosoft Swagger API
 // @version 0.2.0
-// @description this is the swagger implementation for dialosoft, it is a sample docs for fiber
+// @description this is the swagger implementation for dialosoft
 // @termsOfService http://swagger.io/terms/
 // @contact.name @Flussen on github
 // @contact.email flussen0@gmail.com
@@ -39,6 +39,14 @@ import (
 // @license.url https://www.gnu.org/licenses/gpl-3.0.html
 // @host localhost:8080
 // @BasePath /dialosoft-api/v1
+// @securityDefinitions.apikey AccessTokenAuth
+// @in header
+// @name Authorization
+// @description Bearer token for authentication
+// @securityDefinitions.apikey RefreshTokenAuth
+// @in header
+// @name X-Refresh-Token
+// @description Refresh token for authentication
 func main() {
 
 	var err error

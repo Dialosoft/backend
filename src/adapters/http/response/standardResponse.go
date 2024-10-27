@@ -7,7 +7,7 @@ import (
 
 type StandardResponse struct {
 	Message string      `json:"message" example:"info message"`
-	Data    interface{} `json:"data" example:"some data"`
+	Data    interface{} `json:"data"`
 }
 
 func Standard(c fiber.Ctx, message string, data interface{}) error {

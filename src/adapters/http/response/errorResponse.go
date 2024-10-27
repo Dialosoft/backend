@@ -9,7 +9,7 @@ import (
 )
 
 type StandardError struct {
-	ErrorMessage string `json:"error" example:"An error occurred"`
+	ErrorMessage string `json:"error" example:"An error occurred - some context"`
 }
 
 type ValidatorError struct {

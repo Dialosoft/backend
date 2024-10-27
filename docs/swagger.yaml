@@ -1,26 +1,48 @@
-basePath: /
+basePath: /dialosoft-api/v1
 definitions:
   request.LoginRequest:
     properties:
       password:
+        example: "12345678"
         type: string
       username:
+        example: matdevcoder
         type: string
+    type: object
+  request.NewCategory:
+    properties:
+      description:
+        example: some description for category 2
+        type: string
+      name:
+        example: Category 2
+        type: string
+      rolesAllowedID:
+        example:
+        - '[''8213280e-2000-403a-b375-cdcda6488450'''
+        - ' ''roleUUID2'']'
+        items:
+          type: string
+        type: array
     type: object
   request.RefreshToken:
     properties:
       refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
   request.RegisterRequest:
     properties:
       email:
+        example: busta@email.com
         type: string
       password:
+        example: "12345678"
         maxLength: 35
         minLength: 6
         type: string
       username:
+        example: busta
         maxLength: 15
         minLength: 4
         type: string
@@ -29,34 +51,81 @@ definitions:
     - password
     - username
     type: object
+  response.CategoryResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      rolesAllowed:
+        items:
+          type: string
+        type: array
+      updated_at:
+        type: string
+    type: object
   response.LoginResponse:
     properties:
       accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  response.RefreshTokenResponse:
+    properties:
+      accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
   response.RegisterResponse:
     properties:
       accessToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       refreshToken:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       userID:
+        example: userID
         type: string
     type: object
   response.StandardError:
     properties:
       error:
+        example: An error occurred - some context
         type: string
+    type: object
+  response.StandardResponse:
+    properties:
+      data: {}
+      message:
+        example: info message
+        type: string
+    type: object
+  response.ValidatorError:
+    properties:
+      error:
+        example: Validation failed
+        type: string
+      fields:
+        additionalProperties:
+          type: string
+        example:
+          '{''username''': ' ''Username is required''}'
+        type: object
     type: object
 host: localhost:8080
 info:
   contact:
     email: flussen0@gmail.com
     name: '@Flussen on github'
-  description: this is the swagger implementation for dialosoft, it is a sample docs
-    for fiber
+  description: this is the swagger implementation for dialosoft
   license:
     name: GPL-3.0 License
     url: https://www.gnu.org/licenses/gpl-3.0.html
@@ -84,9 +153,9 @@ paths:
           schema:
             $ref: '#/definitions/response.LoginResponse'
         "400":
-          description: BAD REQUEST
+          description: Credential validation failed
           schema:
-            $ref: '#/definitions/response.StandardError'
+            $ref: '#/definitions/response.ValidatorError'
         "401":
           description: UNAUTHORIZED
           schema:
@@ -116,9 +185,7 @@ paths:
         "200":
           description: OK
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/response.RefreshTokenResponse'
         "400":
           description: BAD REQUEST
           schema:
@@ -168,4 +235,189 @@ paths:
       summary: Register a new user
       tags:
       - Auth
+  /categories/create-new-category:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new category with a specified name.
+      parameters:
+      - description: New Category Data
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CREATED - Category created successfully
+          schema:
+            type: string
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT - Category already exists
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Create new category
+      tags:
+      - Categories
+  /categories/get-all-categories-allowed:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of categories that the specified role is allowed
+        to access, if is Authenticated can see protected categories by role
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of accessible categories
+          schema:
+            items:
+              $ref: '#/definitions/response.CategoryResponse'
+            type: array
+        "403":
+          description: FORBIDDEN - Invalid roleID format in token or unauthorized
+            access
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - No categories found for this role
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get allowed categories by role
+      tags:
+      - Categories
+  /categories/protected/delete-category/{id}:
+    delete:
+      description: Deletes an existing category from the system.
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: DELETED - Category deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid category ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Category not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Delete category
+      tags:
+      - Categories
+  /categories/protected/restore-category/{id}:
+    put:
+      description: Restores a previously deleted category.
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: RESTORED - Category restored successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid category ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Category not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Restore category
+      tags:
+      - Categories
+  /categories/protected/update-category/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing category with new data.
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Category Data
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - Category updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Category not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update category
+      tags:
+      - Categories
+securityDefinitions:
+  AccessTokenAuth:
+    description: Bearer token for authentication
+    in: header
+    name: Authorization
+    type: apiKey
+  RefreshTokenAuth:
+    description: Refresh token for authentication
+    in: header
+    name: X-Refresh-Token
+    type: apiKey
 swagger: "2.0"

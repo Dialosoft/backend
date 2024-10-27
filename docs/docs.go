@@ -55,9 +55,9 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "BAD REQUEST",
+                        "description": "Credential validation failed",
                         "schema": {
-                            "$ref": "#/definitions/response.StandardError"
+                            "$ref": "#/definitions/response.ValidatorError"
                         }
                     },
                     "401": {
@@ -103,10 +103,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/response.RefreshTokenResponse"
                         }
                     },
                     "400": {
@@ -181,6 +178,281 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/categories/create-new-category": {
+            "post": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Creates a new category with a specified name.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Create new category",
+                "parameters": [
+                    {
+                        "description": "New Category Data",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CREATED - Category created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "409": {
+                        "description": "CONFLICT - Category already exists",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/get-all-categories-allowed": {
+            "get": {
+                "description": "Retrieves a list of categories that the specified role is allowed to access, if is Authenticated can see protected categories by role",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get allowed categories by role",
+                "responses": {
+                    "200": {
+                        "description": "List of accessible categories",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.CategoryResponse"
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "FORBIDDEN - Invalid roleID format in token or unauthorized access",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No categories found for this role",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/protected/delete-category/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Deletes an existing category from the system.",
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Delete category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DELETED - Category deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid category ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/protected/restore-category/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Restores a previously deleted category.",
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Restore category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RESTORED - Category restored successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid category ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/protected/update-category/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates an existing category with new data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Update category",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Category Data",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewCategory"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - Category updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Category not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -188,10 +460,35 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "12345678"
                 },
                 "username": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "matdevcoder"
+                }
+            }
+        },
+        "request.NewCategory": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "some description for category 2"
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Category 2"
+                },
+                "rolesAllowedID": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "['8213280e-2000-403a-b375-cdcda6488450'",
+                        " 'roleUUID2']"
+                    ]
                 }
             }
         },
@@ -199,7 +496,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "refreshToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },
@@ -212,17 +510,46 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "busta@email.com"
                 },
                 "password": {
                     "type": "string",
                     "maxLength": 35,
-                    "minLength": 6
+                    "minLength": 6,
+                    "example": "12345678"
                 },
                 "username": {
                     "type": "string",
                     "maxLength": 15,
-                    "minLength": 4
+                    "minLength": 4,
+                    "example": "busta"
+                }
+            }
+        },
+        "response.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rolesAllowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "updated_at": {
+                    "type": "string"
                 }
             }
         },
@@ -230,10 +557,21 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accessToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "refreshToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "response.RefreshTokenResponse": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },
@@ -241,13 +579,16 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "accessToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "refreshToken": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "userID": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "userID"
                 }
             }
         },
@@ -255,9 +596,52 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "An error occurred - some context"
                 }
             }
+        },
+        "response.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string",
+                    "example": "info message"
+                }
+            }
+        },
+        "response.ValidatorError": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "Validation failed"
+                },
+                "fields": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    },
+                    "example": {
+                        "{'username'": " 'Username is required'}"
+                    }
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "AccessTokenAuth": {
+            "description": "Bearer token for authentication",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        },
+        "RefreshTokenAuth": {
+            "description": "Refresh token for authentication",
+            "type": "apiKey",
+            "name": "X-Refresh-Token",
+            "in": "header"
         }
     }
 }`
@@ -266,10 +650,10 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "0.2.0",
 	Host:             "localhost:8080",
-	BasePath:         "/",
+	BasePath:         "/dialosoft-api/v1",
 	Schemes:          []string{},
 	Title:            "Dialosoft Swagger API",
-	Description:      "this is the swagger implementation for dialosoft, it is a sample docs for fiber",
+	Description:      "this is the swagger implementation for dialosoft",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

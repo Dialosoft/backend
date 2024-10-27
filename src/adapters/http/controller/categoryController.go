@@ -33,6 +33,18 @@ func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
 	return response.Standard(c, "OK", categoriesResponses)
 }
 
+// GetAllCategoriesAllowedByRole retrieves all categories accessible to a specific role.
+//
+// @Summary Get allowed categories by role
+// @Description Retrieves a list of categories that the specified role is allowed to access, if is Authenticated can see protected categories by role
+// @Tags Categories
+// @Accept  json
+// @Produce  json
+// @Success 200 {array} response.CategoryResponse "List of accessible categories"
+// @Failure 403 {object} response.StandardError "FORBIDDEN - Invalid roleID format in token or unauthorized access"
+// @Failure 404 {object} response.StandardError "NOT FOUND - No categories found for this role"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Router	/categories/get-all-categories-allowed [get]
 func (ac *CategoryController) GetAllCategoriesAllowedByRole(c fiber.Ctx) error {
 	roleID := c.Locals("roleID")
 	roleIDString, ok := roleID.(string)
@@ -95,6 +107,21 @@ func (ac *CategoryController) GetCategoryByName(c fiber.Ctx) error {
 	return response.Standard(c, "OK", categoryDto)
 }
 
+// CreateNewCategory creates a new category in the system.
+//
+// @Summary Create new category
+// @Description Creates a new category with a specified name.
+// @Tags Categories
+// @Accept  json
+// @Produce  json
+// @Param category body request.NewCategory true "New Category Data"
+// @Success 201 {object} string "CREATED - Category created successfully"
+// @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data"
+// @Failure 409 {object} response.StandardError "CONFLICT - Category already exists"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Security AccessTokenAuth
+// @Security RefreshTokenAuth
+// @Router /categories/create-new-category [post]
 func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 	var req request.NewCategory
 	if err := c.Bind().Body(&req); err != nil {
@@ -120,6 +147,22 @@ func (ac *CategoryController) CreateNewCategory(c fiber.Ctx) error {
 	})
 }
 
+// UpdateCategory updates an existing category based on its ID.
+//
+// @Summary Update category
+// @Description Updates an existing category with new data.
+// @Tags Categories
+// @Accept  json
+// @Produce  json
+// @Param id path string true "Category ID"
+// @Param category body request.NewCategory true "Updated Category Data"
+// @Success 200 {object} response.StandardResponse "UPDATED - Category updated successfully"
+// @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data"
+// @Failure 404 {object} response.StandardError "NOT FOUND - Category not found"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Security AccessTokenAuth
+// @Security RefreshTokenAuth
+// @Router /categories/protected/update-category/{id} [put]
 func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
 	var req request.NewCategory
 
@@ -148,6 +191,19 @@ func (ac *CategoryController) UpdateCategory(c fiber.Ctx) error {
 	return response.Standard(c, "UPDATED", nil)
 }
 
+// DeleteCategory deletes an existing category by its ID.
+//
+// @Summary Delete category
+// @Description Deletes an existing category from the system.
+// @Tags Categories
+// @Param id path string true "Category ID"
+// @Success 200 {object} response.StandardResponse "DELETED - Category deleted successfully"
+// @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid category ID"
+// @Failure 404 {object} response.StandardError "NOT FOUND - Category not found"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Security AccessTokenAuth
+// @Security RefreshTokenAuth
+// @Router /categories/protected/delete-category/{id} [delete]
 func (ac *CategoryController) DeleteCategory(c fiber.Ctx) error {
 	id := c.Params("id")
 
@@ -166,6 +222,19 @@ func (ac *CategoryController) DeleteCategory(c fiber.Ctx) error {
 	return response.Standard(c, "DELETED", nil)
 }
 
+// RestoreCategory restores a previously deleted category by its ID.
+//
+// @Summary Restore category
+// @Description Restores a previously deleted category.
+// @Tags Categories
+// @Param id path string true "Category ID"
+// @Success 200 {object} response.StandardResponse "RESTORED - Category restored successfully"
+// @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid category ID"
+// @Failure 404 {object} response.StandardError "NOT FOUND - Category not found"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Security AccessTokenAuth
+// @Security RefreshTokenAuth
+// @Router /categories/protected/restore-category/{id} [put]
 func (ac *CategoryController) RestoreCategory(c fiber.Ctx) error {
 	id := c.Params("id")
 	categoryUUID, err := uuid.Parse(id)
