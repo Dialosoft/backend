@@ -6,6 +6,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v3"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
@@ -15,11 +16,10 @@ import (
 //
 // repositories -> services -> controllers -> routers -> Setups for routes
 func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig) *fiber.App {
-
 	app := fiber.New(fiber.Config{})
 
 	api := app.Group("/dialosoft-api/v1")
-
+	validate := validator.New()
 	// Repositories
 	userRepository := repository.NewUserRepository(db)
 	roleRepository := repository.NewRoleRepository(db)
@@ -41,23 +41,24 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
 	// Middlewares
-	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey)
-	permissionMiddleware := middleware.NewPermissionMiddleware(authService, cacheService, roleService, generalConfig.JWTKey)
+	securityMiddleware := middleware.NewSecurityMiddleware(authService, cacheService, generalConfig.JWTKey, "Middleware/SecurityMiddleware")
+	permissionMiddleware := middleware.NewPermissionMiddleware(authService, cacheService, roleService, generalConfig.JWTKey, "Middleware/PermissionMiddleware")
 
 	// Controllers
-	userController := controller.NewUserController(userService)
-	authController := controller.NewAuthController(authService)
-	forumController := controller.NewForumController(forumService)
-	categoryController := controller.NewCategoryController(categoryService)
-	roleController := controller.NewRoleController(roleService)
-	postController := controller.NewPostController(postService)
+	userController := controller.NewUserController(userService, "Controller/UserController")
+	authController := controller.NewAuthController(authService, validate, "Controller/AuthController")
+	forumController := controller.NewForumController(forumService, "Controller/ForumController")
+	categoryController := controller.NewCategoryController(categoryService, "Controller/CategoryController")
+	roleController := controller.NewRoleController(roleService, "Controller/RoleController")
+	postController := controller.NewPostController(postService, "Controller/PostController")
 	managementController := controller.NewManagamentController(
 		forumService,
 		categoryService,
 		roleService,
 		userService,
 		authService,
-		cacheService)
+		cacheService,
+		"Controller/ManagementController")
 
 	// Routers
 	userRouter := router.NewUserRouter(userController)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 	"github.com/Dialosoft/src/pkg/utils/jsonWebToken"
 	"github.com/Dialosoft/src/pkg/utils/logger"
 	"github.com/gofiber/fiber/v3"
@@ -16,10 +17,11 @@ type SecurityMiddleware struct {
 	AuthService  services.AuthService
 	CacheService services.CacheService
 	JwtKey       string
+	Layer        string
 }
 
-func NewSecurityMiddleware(authService services.AuthService, cacheService services.CacheService, jwtKey string) *SecurityMiddleware {
-	return &SecurityMiddleware{AuthService: authService, CacheService: cacheService, JwtKey: jwtKey}
+func NewSecurityMiddleware(authService services.AuthService, cacheService services.CacheService, jwtKey string, Layer string) *SecurityMiddleware {
+	return &SecurityMiddleware{AuthService: authService, CacheService: cacheService, JwtKey: jwtKey, Layer: Layer}
 }
 
 // GetAndVerifyAccessToken retrieves the access token from the Authorization header,
@@ -30,19 +32,12 @@ func (sm *SecurityMiddleware) GetAndVerifyAccessToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		accessTokenHeader := c.Get("Authorization")
 		if accessTokenHeader == "" {
-			logger.Warn("Authorization header missing", map[string]interface{}{
-				"route": c.Path(),
-			})
-			return response.ErrUnauthorizedHeader(c)
+			return response.ErrUnauthorizedHeader(c, sm.Layer)
 		}
 
 		accessTokenParts := strings.Split(accessTokenHeader, " ")
 		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
-			logger.Warn("Invalid authorization header format", map[string]interface{}{
-				"header": accessTokenHeader,
-				"route":  c.Path(),
-			})
-			return response.ErrUnauthorizedInvalidHeader(c)
+			return response.ErrUnauthorizedInvalidHeader(c, sm.Layer)
 		}
 
 		accessToken := accessTokenParts[1]
@@ -50,17 +45,9 @@ func (sm *SecurityMiddleware) GetAndVerifyAccessToken() fiber.Handler {
 		claimsAccess, err := jsonWebToken.ValidateJWT(accessToken, sm.JwtKey)
 		if err != nil {
 			if err == jwt.ErrTokenExpired {
-				logger.Warn("Access token expired", map[string]interface{}{
-					"token": accessToken,
-					"route": c.Path(),
-				})
-				return response.ErrExpiredAccessToken(c)
+				return response.ErrExpiredAccessToken(c, sm.Layer)
 			}
-			logger.Error("Access token validation error", map[string]interface{}{
-				"error": err.Error(),
-				"route": c.Path(),
-			})
-			return response.PersonalizedErr(c, "Token is not valid", fiber.StatusUnauthorized)
+			return response.ErrInvalidToken(c, sm.Layer)
 		}
 
 		userID, ok := claimsAccess["sub"].(string)
@@ -101,28 +88,16 @@ func (sm *SecurityMiddleware) VerifyRefreshToken() fiber.Handler {
 	return func(c fiber.Ctx) error {
 		refreshToken := c.Get("X-Refresh-Token")
 		if refreshToken == "" {
-			logger.Warn("Refresh token header missing", map[string]interface{}{
-				"route": c.Path(),
-			})
-			return response.ErrUnauthorizedHeader(c)
+			return response.ErrUnauthorizedHeader(c, sm.Layer)
 		}
 
 		_, err := jsonWebToken.ValidateJWT(refreshToken, sm.JwtKey)
 		if err != nil {
-			logger.Error("Refresh token validation error", map[string]interface{}{
-				"error": err.Error(),
-				"token": refreshToken,
-				"route": c.Path(),
-			})
-			return response.ErrUnauthorized(c)
+			return response.ErrUnauthorized(c, refreshToken, err, sm.Layer)
 		}
 
 		if sm.CacheService.IsTokenBlacklisted(refreshToken) {
-			logger.Warn("Refresh token has been blacklisted", map[string]interface{}{
-				"token": refreshToken,
-				"route": c.Path(),
-			})
-			return response.PersonalizedErr(c, "Refresh Token has been invalidated", fiber.StatusUnauthorized)
+			return response.ErrTokenIsBlacklisted(c, sm.Layer)
 		}
 
 		logger.Info("Refresh token verified", map[string]interface{}{
@@ -159,27 +134,13 @@ func (sm *SecurityMiddleware) RoleRequiredByName(roleRequired string) fiber.Hand
 		roleName, err := sm.AuthService.GetRoleInformationByRoleID(roleIDString)
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {
-				logger.Warn("Role not found", map[string]interface{}{
-					"roleID": roleIDString,
-					"route":  c.Path(),
-				})
-				return response.ErrNotFound(c)
+				return response.ErrNotFound(c, sm.Layer)
 			}
-			logger.Error("Error retrieving role information", map[string]interface{}{
-				"roleID": roleIDString,
-				"error":  err.Error(),
-				"route":  c.Path(),
-			})
-			return response.ErrInternalServer(c)
+			return response.ErrInternalServer(c, err, nil, sm.Layer)
 		}
 
 		if roleName != roleRequired {
-			logger.Warn("Insufficient role permissions", map[string]interface{}{
-				"requiredRole": roleRequired,
-				"roleName":     roleName,
-				"route":        c.Path(),
-			})
-			return response.ErrForbidden(c)
+			return response.ErrForbidden(c, sm.Layer)
 		}
 
 		return c.Next()
@@ -209,12 +170,7 @@ func (sm *SecurityMiddleware) RoleRequiredByID(roleRequiredID string) fiber.Hand
 		}
 
 		if roleIDString != roleRequiredID {
-			logger.Warn("Insufficient role permissions", map[string]interface{}{
-				"requiredRoleID": roleRequiredID,
-				"roleID":         roleIDString,
-				"route":          c.Path(),
-			})
-			return response.ErrForbidden(c)
+			return response.ErrForbidden(c, sm.Layer)
 		}
 
 		return c.Next()
@@ -230,19 +186,11 @@ func (sm *SecurityMiddleware) AuthorizeSelfUserID() fiber.Handler {
 		userIDString, ok := userID.(string)
 
 		if !ok || userIDString == "" {
-			logger.Error("Invalid userID format in context", map[string]interface{}{
-				"route": c.Path(),
-			})
-			return response.ErrInternalServer(c)
+			return response.ErrInternalServer(c, errorsUtils.ErrInternalServer, nil, sm.Layer)
 		}
 
 		if c.Params("id") != userIDString {
-			logger.Warn("User ID mismatch", map[string]interface{}{
-				"providedID": c.Params("id"),
-				"userID":     userIDString,
-				"route":      c.Path(),
-			})
-			return response.ErrUnauthorized(c)
+			return response.ErrUnauthorized(c, userIDString, errorsUtils.ErrUnauthorizedAcces, sm.Layer)
 		}
 
 		logger.Info("User authorized", map[string]interface{}{
@@ -267,11 +215,7 @@ func (sm *SecurityMiddleware) GetRoleFromToken() fiber.Handler {
 
 		accessTokenParts := strings.Split(accessTokenHeader, " ")
 		if len(accessTokenParts) != 2 || accessTokenParts[0] != "Bearer" {
-			logger.Warn("Invalid authorization header format", map[string]interface{}{
-				"header": accessTokenHeader,
-				"route":  c.Path(),
-			})
-			return response.ErrUnauthorizedInvalidHeader(c)
+			return response.ErrUnauthorizedInvalidHeader(c, sm.Layer)
 		}
 
 		accessToken := accessTokenParts[1]
@@ -279,11 +223,7 @@ func (sm *SecurityMiddleware) GetRoleFromToken() fiber.Handler {
 		claimsAccess, err := jsonWebToken.ValidateJWT(accessToken, sm.JwtKey)
 		if err != nil {
 			if err == jwt.ErrTokenExpired {
-				logger.Warn("Access token expired", map[string]interface{}{
-					"token": accessToken,
-					"route": c.Path(),
-				})
-				return response.ErrExpiredAccessToken(c)
+				return response.ErrExpiredAccessToken(c, sm.Layer)
 			}
 			logger.Error("Access token validation error", map[string]interface{}{
 				"error": err.Error(),
