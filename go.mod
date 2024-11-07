@@ -13,6 +13,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12
+	github.com/stretchr/testify v1.9.0 // indirect
 )
 
 require (
