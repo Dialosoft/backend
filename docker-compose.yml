@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  database:
+  database_dialosoft_v2:
     image: postgres:latest
-    container_name: database
+    container_name: database_dialosoft_v2
     deploy:
       resources:
         limits:
@@ -15,15 +15,23 @@ services:
     env_file:
       - .env
     environment:
-      POSTGRES_DB: ${DATASOURCE_DB}
-      POSTGRES_USER: ${DATASOURCE_USERNAME}
-      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
+      POSTGRES_DB: ${DATABASE}
+      POSTGRES_USER: ${USER}
+      POSTGRES_PASSWORD: ${PASSWORD}
     ports:
-      - "${DATASOURCE_PORT_LOCAL}:${DATASOURCE_PORT}"
+      - "${PORT}:${PORT_DOCKER}"
     networks:
-      - dialosoft-network
+      - dialosoft-v2-network
+    # command: >
+    #   bash -c "
+    #     docker-entrypoint.sh postgres &
+    #     sleep 10
+    #     psql -U $$POSTGRES_USER -d $$POSTGRES_DB -f /docker-entrypoint-initdb.d/init-db.sql
+    #     wait
+    #   "
     volumes:
-      - dialosoft-db-data:/var/lib/postgresql/data
+      - dialosoft-v2-db-data:/var/lib/postgresql/data
+      - ./src/app/database/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-dialosoft_user} -d ${DB_NAME:-dialosoft}" ]
       interval: 30s
@@ -31,128 +39,54 @@ services:
       retries: 3
       start_period: 30s
 
-  redis:
+  redis_dialosoft_v2:
     image: redis:latest
-    container_name: redis
+    container_name: redis_dialosoft_v2
     env_file:
       - .env
     environment:
-      REDIS_PORT: 6379
+      REDIS_PORT: ${REDIS_PORT}
     ports:
-      - "${REDIS_PORT_LOCAL}:6379"
+      - "${REDIS_PORT}:${REDIS_PORT}"
     networks:
-      - dialosoft-network
+      - dialosoft-v2-network
     volumes:
-      - dialosoft-redis-data:/data
+      - dialosoft-v2-redis-data:/data
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 5
 
-  registry-service:
-    build:
-      context: src/registry-service
-    container_name: registry-service
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1G
-        reservations:
-          cpus: "1.0"
-          memory: 512M
-    image: dialosoft-registry-eureka:v1.0
-    env_file:
-      - .env
-    ports:
-      - "8761:8761"
-    depends_on:
-      - database
-    networks:
-      - dialosoft-network
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    command: [ "sh", "-c", "echo 'Registry Service ready to start' && tail -f /dev/null" ]
-
-  auth-service:
-    build:
-      context: src/auth-service
-#    container_name: auth-service # NOTE: This is not needed due to docker needs to be able to resolve the dynamic container names of every replica
-    deploy:
-#      replicas: 3
-#      endpoint_mode: dnsrr
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1G
-        reservations:
-          cpus: "1.0"
-          memory: 512M
-    image: dialosoft-auth-service:v1.0
-    ports:
-      - "8081:8081" # NOTE: This is not needed due to docker needs to be able to resolve the dynamic container ports of every replica
-      - "5006:5005"
-    depends_on:
-      - database
-      - registry-service
-    networks:
-      - dialosoft-network
-    env_file:
-      - .env
-    environment:
-      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-      SPRING_PROFILES_ACTIVE: docker
-      DATASOURCE_HOST: ${DATASOURCE_HOST}
-      DATASOURCE_PORT: ${DATASOURCE_PORT}
-      DATASOURCE_DB: ${DATASOURCE_DB}
-      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
-      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      REDIS_HOST: redis
-      REDIS_PORT_LOCAL: ${REDIS_PORT_LOCAL}
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    command: [ "sh", "-c", "echo 'Auth Service ready to start' && tail -f /dev/null" ]
-
-  user-service:
-    build:
-      context: src/user-service
-    container_name: user-service
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 1G
-        reservations:
-          cpus: "1.0"
-          memory: 512M
-    image: dialosoft-user-service:v1.0
-    ports:
-      - "8086:8086"
-      - "5007:5005"
-    depends_on:
-      - registry-service
-    networks:
-      - dialosoft-network
-    env_file:
-      - .env
-    environment:
-      DATASOURCE_HOST: ${DATASOURCE_HOST}
-      DATASOURCE_PORT: 5432
-      DATASOURCE_DB: ${DATASOURCE_DB}
-      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
-      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
+  # user-service:
+  #   build:
+  #     context: src/user-service
+  #   container_name: user-service
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: "2.0"
+  #         memory: 1G
+  #       reservations:
+  #         cpus: "1.0"
+  #         memory: 512M
+  #   image: dialosoft-user-service:v1.0
+  #   ports:
+  #     - "8086:8086"
+  #     - "5007:5005"
+  #   depends_on:
+  #     - registry-service
+  #   networks:
+  #     - dialosoft-network
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     HOST: ${HOST}
+  #     PORT: 5432
+  #     DATABASE: ${DATABASE}
+  #     USER: ${USER}
+  #     PASSWORD: ${PASSWORD}
+  #     EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
   #    healthcheck:
   #      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
   #      interval: 30s
@@ -160,127 +94,16 @@ services:
   #      retries: 5
   #    command: [ "sh", "-c", "echo 'User Service ready to start' && tail -f /dev/null" ]
 
-  post-manager-service:
-    build:
-      context: src/post-manager-service
-    container_name: post-manager-service
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-        reservations:
-          cpus: "0.5"
-          memory: 256M
-    image: dialosoft-post-manager-service:v1.0
-    ports:
-      - "8084:8084"
-      - "5008:5005"
-    depends_on:
-      - database
-      - registry-service
-    networks:
-      - dialosoft-network
-    env_file:
-      - .env
-    environment:
-      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-      SPRING_PROFILES_ACTIVE: docker
-      DATASOURCE_HOST: ${DATASOURCE_HOST}
-      DATASOURCE_PORT: ${DATASOURCE_PORT}
-      DATASOURCE_DB: ${DATASOURCE_DB}
-      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
-      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    command: [ "sh", "-c", "echo 'Post-Manager Service ready to start' && tail -f /dev/null" ]
-
-
-  management-service:
-    build:
-      context: src/management-service
-    container_name: management-service
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 512M
-        reservations:
-          cpus: "0.25"
-          memory: 256M
-    image: dialosoft-management-service:v1.0
-    ports:
-      - "8087:8087"
-    depends_on:
-      - registry-service
-    networks:
-      - dialosoft-network
-    env_file:
-      - .env
-    environment:
-      DATASOURCE_HOST: ${DATASOURCE_HOST}
-      DATASOURCE_PORT: 5432
-      DATASOURCE_DB: ${DATASOURCE_DB}
-      DATASOURCE_USERNAME: ${DATASOURCE_USERNAME}
-      DATASOURCE_PASSWORD: ${DATASOURCE_PASSWORD}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-
-  gateway-service:
-    build:
-      context: src/gateway-service
-    container_name: gateway-service
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: '1g'
-        reservations:
-          cpus: "0.5"
-          memory: '512m'
-    image: dialosoft-gateway:v1.0
-    ports:
-      - "8080:8080"
-      - "5005:5005"
-    depends_on:
-      - registry-service
-      - user-service
-      - auth-service
-      - post-manager-service
-      - management-service
-    networks:
-      - dialosoft-network
-    env_file:
-      - .env
-    environment:
-      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
-      SPRING_PROFILES_ACTIVE: docker
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://registry-service:8761/eureka/"
-      REDIS_HOST: redis
-      REDIS_PORT_LOCAL: ${REDIS_PORT_LOCAL}
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    command: [ "sh", "-c", "echo 'Gateway Service ready to start' && tail -f /dev/null" ]
-
-
 volumes:
-  dialosoft-db-data:
-    name: dialosoft-db-data
+  dialosoft-v2-db-data:
+    name: dialosoft-v2-db-data
     driver: local
-  dialosoft-redis-data:
-    name: dialosoft-redis-data
+  dialosoft-v2-redis-data:
+    name: dialosoft-v2-redis-data
     driver: local
 
 networks:
-  dialosoft-network:
+  dialosoft-v2-network:
     driver: bridge
     driver_opts:
       com.docker.network.driver.mtu: 1500  # Ajusta el MTU si es necesario, MTU is the maximum transmission unit of the network
