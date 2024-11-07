@@ -143,7 +143,7 @@ func TestCategoryService_CreateCategory(t *testing.T) {
 		}
 		
         roleEntities := []*models.RoleEntity{
-			{ID: uuid.New(), RoleType: "admin"},
+			{ID: uuid.New(), RoleType: "administrator"},
 			{ID: uuid.New(), RoleType: "user"},
         }
 
@@ -174,7 +174,7 @@ func TestCategoryService_CreateCategory(t *testing.T) {
         }
         
         roleEntities := []*models.RoleEntity{
-			{ID: uuid.New(), RoleType: "admin"},
+			{ID: uuid.New(), RoleType: "administrator"},
 			{ID: uuid.New(), RoleType: "user"},
         }
 
@@ -247,10 +247,10 @@ func TestCategoryService_GetAllCategoriesAllowedByRole(t *testing.T) {
 	}{
 		{
 			name:         "success with matching roles",
-			roleID:       "admin",
+			roleID:       "administrator",
 			mockCategories: []*models.Category{
 				{Name: "Public Category", RolesAllowed: []string{}},
-				{Name: "Admin Category", RolesAllowed: []string{"admin"}},
+				{Name: "Admin Category", RolesAllowed: []string{"administrator"}},
 			},
 			expectedCount: 2,
 			expectedErr:   nil,
@@ -259,14 +259,14 @@ func TestCategoryService_GetAllCategoriesAllowedByRole(t *testing.T) {
             name:         "no matching roles",
             roleID:       "user",
             mockCategories: []*models.Category{
-                {Name: "Admin Category", RolesAllowed: []string{"admin"}},
+                {Name: "Admin Category", RolesAllowed: []string{"administrator"}},
             },
             expectedCount: 0,
             expectedErr:   nil,
         },
         {
             name:         "error retrieving categories",
-            roleID:       "admin",
+            roleID:       "administrator",
             mockCategories: nil,
             expectedCount: 0,
             expectedErr:   errors.New("database error"),
