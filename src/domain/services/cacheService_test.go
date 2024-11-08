@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Dialosoft/src/adapters/repository"
-	"github.com/Dialosoft/src/domain/models"
-	"github.com/Dialosoft/src/services"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/Dialosoft/src/domain/models"
 )
 
 // RedisRepository Mock
@@ -40,237 +40,290 @@ func (m *MockRedisRepository) Delete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-// Test InvalidateRefreshToken
-func TestCacheService_InvalidateRefreshToken(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
-
-	t.Run("success", func(t *testing.T) {
-		token := "testToken"
-		cacheKey := "blacklist:" + token
-
-		mockRepo.On("Set", mock.Anything, cacheKey, "true", time.Hour*720).Return(nil)
-
-		err := service.InvalidateRefreshToken(token)
-
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("error setting token in cache", func(t *testing.T) {
-		token := "testToken"
-		cacheKey := "blacklist:" + token
-
-		mockRepo.On("Set", mock.Anything, cacheKey, "true", time.Hour*720).Return(errors.New("cache error"))
-
-		err := service.InvalidateRefreshToken(token)
-
-		assert.EqualError(t, err, "cache error")
-	})
+// CACSERVICESTSUITE It is the test suite that groups the tests related to cacsevice.
+type CacheServiceTestSuite struct {
+	suite.Suite
+	mockRepo *MockRedisRepository
+	service  CacheService
 }
 
-// Test IsTokenBlacklisted
-func TestCacheService_IsTokenBlacklisted(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
-
-	t.Run("token is blacklisted", func(t *testing.T) {
-		token := "testToken"
-		cacheKey := "blacklist:" + token
-
-		mockRepo.On("Exists", mock.Anything, cacheKey).Return(true, nil)
-
-		isBlacklisted := service.IsTokenBlacklisted(token)
-
-		assert.True(t, isBlacklisted)
-	})
-
-	t.Run("token is not blacklisted", func(t *testing.T) {
-		token := "testToken"
-		cacheKey := "blacklist:" + token
-
-		mockRepo.On("Exists", mock.Anything, cacheKey).Return(false, nil)
-
-		isBlacklisted := service.IsTokenBlacklisted(token)
-
-		assert.False(t, isBlacklisted)
-	})
-
-	t.Run("error checking blacklist status", func(t *testing.T) {
-		token := "testToken"
-		cacheKey := "blacklist:" + token
-
-		mockRepo.On("Exists", mock.Anything, cacheKey).Return(false, errors.New("cache error"))
-
-		isBlacklisted := service.IsTokenBlacklisted(token)
-
-		assert.False(t, isBlacklisted)
-	})
+// SetupTest is executed before each general suite test.
+func (suite *CacheServiceTestSuite) SetupTest() {
+	suite.mockRepo = new(MockRedisRepository)
+	suite.service = NewCacheService(suite.mockRepo)
 }
 
-// Test SetUserInfoByID
-func TestCacheService_SetUserInfoByID(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
-
-	t.Run("success", func(t *testing.T) {
-		userID := uuid.New()
-		userEntity := &models.UserEntity{ID: userID, Username: "testuser"}
-		cacheKey := "user:" + userID.String()
-
-		userEntity.Password = "" // Simular la eliminación de la contraseña antes de almacenar en caché
-		userJSON, _ := json.Marshal(userEntity)
-
-		mockRepo.On("Set", mock.Anything, cacheKey, string(userJSON), time.Hour*24).Return(nil)
-
-		err := service.SetUserInfoByID(userID, userEntity)
-
-		assert.NoError(t, err)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("error marshalling", func(t *testing.T) {
-		userID := uuid.New()
-		userEntity := &models.UserEntity{ID: userID}
-
-		mockRepo.On("Set", mock.Anything).Return(nil).Maybe() // No se espera que se llame
-
-		err := service.SetUserInfoByID(userID, userEntity)
-
-		assert.NoError(t, err)
-	})
+// Teardowtest is executed after each general suite test.
+func (suite *CacheServiceTestSuite) TearDownTest() {
+	suite.mockRepo.AssertExpectations(suite.T())
 }
 
-// Test GetUserInfoByID
-func TestCacheService_GetUserInfoByID(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
+func (suite *CacheServiceTestSuite) TestInvalidateRefreshToken() {
+	tests := []struct {
+		name          string
+		token         string
+		mockReturnErr error
+		expectedErr   string
+	}{
+		{
+			name:          "success InvalidateRefreshToken",
+			token:         "testToken",
+			mockReturnErr: nil,
+			expectedErr:   "",
+		},
+		{
+			name:          "error setting token in cache",
+			token:         "testToken",
+			mockReturnErr: errors.New("cache error"),
+			expectedErr:   "cache error",
+		},
+	}
 
-	t.Run("success", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "user:" + userID.String()
-		userEntity := &models.UserEntity{ID: userID, Username: "testuser"}
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "blacklist:" + tt.token
 
-		userJSON, _ := json.Marshal(userEntity)
+			// Reset Mock's expectations before each subtest
+			suite.mockRepo.ExpectedCalls = nil
 
-		mockRepo.On("Get", mock.Anything, cacheKey).Return(string(userJSON), nil)
+			suite.mockRepo.On("Set", context.Background(), cacheKey, "true", time.Hour*720).Return(tt.mockReturnErr)
 
-		result, err := service.GetUserInfoByID(userID)
+			err := suite.service.InvalidateRefreshToken(tt.token)
 
-		assert.NoError(t, err)
-		assert.Equal(t, userEntity.Username, result.Username)
-		mockRepo.AssertExpectations(t)
-	})
-
-	t.Run("error retrieving from cache", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "user:" + userID.String()
-
-		mockRepo.On("Get", mock.Anything, cacheKey).Return("", errors.New("cache miss"))
-
-		result, err := service.GetUserInfoByID(userID)
-
-		assert.Nil(t, result)
-		assert.EqualError(t, err, "cache miss")
-	})
-
-	t.Run("error unmarshalling data", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "user:" + userID.String()
-
-		mockRepo.On("Get", mock.Anything, cacheKey).Return("invalid json", nil)
-
-		result, err := service.GetUserInfoByID(userID)
-
-		assert.Nil(t, result)
-		assert.Error(t, err)
-	})
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+			} else {
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+			}
+		})
+	}
 }
 
-// Test SetRefreshTokenByID
-func TestCacheService_SetRefreshTokenByID(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
+func (suite *CacheServiceTestSuite) TestIsTokenBlacklisted() {
+	tests := []struct {
+		name          string
+		token         string
+		mockExists    bool
+		mockReturnErr error
+		expected      bool
+	}{
+		{name: "token blacklisted", token: "blacklistedToken", mockExists: true, mockReturnErr: nil, expected: true},
+		{name: "token not blacklisted", token: "validToken", mockExists: false, mockReturnErr: nil, expected: false},
+		{name: "error checking token", token: "errorToken", mockExists: false, mockReturnErr: errors.New("redis error"), expected: false},
+	}
 
-	t.Run("success", func(t *testing.T) {
-		userID := uuid.New()
-		token := "refreshToken"
-		cacheKey := "refreshToken:" + userID.String()
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "blacklist:" + tt.token
 
-		mockRepo.On("Set", mock.Anything, cacheKey, token, time.Hour*120).Return(nil)
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Exists", context.Background(), cacheKey).Return(tt.mockExists, tt.mockReturnErr)
 
-		err := service.SetRefreshTokenByID(userID, token)
+			result := suite.service.IsTokenBlacklisted(tt.token)
 
-		assert.NoError(t, err)
-	})
-
-	t.Run("error setting refresh token in cache", func(t *testing.T) {
-		userID := uuid.New()
-		token := "refreshToken"
-		cacheKey := "refreshToken:" + userID.String()
-
-		mockRepo.On("Set", mock.Anything, cacheKey, token, time.Hour*120).Return(errors.New("cache error"))
-
-		err := service.SetRefreshTokenByID(userID, token)
-
-		assert.EqualError(t, err, "cache error")
-	})
+			assert.Equal(suite.T(), tt.expected, result)
+		})
+	}
 }
 
-// Test GetRefreshTokenByID
-func TestCacheService_GetRefreshTokenByID(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
+func (suite *CacheServiceTestSuite) TestSetUserInfoByID() {
+	userID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "refreshToken:" + userID.String()
+	tests := []struct {
+		name          string
+		userEntity    *models.UserEntity
+		mockReturnErr error
+		expectedErr   string
+	}{
+		{name: "success set user info", userEntity: &models.UserEntity{Username: "testuser"}, mockReturnErr: nil, expectedErr: ""},
+		{name: "error setting user info", userEntity: &models.UserEntity{Username: "testuser"}, mockReturnErr: errors.New("redis error"), expectedErr: "redis error"},
+	}
 
-		mockRepo.On("Get", mock.AnythingOfType("*context.emptyCtx"), cacheKey).Return("refresh-token-value", nil)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "user:" + userID.String()
 
-		tokenValue, err := service.GetRefreshTokenByID(userID)
+			// Marshal the user entity to JSON and remove the password.
+			jsonData, err := json.Marshal(tt.userEntity)
+			assert.NoError(suite.T(), err)
 
-		assert.NoError(t, err)
-		assert.Equal(t, "refresh-token-value", tokenValue)
-	})
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Set", context.Background(), cacheKey, string(jsonData), time.Hour*24).Return(tt.mockReturnErr)
 
-	t.Run("error retrieving refresh token from cache", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "refreshToken:" + userID.String()
+			err = suite.service.SetUserInfoByID(userID, tt.userEntity)
 
-		mockRepo.On("Get", mock.AnythingOfType("*context.emptyCtx"), cacheKey).Return("", errors.New("cache miss"))
-
-		tokenValue, err := service.GetRefreshTokenByID(userID)
-
-		assert.Empty(t, tokenValue)
-		assert.EqualError(t, err, "cache miss")
-	})
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+			} else {
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+			}
+		})
+	}
 }
 
-// Test DeleteRefreshTokenByID
-func TestCacheService_DeleteRefreshTokenByID(t *testing.T) {
-	mockRepo := new(MockRedisRepository)
-	service := services.NewCacheService(mockRepo)
+func (suite *CacheServiceTestSuite) TestGetUserInfoByID() {
+	userID := uuid.New()
 
-	t.Run("success", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "refreshToken:" + userID.String()
+	tests := []struct {
+		name          string
+		mockReturn    string
+		mockReturnErr error
+		expected      *models.UserEntity
+		expectedErr   string
+	}{
+		{
+			name:          "success retrieving user info",
+			mockReturn:    `{"id":"` + userID.String() + `","username":"testuser"}`,
+			mockReturnErr: nil,
+			expected:      &models.UserEntity{ID: userID, Username: "testuser"},
+			expectedErr:   "",
+		},
+		{
+			name:          "error retrieving user info from cache",
+			mockReturn:    "",
+			mockReturnErr: errors.New("redis error"),
+			expected:      nil,
+			expectedErr:   "redis error",
+		},
+		{
+			name:          "error unmarshalling user info",
+			mockReturn:    `invalid json`,
+			mockReturnErr: nil,
+			expected:      nil,
+			expectedErr:   "invalid character 'i' looking for beginning of value",
+		},
+	}
 
-		mockRepo.On("Delete", mock.AnythingOfType("*context.emptyCtx"), cacheKey).Return(nil)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "user:" + userID.String()
 
-		err := service.DeleteRefreshTokenByID(userID)
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Get", context.Background(), cacheKey).Return(tt.mockReturn, tt.mockReturnErr)
 
-		assert.NoError(t, err)
-	})
+			result, err := suite.service.GetUserInfoByID(userID)
 
-	t.Run("error deleting refresh token from cache", func(t *testing.T) {
-		userID := uuid.New()
-		cacheKey := "refreshToken:" + userID.String()
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+				assert.Equal(suite.T(), tt.expected, result)
+			} else {
+				assert.Nil(suite.T(), result)
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+			}
+		})
+	}
+}
 
-		mockRepo.On("Delete", mock.AnythingOfType("*context.emptyCtx"), cacheKey).Return(errors.New("cache error"))
+func (suite *CacheServiceTestSuite) TestSetRefreshTokenByID() {
+	userID := uuid.New()
 
-		err := service.DeleteRefreshTokenByID(userID)
+	tests := []struct {
+		name          string
+		token         string
+		mockReturnErr error
+		expectedErr   string
+	}{
+		{name: "success setting refresh token", token: "testRefreshToken", mockReturnErr: nil, expectedErr: ""},
+		{name: "error setting refresh token", token: "testRefreshToken", mockReturnErr: errors.New("redis error"), expectedErr: "redis error"},
+	}
 
-		assert.EqualError(t, err, "cache error")
-	})
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "refreshToken:" + userID.String()
+
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Set", context.Background(), cacheKey, tt.token, time.Hour*120).Return(tt.mockReturnErr)
+
+			err := suite.service.SetRefreshTokenByID(userID, tt.token)
+
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+			} else {
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+			}
+		})
+	}
+}
+
+func (suite *CacheServiceTestSuite) TestGetRefreshTokenByID() {
+	userID := uuid.New()
+
+	tests := []struct {
+		name          string
+		mockReturn    string
+		mockReturnErr error
+		expected      string
+		expectedErr   string
+	}{
+		{
+			name:          "success retrieving refresh token",
+			mockReturn:    "testRefreshToken",
+			mockReturnErr: nil,
+			expected:      "testRefreshToken",
+			expectedErr:   "",
+		},
+		{
+			name:          "error retrieving refresh token from cache",
+			mockReturn:    "",
+			mockReturnErr: errors.New("redis error"),
+			expected:      "",
+			expectedErr:   "redis error",
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "refreshToken:" + userID.String()
+
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Get", context.Background(), cacheKey).Return(tt.mockReturn, tt.mockReturnErr)
+
+			result, err := suite.service.GetRefreshTokenByID(userID)
+
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+				assert.Equal(suite.T(), tt.expected, result)
+			} else {
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+				assert.Empty(suite.T(), result)
+			}
+		})
+	}
+}
+
+// TestDeleteRefreshTokenByID prueba el método DeleteRefreshTokenByID.
+func (suite *CacheServiceTestSuite) TestDeleteRefreshTokenByID() {
+	userID := uuid.New()
+
+	tests := []struct {
+		name          string
+		mockReturnErr error
+		expectedErr   string
+	}{
+		{name: "success deleting refresh token", mockReturnErr: nil, expectedErr: ""},
+		{name: "error deleting refresh token", mockReturnErr: errors.New("redis error"), expectedErr: "redis error"},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			cacheKey := "refreshToken:" + userID.String()
+
+			// Resetea las expectativas del mock antes de cada subtest.
+			suite.mockRepo.ExpectedCalls = nil
+			suite.mockRepo.On("Delete", context.Background(), cacheKey).Return(tt.mockReturnErr)
+
+			err := suite.service.DeleteRefreshTokenByID(userID)
+
+			if tt.expectedErr == "" {
+				assert.NoError(suite.T(), err)
+			} else {
+				assert.EqualError(suite.T(), err, tt.expectedErr)
+			}
+		})
+	}
+}
+
+// Create a new instance of the cacsevicetestsuite structure and executes the test suite
+func TestCacheServiceTestSuite(t *testing.T) {
+	suite.Run(t, new(CacheServiceTestSuite))
 }
