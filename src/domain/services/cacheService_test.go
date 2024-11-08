@@ -40,7 +40,7 @@ func (m *MockRedisRepository) Delete(ctx context.Context, key string) error {
 	return args.Error(0)
 }
 
-// CACSERVICESTSUITE It is the test suite that groups the tests related to cacsevice.
+// CacheServiceTestSuite It is the test suite that groups the tests related to CacheService.
 type CacheServiceTestSuite struct {
 	suite.Suite
 	mockRepo *MockRedisRepository
@@ -53,7 +53,7 @@ func (suite *CacheServiceTestSuite) SetupTest() {
 	suite.service = NewCacheService(suite.mockRepo)
 }
 
-// Teardowtest is executed after each general suite test.
+// TearDownTest is executed after each general suite test.
 func (suite *CacheServiceTestSuite) TearDownTest() {
 	suite.mockRepo.AssertExpectations(suite.T())
 }
@@ -308,7 +308,6 @@ func (suite *CacheServiceTestSuite) TestDeleteRefreshTokenByID() {
 		suite.Run(tt.name, func() {
 			cacheKey := "refreshToken:" + userID.String()
 
-			// Resetea las expectativas del mock antes de cada subtest.
 			suite.mockRepo.ExpectedCalls = nil
 			suite.mockRepo.On("Delete", context.Background(), cacheKey).Return(tt.mockReturnErr)
 

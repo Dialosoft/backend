@@ -122,7 +122,7 @@ func (service *categoryServiceImpl) GetAllCategories() ([]response.CategoryRespo
 }
 
 func (service *categoryServiceImpl) GetAllCategoriesAllowedByRole(roleID string) ([]response.CategoryResponse, error) {
-	var categoriesIDs []response.CategoryResponse
+	var categoriesIDs = []response.CategoryResponse{}
 
 	categories, err := service.categoryRepository.FindAll()
 	if err != nil {
