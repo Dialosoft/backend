@@ -22,6 +22,17 @@ func NewCategoryController(categoryService services.CategoryService, layer strin
 	return &CategoryController{CategoryService: categoryService, Layer: layer}
 }
 
+// GetAllCategories retrieves all categories available in the system.
+//
+// @Summary Get all categories
+// @Description Retrieves a list of all categories in the system, accessible to all users.
+// @Tags Categories
+// @Accept json
+// @Produce json
+// @Success 200 {array} response.CategoryResponse "List of all categories"
+// @Failure 404 {object} response.StandardError "NOT FOUND - No categories found"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Router /categories/get-all-categories [get]
 func (ac *CategoryController) GetAllCategories(c fiber.Ctx) error {
 	categoriesResponses, err := ac.CategoryService.GetAllCategories()
 	if err != nil {
