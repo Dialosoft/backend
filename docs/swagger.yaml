@@ -1,5 +1,48 @@
 basePath: /dialosoft-api/v1
 definitions:
+  dto.ForumDto:
+    properties:
+      categoryId:
+        type: string
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isActive:
+        type: boolean
+      name:
+        type: string
+      rolesAllowed:
+        items:
+          type: string
+        type: array
+      type:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - categoryId
+    - name
+    - type
+    type: object
+  request.ChangeUserRole:
+    properties:
+      roleID:
+        example: 8213280e-2000-403a-b375-cdcda6488452
+        type: string
+      userID:
+        example: 8213280e-2000-403a-b375-cdcda6488450
+        type: string
+    type: object
+  request.LikeOrUnlikePost:
+    properties:
+      postID:
+        type: string
+      userID:
+        type: string
+    type: object
   request.LoginRequest:
     properties:
       password:
@@ -24,6 +67,89 @@ definitions:
         items:
           type: string
         type: array
+    type: object
+  request.NewForum:
+    properties:
+      categoryID:
+        example: 8213280e-2000-403a-b375-cdcda6488450
+        type: string
+      description:
+        example: some description for forum 2
+        type: string
+      isActive:
+        example: true
+        type: boolean
+      name:
+        example: Forum 2
+        type: string
+      rolesAllowed:
+        example:
+        - '[''8213280e-2000-403a-b375-cdcda6488450'''
+        - ' ''roleUUID2'']'
+        items:
+          type: string
+        type: array
+      type:
+        example: information
+        type: string
+    required:
+    - categoryID
+    type: object
+  request.NewPost:
+    properties:
+      content:
+        example: some content
+        type: string
+      forumID:
+        example: 8213280e-2000-403a-b375-cdcda6488451
+        type: string
+      title:
+        example: some title
+        type: string
+      userID:
+        example: 8213280e-2000-403a-b375-cdcda6488450
+        type: string
+    type: object
+  request.NewRole:
+    properties:
+      adminRole:
+        example: true
+        type: boolean
+      modRole:
+        example: false
+        type: boolean
+      permission:
+        example: 2
+        type: integer
+      roleType:
+        example: moderator
+        type: string
+    type: object
+  request.NewRolePermissions:
+    properties:
+      canManageCategories:
+        example: true
+        type: boolean
+      canManageForums:
+        example: false
+        type: boolean
+      canManageRoles:
+        example: true
+        type: boolean
+      canManageUsers:
+        example: false
+        type: boolean
+    type: object
+  request.NewUser:
+    properties:
+      disable:
+        type: boolean
+      locked:
+        type: boolean
+      userID:
+        type: string
+      username:
+        type: string
     type: object
   request.RefreshToken:
     properties:
@@ -51,21 +177,52 @@ definitions:
     - password
     - username
     type: object
+  request.UpdatePostContent:
+    properties:
+      content:
+        type: string
+      postID:
+        type: string
+    type: object
+  request.UpdatePostTitle:
+    properties:
+      postID:
+        type: string
+      title:
+        type: string
+    type: object
+  request.UserRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
   response.CategoryResponse:
     properties:
       created_at:
+        example: "2022-08-01T00:00:00Z"
         type: string
       description:
+        example: some description for category 1
         type: string
       id:
+        example: 8213280e-2000-403a-b375-cdcda6488450
         type: string
       name:
+        example: Category 1
         type: string
       rolesAllowed:
+        example:
+        - '[''8213280e-2000-403a-b375-cdcda6488450'''
+        - ' ''roleUUID2'']'
         items:
           type: string
         type: array
       updated_at:
+        example: "2022-08-01T00:00:00Z"
         type: string
     type: object
   response.LoginResponse:
@@ -272,6 +429,32 @@ paths:
       summary: Create new category
       tags:
       - Categories
+  /categories/get-all-categories:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all categories in the system, accessible to
+        all users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of all categories
+          schema:
+            items:
+              $ref: '#/definitions/response.CategoryResponse'
+            type: array
+        "404":
+          description: NOT FOUND - No categories found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get all categories
+      tags:
+      - Categories
   /categories/get-all-categories-allowed:
     get:
       consumes:
@@ -409,6 +592,1438 @@ paths:
       summary: Update category
       tags:
       - Categories
+  /forums/get-forums-by-category-id/{categoryID}:
+    get:
+      description: Retrieves forums by category ID if allowed for the role.
+      parameters:
+      - description: Category ID
+        in: path
+        name: categoryID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ForumDto'
+            type: array
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "403":
+          description: FORBIDDEN
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get forums by category ID
+      tags:
+      - Forums
+  /forums/protected/create-new-forum:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new forum with the specified details.
+      parameters:
+      - description: New Forum Data
+        in: body
+        name: forum
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewForum'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CREATED
+          schema:
+            type: string
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Create a new forum
+      tags:
+      - Forums
+  /forums/protected/delete-forum/{id}:
+    delete:
+      description: Deletes a forum with the specified ID.
+      parameters:
+      - description: Forum ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Delete a forum
+      tags:
+      - Forums
+  /forums/protected/get-all-forums:
+    get:
+      description: Retrieves a list of all forums.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.ForumDto'
+            type: array
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get all forums
+      tags:
+      - Forums
+  /forums/protected/get-forum-by-id/{id}:
+    get:
+      description: Retrieves a specific forum by its unique ID.
+      parameters:
+      - description: Forum ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ForumDto'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get forum by ID
+      tags:
+      - Forums
+  /forums/protected/get-forum-by-name/{name}:
+    get:
+      description: Retrieves a specific forum by its unique name.
+      parameters:
+      - description: Forum Name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ForumDto'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get forum by name
+      tags:
+      - Forums
+  /forums/protected/restore-forum/{id}:
+    put:
+      description: Restores a deleted forum with the specified ID.
+      parameters:
+      - description: Forum ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: RESTORED
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Restore a forum
+      tags:
+      - Forums
+  /forums/protected/update-forum/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing forum with the specified ID and details.
+      parameters:
+      - description: Forum ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Forum Data
+        in: body
+        name: forum
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewForum'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update a forum
+      tags:
+      - Forums
+  /management/change-user-role:
+    post:
+      consumes:
+      - application/json
+      description: Updates the role of a user and invalidates their current refresh
+        token to ensure role changes are applied.
+      parameters:
+      - description: Change User Role Data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangeUserRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - User role updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data or parameters
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User or role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Change user role
+      tags:
+      - Management
+  /posts/authenticated/create-new-post:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new post with the provided data.
+      parameters:
+      - description: New Post Data
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewPost'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CREATED - New post created successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Create a new post
+      tags:
+      - Posts
+  /posts/authenticated/like-post:
+    put:
+      consumes:
+      - application/json
+      description: Adds a like to a specific post from a user.
+      parameters:
+      - description: Post and User ID for liking
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/request.LikeOrUnlikePost'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: LIKED - Post liked successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post or user not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT - Post already liked by the user
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Like post
+      tags:
+      - Posts
+  /posts/authenticated/unlike-post:
+    put:
+      consumes:
+      - application/json
+      description: Removes a like from a specific post by a user.
+      parameters:
+      - description: Post and User ID for unliking
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/request.LikeOrUnlikePost'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UNLIKED - Post unliked successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post or user not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Unlike post
+      tags:
+      - Posts
+  /posts/get-all-posts-by-forum/{forumID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all posts within a given forum specified by its ID, with
+        pagination options.
+      parameters:
+      - description: Forum ID
+        in: path
+        name: forumID
+        required: true
+        type: string
+      - description: 'Limit of posts (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of posts
+          schema:
+            items:
+              $ref: '#/definitions/response.StandardResponse'
+            type: array
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - No posts found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get all posts by forum ID
+      tags:
+      - Posts
+  /posts/get-all-posts-simple:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all posts with a simplified response format,
+        with pagination options.
+      parameters:
+      - description: 'Limit of posts (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of simple post responses
+          schema:
+            items:
+              $ref: '#/definitions/response.StandardResponse'
+            type: array
+        "404":
+          description: NOT FOUND - No posts found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get all posts (simple response)
+      tags:
+      - Posts
+  /posts/get-like-count/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves the count of likes for a post by its unique identifier.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Number of likes
+          schema:
+            type: integer
+        "400":
+          description: BAD REQUEST - Invalid post ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get number of likes for a post
+      tags:
+      - Posts
+  /posts/get-post-likes-by-user-id/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all post IDs that a user has liked.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of post IDs liked by the user
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: BAD REQUEST - Invalid user ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - No liked posts found for the user
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get posts liked by user ID
+      tags:
+      - Posts
+  /posts/get-posts-by-user-id/{userID}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves all posts created by a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of posts by user
+          schema:
+            items:
+              $ref: '#/definitions/response.StandardResponse'
+            type: array
+        "400":
+          description: BAD REQUEST - Invalid ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Posts not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get posts by user ID
+      tags:
+      - Posts
+  /posts/protected/delete-post/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a specific post from the system by its ID.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED - Post deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid post ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Delete post
+      tags:
+      - Posts
+  /posts/protected/get-all-posts:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all posts with pagination options.
+      parameters:
+      - description: 'Limit of posts (default: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset for pagination (default: 0)'
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of posts
+          schema:
+            items:
+              $ref: '#/definitions/response.StandardResponse'
+            type: array
+        "404":
+          description: NOT FOUND - No posts found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get all posts
+      tags:
+      - Posts
+  /posts/protected/get-post-by-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a post by its unique identifier.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Post data
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get post by ID
+      tags:
+      - Posts
+  /posts/protected/restore-post/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Restores a previously deleted post by its unique identifier.
+      parameters:
+      - description: Post ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: RESTORED - Post restored successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid post ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Restore post
+      tags:
+      - Posts
+  /posts/protected/update-post-content/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the content of a specific post by its ID.
+      parameters:
+      - description: Updated Post Content Data
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePostContent'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - Post content updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update post content
+      tags:
+      - Posts
+  /posts/protected/update-post-title/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the title of a specific post by its ID.
+      parameters:
+      - description: Updated Post Title Data
+        in: body
+        name: post
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePostTitle'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - Post title updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Post not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update post title
+      tags:
+      - Posts
+  /roles/get-all-roles:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all roles available in the system.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of roles
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: NOT FOUND - No roles found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get all roles
+      tags:
+      - Roles
+  /roles/get-role-by-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves role details by its unique identifier.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role data
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get role by ID
+      tags:
+      - Roles
+  /roles/get-role-by-type/{type}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves role details based on its type.
+      parameters:
+      - description: Role type
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role data
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid role type
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get role by type
+      tags:
+      - Roles
+  /roles/protected/create-new-role:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new role with the specified data.
+      parameters:
+      - description: New Role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewRole'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CREATED - New role created successfully
+          schema:
+            type: string
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT - Role already exists
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Create new role
+      tags:
+      - Roles
+  /roles/protected/delete-role/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes an existing role by its unique identifier.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED - Role deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid role ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Delete role
+      tags:
+      - Roles
+  /roles/protected/get-role-permissions-by-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves permissions for a specific role by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Role permissions
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role or permissions not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Get role permissions by ID
+      tags:
+      - Roles
+  /roles/protected/restore-role/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Restores a previously deleted role by its unique identifier.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: RESTORED - Role restored successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid role ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Restore role
+      tags:
+      - Roles
+  /roles/protected/set-role-permissions-by-id/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the permissions for a role by its unique identifier.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Permissions Data
+        in: body
+        name: permissions
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewRolePermissions'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - Role permissions updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Set role permissions by ID
+      tags:
+      - Roles
+  /roles/protected/update-role/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing role with new data by its ID.
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated Role Data
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewRole'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - Role updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - Role not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update role
+      tags:
+      - Roles
+  /users/get-all-users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all registered users.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/response.StandardResponse'
+            type: array
+        "404":
+          description: NOT FOUND - No users found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get all users
+      tags:
+      - Users
+  /users/get-user-by-id/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves user details based on their unique identifier.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid ID format
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get user by ID
+      tags:
+      - Users
+  /users/get-user-by-name/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves user details based on their username.
+      parameters:
+      - description: Username
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid username
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Get user by username
+      tags:
+      - Users
+  /users/protected/change-user-avatar/{id}:
+    put:
+      consumes:
+      - multipart/form-data
+      description: Changes the avatar of a specific user by their ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Avatar image file (PNG or JPEG, max 5MB)
+        in: formData
+        name: avatar
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Avatar uploaded successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data or file type
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "413":
+          description: REQUEST ENTITY TOO LARGE - File size exceeds the limit
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "415":
+          description: UNSUPPORTED MEDIA TYPE - Only PNG and JPEG allowed
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Change user avatar
+      tags:
+      - Users
+  /users/protected/create-new-user:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user with the provided data.
+      parameters:
+      - description: New User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.UserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: CREATED - New user created successfully
+          schema:
+            type: string
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "409":
+          description: CONFLICT - User already exists
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      summary: Create new user
+      tags:
+      - Users
+  /users/protected/delete-user/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a specific user by their unique identifier.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: DELETED - User deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid user ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Delete user
+      tags:
+      - Users
+  /users/protected/restore-user/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Restores a previously deleted user by their unique identifier.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: RESTORED - User restored successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid user ID
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Restore user
+      tags:
+      - Users
+  /users/protected/update-user/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing user's data by their ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated User Data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/request.NewUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: UPDATED - User updated successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: BAD REQUEST - Invalid input data
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "404":
+          description: NOT FOUND - User not found
+          schema:
+            $ref: '#/definitions/response.StandardError'
+        "500":
+          description: INTERNAL SERVER ERROR - Unexpected server error
+          schema:
+            $ref: '#/definitions/response.StandardError'
+      security:
+      - AccessTokenAuth: []
+      - RefreshTokenAuth: []
+      summary: Update user
+      tags:
+      - Users
 securityDefinitions:
   AccessTokenAuth:
     description: Bearer token for authentication

@@ -233,6 +233,44 @@
                 }
             }
         },
+        "/categories/get-all-categories": {
+            "get": {
+                "description": "Retrieves a list of all categories in the system, accessible to all users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Categories"
+                ],
+                "summary": "Get all categories",
+                "responses": {
+                    "200": {
+                        "description": "List of all categories",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.CategoryResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No categories found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
         "/categories/get-all-categories-allowed": {
             "get": {
                 "description": "Retrieves a list of categories that the specified role is allowed to access, if is Authenticated can see protected categories by role",
@@ -447,9 +485,2339 @@
                     }
                 }
             }
+        },
+        "/forums/get-forums-by-category-id/{categoryID}": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves forums by category ID if allowed for the role.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Get forums by category ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Category ID",
+                        "name": "categoryID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ForumDto"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "403": {
+                        "description": "FORBIDDEN",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/create-new-forum": {
+            "post": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Creates a new forum with the specified details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Create a new forum",
+                "parameters": [
+                    {
+                        "description": "New Forum Data",
+                        "name": "forum",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewForum"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CREATED",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "409": {
+                        "description": "CONFLICT",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/delete-forum/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Deletes a forum with the specified ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Delete a forum",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DELETED",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/get-all-forums": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all forums.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Get all forums",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.ForumDto"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/get-forum-by-id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific forum by its unique ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Get forum by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ForumDto"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/get-forum-by-name/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves a specific forum by its unique name.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Get forum by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ForumDto"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/restore-forum/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Restores a deleted forum with the specified ID.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Restore a forum",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RESTORED",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/forums/protected/update-forum/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates an existing forum with the specified ID and details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Forums"
+                ],
+                "summary": "Update a forum",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Forum Data",
+                        "name": "forum",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewForum"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/management/change-user-role": {
+            "post": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates the role of a user and invalidates their current refresh token to ensure role changes are applied.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Management"
+                ],
+                "summary": "Change user role",
+                "parameters": [
+                    {
+                        "description": "Change User Role Data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.ChangeUserRole"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - User role updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data or parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User or role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/authenticated/create-new-post": {
+            "post": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Creates a new post with the provided data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Create a new post",
+                "parameters": [
+                    {
+                        "description": "New Post Data",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewPost"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CREATED - New post created successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/authenticated/like-post": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Adds a like to a specific post from a user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Like post",
+                "parameters": [
+                    {
+                        "description": "Post and User ID for liking",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.LikeOrUnlikePost"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "LIKED - Post liked successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post or user not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "409": {
+                        "description": "CONFLICT - Post already liked by the user",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/authenticated/unlike-post": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Removes a like from a specific post by a user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Unlike post",
+                "parameters": [
+                    {
+                        "description": "Post and User ID for unliking",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.LikeOrUnlikePost"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UNLIKED - Post unliked successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post or user not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/get-all-posts-by-forum/{forumID}": {
+            "get": {
+                "description": "Retrieves all posts within a given forum specified by its ID, with pagination options.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get all posts by forum ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Forum ID",
+                        "name": "forumID",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Limit of posts (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of posts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.StandardResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No posts found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/get-all-posts-simple": {
+            "get": {
+                "description": "Retrieves a list of all posts with a simplified response format, with pagination options.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get all posts (simple response)",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit of posts (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of simple post responses",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.StandardResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No posts found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/get-like-count/{id}": {
+            "get": {
+                "description": "Retrieves the count of likes for a post by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get number of likes for a post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Number of likes",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid post ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/get-post-likes-by-user-id/{userID}": {
+            "get": {
+                "description": "Retrieves all post IDs that a user has liked.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get posts liked by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of post IDs liked by the user",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No liked posts found for the user",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/get-posts-by-user-id/{userID}": {
+            "get": {
+                "description": "Retrieves all posts created by a specific user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get posts by user ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "userID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of posts by user",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.StandardResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Posts not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/delete-post/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Deletes a specific post from the system by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Delete post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DELETED - Post deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid post ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/get-all-posts": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves a list of all posts with pagination options.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get all posts",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Limit of posts (default: 10)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Offset for pagination (default: 0)",
+                        "name": "offset",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of posts",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.StandardResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No posts found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/get-post-by-id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves a post by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Get post by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Post data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/restore-post/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Restores a previously deleted post by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Restore post",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Post ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RESTORED - Post restored successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid post ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/update-post-content/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates the content of a specific post by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Update post content",
+                "parameters": [
+                    {
+                        "description": "Updated Post Content Data",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdatePostContent"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - Post content updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/posts/protected/update-post-title/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates the title of a specific post by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Update post title",
+                "parameters": [
+                    {
+                        "description": "Updated Post Title Data",
+                        "name": "post",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UpdatePostTitle"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - Post title updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Post not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/get-all-roles": {
+            "get": {
+                "description": "Retrieves a list of all roles available in the system.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get all roles",
+                "responses": {
+                    "200": {
+                        "description": "List of roles",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No roles found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/get-role-by-id/{id}": {
+            "get": {
+                "description": "Retrieves role details by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get role by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/get-role-by-type/{type}": {
+            "get": {
+                "description": "Retrieves role details based on its type.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get role by type",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role type",
+                        "name": "type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid role type",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/create-new-role": {
+            "post": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Creates a new role with the specified data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Create new role",
+                "parameters": [
+                    {
+                        "description": "New Role Data",
+                        "name": "role",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewRole"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CREATED - New role created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "409": {
+                        "description": "CONFLICT - Role already exists",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/delete-role/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Deletes an existing role by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Delete role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DELETED - Role deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid role ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/get-role-permissions-by-id/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Retrieves permissions for a specific role by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get role permissions by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role permissions",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role or permissions not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/restore-role/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Restores a previously deleted role by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Restore role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RESTORED - Role restored successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid role ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/set-role-permissions-by-id/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates the permissions for a role by its unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Set role permissions by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Permissions Data",
+                        "name": "permissions",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewRolePermissions"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - Role permissions updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/protected/update-role/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates an existing role with new data by its ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Update role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated Role Data",
+                        "name": "role",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewRole"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - Role updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - Role not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/get-all-users": {
+            "get": {
+                "description": "Retrieves a list of all registered users.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get all users",
+                "responses": {
+                    "200": {
+                        "description": "List of users",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/response.StandardResponse"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - No users found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/get-user-by-id/{id}": {
+            "get": {
+                "description": "Retrieves user details based on their unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid ID format",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/get-user-by-name/{username}": {
+            "get": {
+                "description": "Retrieves user details based on their username.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get user by username",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Username",
+                        "name": "username",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid username",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/protected/change-user-avatar/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Changes the avatar of a specific user by their ID.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Change user avatar",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Avatar image file (PNG or JPEG, max 5MB)",
+                        "name": "avatar",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Avatar uploaded successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data or file type",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "413": {
+                        "description": "REQUEST ENTITY TOO LARGE - File size exceeds the limit",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "415": {
+                        "description": "UNSUPPORTED MEDIA TYPE - Only PNG and JPEG allowed",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/protected/create-new-user": {
+            "post": {
+                "description": "Creates a new user with the provided data.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create new user",
+                "parameters": [
+                    {
+                        "description": "New User Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.UserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "CREATED - New user created successfully",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "409": {
+                        "description": "CONFLICT - User already exists",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/protected/delete-user/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Deletes a specific user by their unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "DELETED - User deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/protected/restore-user/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Restores a previously deleted user by their unique identifier.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Restore user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "RESTORED - User restored successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid user ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/protected/update-user/{id}": {
+            "put": {
+                "security": [
+                    {
+                        "AccessTokenAuth": []
+                    },
+                    {
+                        "RefreshTokenAuth": []
+                    }
+                ],
+                "description": "Updates an existing user's data by their ID.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Updated User Data",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/request.NewUser"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "UPDATED - User updated successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "BAD REQUEST - Invalid input data",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "404": {
+                        "description": "NOT FOUND - User not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    },
+                    "500": {
+                        "description": "INTERNAL SERVER ERROR - Unexpected server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardError"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
+        "dto.ForumDto": {
+            "type": "object",
+            "required": [
+                "categoryId",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "categoryId": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "isActive": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "rolesAllowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.ChangeUserRole": {
+            "type": "object",
+            "properties": {
+                "roleID": {
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488452"
+                },
+                "userID": {
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488450"
+                }
+            }
+        },
+        "request.LikeOrUnlikePost": {
+            "type": "object",
+            "properties": {
+                "postID": {
+                    "type": "string"
+                },
+                "userID": {
+                    "type": "string"
+                }
+            }
+        },
         "request.LoginRequest": {
             "type": "object",
             "properties": {
@@ -483,6 +2851,124 @@
                         "['8213280e-2000-403a-b375-cdcda6488450'",
                         " 'roleUUID2']"
                     ]
+                }
+            }
+        },
+        "request.NewForum": {
+            "type": "object",
+            "required": [
+                "categoryID"
+            ],
+            "properties": {
+                "categoryID": {
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488450"
+                },
+                "description": {
+                    "type": "string",
+                    "example": "some description for forum 2"
+                },
+                "isActive": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "example": "Forum 2"
+                },
+                "rolesAllowed": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "['8213280e-2000-403a-b375-cdcda6488450'",
+                        " 'roleUUID2']"
+                    ]
+                },
+                "type": {
+                    "type": "string",
+                    "example": "information"
+                }
+            }
+        },
+        "request.NewPost": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "some content"
+                },
+                "forumID": {
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488451"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "some title"
+                },
+                "userID": {
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488450"
+                }
+            }
+        },
+        "request.NewRole": {
+            "type": "object",
+            "properties": {
+                "adminRole": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "modRole": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "permission": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "roleType": {
+                    "type": "string",
+                    "example": "moderator"
+                }
+            }
+        },
+        "request.NewRolePermissions": {
+            "type": "object",
+            "properties": {
+                "canManageCategories": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "canManageForums": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "canManageRoles": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "canManageUsers": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "request.NewUser": {
+            "type": "object",
+            "properties": {
+                "disable": {
+                    "type": "boolean"
+                },
+                "locked": {
+                    "type": "boolean"
+                },
+                "userID": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
                 }
             }
         },
@@ -521,29 +3007,74 @@
                 }
             }
         },
+        "request.UpdatePostContent": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "postID": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UpdatePostTitle": {
+            "type": "object",
+            "properties": {
+                "postID": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "request.UserRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
         "response.CategoryResponse": {
             "type": "object",
             "properties": {
                 "created_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2022-08-01T00:00:00Z"
                 },
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "some description for category 1"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "8213280e-2000-403a-b375-cdcda6488450"
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Category 1"
                 },
                 "rolesAllowed": {
                     "type": "array",
                     "items": {
                         "type": "string"
-                    }
+                    },
+                    "example": [
+                        "['8213280e-2000-403a-b375-cdcda6488450'",
+                        " 'roleUUID2']"
+                    ]
                 },
                 "updated_at": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2022-08-01T00:00:00Z"
                 }
             }
         },
