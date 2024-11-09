@@ -1,10 +1,10 @@
 package request
 
 type NewPost struct {
-	UserID  string `json:"userID"`
-	ForumID string `json:"forumID"`
-	Title   string `json:"title"`
-	Content string `json:"content"`
+	UserID  string `json:"userID" example:"8213280e-2000-403a-b375-cdcda6488450"`
+	ForumID string `json:"forumID" example:"8213280e-2000-403a-b375-cdcda6488451"`
+	Title   string `json:"title" example:"some title"`
+	Content string `json:"content" example:"some content"`
 }
 
 type UpdatePostTitle struct {
