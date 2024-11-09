@@ -165,7 +165,7 @@ func (fc *ForumController) GetForumsByCategoryIDAndAllowed(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param forum body request.NewForum true "New Forum Data"
-// @Success 201 {object} fiber.Map "CREATED"
+// @Success 201 {object} string "CREATED"
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
 // @Failure 409 {object} response.StandardError "CONFLICT"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"
@@ -204,7 +204,7 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Forum ID"
 // @Param forum body request.NewForum true "Updated Forum Data"
-// @Success 200 {object} response.StandardMessage "UPDATED"
+// @Success 200 {object} response.StandardResponse "UPDATED"
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
 // @Failure 404 {object} response.StandardError "NOT FOUND"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"
@@ -241,7 +241,7 @@ func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
 // @Tags Forums
 // @Param id path string true "Forum ID"
 // @Produce json
-// @Success 200 {object} response.StandardMessage "DELETED"
+// @Success 200 {object} response.StandardResponse "DELETED"
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
 // @Failure 404 {object} response.StandardError "NOT FOUND"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"
@@ -272,7 +272,7 @@ func (fc *ForumController) DeleteForum(c fiber.Ctx) error {
 // @Tags Forums
 // @Param id path string true "Forum ID"
 // @Produce json
-// @Success 200 {object} response.StandardMessage "RESTORED"
+// @Success 200 {object} response.StandardResponse "RESTORED"
 // @Failure 400 {object} response.StandardError "BAD REQUEST"
 // @Failure 404 {object} response.StandardError "NOT FOUND"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR"

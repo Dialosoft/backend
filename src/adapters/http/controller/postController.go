@@ -32,7 +32,7 @@ func NewPostController(postService services.PostService, Layer string) *PostCont
 // @Param forumID path string true "Forum ID"
 // @Param limit query int false "Limit of posts (default: 10)"
 // @Param offset query int false "Offset for pagination (default: 0)"
-// @Success 200 {array} response.PostResponse "List of posts"
+// @Success 200 {array} response.StandardResponse "List of posts"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data"
 // @Failure 404 {object} response.StandardError "NOT FOUND - No posts found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -85,7 +85,7 @@ func (pc *PostController) GetAllPostsByForum(c fiber.Ctx) error {
 // @Produce json
 // @Param limit query int false "Limit of posts (default: 10)"
 // @Param offset query int false "Offset for pagination (default: 0)"
-// @Success 200 {array} response.PostResponse "List of posts"
+// @Success 200 {array} response.StandardResponse "List of posts"
 // @Failure 404 {object} response.StandardError "NOT FOUND - No posts found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
 // @Security AccessTokenAuth
@@ -132,7 +132,7 @@ func (pc *PostController) GetAllPosts(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "Post ID"
-// @Success 200 {object} response.PostResponse "Post data"
+// @Success 200 {object} response.StandardResponse "Post data"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid ID format"
 // @Failure 404 {object} response.StandardError "NOT FOUND - Post not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -169,7 +169,7 @@ func (pc *PostController) GetPostByID(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param userID path string true "User ID"
-// @Success 200 {array} response.PostResponse "List of posts by user"
+// @Success 200 {array} response.StandardResponse "List of posts by user"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid ID format"
 // @Failure 404 {object} response.StandardError "NOT FOUND - Posts not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -205,7 +205,7 @@ func (pc *PostController) GetPostsByUserID(c fiber.Ctx) error {
 // @Produce json
 // @Param limit query int false "Limit of posts (default: 10)"
 // @Param offset query int false "Offset for pagination (default: 0)"
-// @Success 200 {array} response.SimplePostResponse "List of simple post responses"
+// @Success 200 {array} response.StandardResponse "List of simple post responses"
 // @Failure 404 {object} response.StandardError "NOT FOUND - No posts found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
 // @Router /posts/get-all-posts-simple [get]
@@ -283,7 +283,7 @@ func (pc *PostController) GetPostNumberOfLikes(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param post body request.NewPost true "New Post Data"
-// @Success 201 {object} response.PostResponse "CREATED - New post created successfully"
+// @Success 201 {object} response.StandardResponse "CREATED - New post created successfully"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
 // @Security AccessTokenAuth

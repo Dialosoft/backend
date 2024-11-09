@@ -29,7 +29,7 @@ func NewRoleController(roleService services.RoleService, Layer string) *RoleCont
 // @Tags Roles
 // @Accept json
 // @Produce json
-// @Success 200 {array} response.RoleResponse "List of roles"
+// @Success 200 {object} response.StandardResponse "List of roles"
 // @Failure 404 {object} response.StandardError "NOT FOUND - No roles found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
 // @Router /roles/get-all-roles [get]
@@ -53,7 +53,7 @@ func (rc *RoleController) GetAllRoles(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "Role ID"
-// @Success 200 {object} response.RoleResponse "Role data"
+// @Success 200 {object} response.StandardResponse "Role data"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid ID format"
 // @Failure 404 {object} response.StandardError "NOT FOUND - Role not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -88,7 +88,7 @@ func (rc *RoleController) GetRoleByID(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param type path string true "Role type"
-// @Success 200 {object} response.RoleResponse "Role data"
+// @Success 200 {object} response.StandardResponse "Role data"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid role type"
 // @Failure 404 {object} response.StandardError "NOT FOUND - Role not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -250,7 +250,7 @@ func (rc *RoleController) SetRolePermissionsByRoleID(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "Role ID"
-// @Success 200 {object} response.RolePermissionsResponse "Role permissions"
+// @Success 200 {object} response.StandardResponse "Role permissions"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid ID format"
 // @Failure 404 {object} response.StandardError "NOT FOUND - Role or permissions not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"

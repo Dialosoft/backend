@@ -30,7 +30,7 @@ func NewUserController(userService services.UserService, Layer string) *UserCont
 // @Tags Users
 // @Accept json
 // @Produce json
-// @Success 200 {array} response.UserResponse "List of users"
+// @Success 200 {array} response.StandardResponse "List of users"
 // @Failure 404 {object} response.StandardError "NOT FOUND - No users found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
 // @Router /users/get-all-users [get]
@@ -54,7 +54,7 @@ func (uc *UserController) GetAllUsers(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Success 200 {object} response.UserResponse "User data"
+// @Success 200 {object} response.StandardResponse "User data"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid ID format"
 // @Failure 404 {object} response.StandardError "NOT FOUND - User not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
@@ -89,7 +89,7 @@ func (uc *UserController) GetUserByID(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param username path string true "Username"
-// @Success 200 {object} response.UserResponse "User data"
+// @Success 200 {object} response.StandardResponse "User data"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid username"
 // @Failure 404 {object} response.StandardError "NOT FOUND - User not found"
 // @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
