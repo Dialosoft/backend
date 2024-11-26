@@ -7,10 +7,12 @@ follow us on github: https://github.com/Dialosoft
 
 This source code was developed by:
 
-  - Flussen
+  - @Flussen ( https://github.com/Flussen )
+  - @matdevcoder ( https://github.com/matdevcoder )
 
 with Golang and ❤️
 */
+
 package main
 
 import (
@@ -18,13 +20,33 @@ import (
 	"log"
 	"time"
 
+	_ "github.com/Dialosoft/docs"
 	"github.com/Dialosoft/src/app/config"
 	"github.com/Dialosoft/src/app/database"
 	"github.com/Dialosoft/src/pkg/utils/devconfig"
 	"github.com/Dialosoft/src/pkg/utils/logger"
+	swagger "github.com/Flussen/swagger-fiber-v3"
 	"github.com/redis/go-redis/v9"
 )
 
+// @title Dialosoft Swagger API
+// @version 0.2.0
+// @description this is the swagger implementation for dialosoft
+// @termsOfService http://swagger.io/terms/
+// @contact.name @Flussen on github
+// @contact.email flussen0@gmail.com
+// @license.name GPL-3.0 License
+// @license.url https://www.gnu.org/licenses/gpl-3.0.html
+// @host localhost:8080
+// @BasePath /dialosoft-api/v1
+// @securityDefinitions.apikey AccessTokenAuth
+// @in header
+// @name Authorization
+// @description Bearer token for authentication
+// @securityDefinitions.apikey RefreshTokenAuth
+// @in header
+// @name X-Refresh-Token
+// @description Refresh token for authentication
 func main() {
 
 	var err error
@@ -70,6 +92,9 @@ func main() {
 
 	// Api Setup
 	api := config.SetupAPI(conn.Gorm, redisConn, conf)
+
+	// Swagger Docs
+	api.Get("/docs/*", swagger.HandlerDefault)
 
 	if err := api.Listen(":8080"); err != nil {
 		log.Fatal(err)

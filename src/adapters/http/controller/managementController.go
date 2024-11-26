@@ -18,6 +18,21 @@ type ManagementController struct {
 	Layer           string
 }
 
+// ChangeUserRole changes the role of a specified user.
+//
+// @Summary Change user role
+// @Description Updates the role of a user and invalidates their current refresh token to ensure role changes are applied.
+// @Tags Management
+// @Accept json
+// @Produce json
+// @Param request body request.ChangeUserRole true "Change User Role Data"
+// @Success 200 {object} response.StandardResponse "UPDATED - User role updated successfully"
+// @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data or parameters"
+// @Failure 404 {object} response.StandardError "NOT FOUND - User or role not found"
+// @Failure 500 {object} response.StandardError "INTERNAL SERVER ERROR - Unexpected server error"
+// @Security AccessTokenAuth
+// @Security RefreshTokenAuth
+// @Router /management/change-user-role [post]
 func (mc *ManagementController) ChangeUserRole(c fiber.Ctx) error {
 	var req request.ChangeUserRole
 	if err := c.Bind().Body(&req); err != nil {

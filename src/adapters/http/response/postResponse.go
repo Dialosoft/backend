@@ -8,16 +8,16 @@ import (
 )
 
 type PostResponse struct {
-	ID        uuid.UUID      `json:"id"`
-	User      UserResponse   `json:"user"`
-	Forum     ForumResponse  `json:"forumID"`
-	Title     string         `json:"title"`
-	Content   string         `json:"content"`
-	Views     uint32         `json:"views"`
-	Comments  uint32         `json:"comments"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `json:"deletedAt"`
+	ID        uuid.UUID      `json:"id" example:"8213280e-2000-403a-b375-cdcda6488450"`
+	User      UserResponse   `json:"user" example:"8213280e-2000-403a-b375-cdcda6488450"`
+	Forum     ForumResponse  `json:"forumID" example:"8213280e-2000-403a-b375-cdcda6488450"`
+	Title     string         `json:"title" example:"some title"`
+	Content   string         `json:"content" example:"some content"`
+	Views     uint32         `json:"views" example:"10"`
+	Comments  uint32         `json:"comments" example:"5"`
+	CreatedAt time.Time      `json:"createdAt" example:"2022-08-01T00:00:00Z"`
+	UpdatedAt time.Time      `json:"updatedAt" example:"2022-08-01T00:00:00Z"`
+	DeletedAt gorm.DeletedAt `json:"deletedAt" example:"2022-08-01T00:00:00Z"`
 }
 
 type SimplePostResponse struct {
