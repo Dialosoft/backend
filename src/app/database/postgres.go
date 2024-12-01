@@ -43,7 +43,7 @@ func ConnectToDatabase(conf config.GeneralConfig) (Connection, error) {
 		return Connection{}, err
 	}
 
-	err = createDefaultRoles(db)
+	err = CreateDefaultRoles(db)
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return Connection{}, err
 	}
@@ -68,7 +68,7 @@ func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration)
 	}
 }
 
-func createDefaultRoles(db *gorm.DB) error {
+func CreateDefaultRoles(db *gorm.DB) error {
 
 	roles := []models.RoleEntity{
 		{RoleType: "user", Permission: 1, AdminRole: false, ModRole: false},
