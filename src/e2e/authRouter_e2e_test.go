@@ -149,7 +149,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Password: "password456",
 		}
 		resp, err := suite.makeRequest("POST", "/auth/register", registerPayload2, http.StatusConflict) // Esperamos un conflicto (409)
-		suite.NoError(err)                                                                              // El error debería ser nulo porque esperamos un código de estado 409
+		suite.NoError(err)
 
 		body, err := io.ReadAll(resp.Body)
 		suite.NoError(err)
