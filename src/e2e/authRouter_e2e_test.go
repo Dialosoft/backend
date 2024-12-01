@@ -4,11 +4,12 @@ package e2e
 
 import (
 
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 
-
+	"github.com/Dialosoft/src/app/database"
 )
 
 type AuthRouterTestSuite struct {
@@ -30,6 +31,41 @@ func (suite *AuthRouterTestSuite) TearDownSuite() {
 
     suite.E2eTestSuite.TearDownSuite()
 }
+
+func (suite *AuthRouterTestSuite) SetupTest() {
+	// Create predetermined roles at the beginning of each test
+	err := database.CreateDefaultRoles(suite.db)
+	suite.NoError(err)
+}
+
+func (suite *AuthRouterTestSuite) TearDownTest() {
+
+	// truncarTablesMaintainingTheStructureAndRestrictions
+	tables := []string{
+		"comment_votes",
+		"posts_likes",
+		"comments",
+		"posts",
+		"forums",
+		"categories",
+		"tokens",
+		"users",
+		"role_permissions",
+		"roles",
+	}
+
+	for _, table := range tables {
+		err := suite.db.Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE;", table)).Error
+		suite.NoError(err)
+	}
+
+	// Clean Redis at the end of each test
+	err := suite.rdClient.FlushAll(suite.testCtx).Err()
+	suite.NoError(err)
+}
+
+
+
 
 
 func TestAuthRouterSuite(t *testing.T) {
