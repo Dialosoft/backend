@@ -40,3 +40,16 @@ func NewTestServer(db *gorm.DB, redisClient *redis.Client) *TestServer {
 	}
 }
 
+func (s *TestServer) Shutdown() error {
+	if s.App != nil {
+		if err := s.App.Shutdown(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Helper method to get the full API path
+func GetAPIBasePath(path string) string {
+	return "/dialosoft-api/v1" + path
+}
