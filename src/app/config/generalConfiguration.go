@@ -21,6 +21,14 @@ type GeneralConfig struct {
 	MailPassword string
 	FromAddress  string
 	JWTKey       string
+	Redis        *RedisConfig
+}
+
+type RedisConfig struct {
+    Host     string
+    Port     int
+    Password string
+    DB       int
 }
 
 func GetGeneralConfig() GeneralConfig {
@@ -34,6 +42,13 @@ func GetGeneralConfig() GeneralConfig {
 		log.Println("failed to get the port")
 		return GeneralConfig{}
 	}
+
+	redisPort, err := strconv.Atoi(os.Getenv("PORT"))
+	if err != nil {
+		log.Println("failed to get the port")
+		return GeneralConfig{}
+	}
+
 	var SSLMode string
 	if os.Getenv("SSLMODE") == "enable" {
 		SSLMode = "enable"
@@ -59,5 +74,11 @@ func GetGeneralConfig() GeneralConfig {
 		Port:         port,
 		SSLMode:      SSLMode,
 		JWTKey:       jwtKey,
+		Redis: &RedisConfig{
+			Host:     os.Getenv("REDIS_HOST"),
+			Port:     redisPort,
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       0,
+		},
 	}
 }

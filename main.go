@@ -72,7 +72,7 @@ func main() {
 	}
 
 	for {
-		redisConn = database.NewRedisClient()
+		redisConn = database.NewRedisClient(conf)
 		if redisConn != nil {
 			break
 		} else {

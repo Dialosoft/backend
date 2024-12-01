@@ -4,22 +4,22 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/redis/go-redis/v9"
+
+	"github.com/Dialosoft/src/app/config"
 )
+
 
 var redisCtx = context.Background()
 
-func NewRedisClient() *redis.Client {
-	redisHost := os.Getenv("REDIS_HOST") // Get the Redis host from environment variables
-	redisPort := os.Getenv("REDIS_PORT") // Get the Redis port from environment variables
+func NewRedisClient(config config.GeneralConfig) *redis.Client {
 
-	client := redis.NewClient(&redis.Options{
-		Addr:     fmt.Sprintf("%s:%s", redisHost, redisPort),
-		Password: "",
-		DB:       0,
-	})
+    client := redis.NewClient(&redis.Options{
+        Addr:     fmt.Sprintf("%s:%d", config.Redis.Host, config.Redis.Port),
+        Password: config.Redis.Password,
+        DB:       config.Redis.DB,
+    })
 
 	_, err := client.Ping(redisCtx).Result()
 	if err != nil {
