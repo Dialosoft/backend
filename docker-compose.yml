@@ -33,7 +33,7 @@ services:
       - dialosoft-v2-db-data:/var/lib/postgresql/data
       - ./src/app/database/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-dialosoft_user} -d ${DB_NAME:-dialosoft}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${USER:-dialosoft_user} -d ${DATABASE:-dialosoft}" ]
       interval: 30s
       timeout: 10s
       retries: 3

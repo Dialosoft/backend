@@ -43,9 +43,9 @@ func GetGeneralConfig() GeneralConfig {
 		return GeneralConfig{}
 	}
 
-	redisPort, err := strconv.Atoi(os.Getenv("PORT"))
+	redisPort, err := strconv.Atoi(os.Getenv("REDIS_PORT"))
 	if err != nil {
-		log.Println("failed to get the port")
+		log.Println("failed to get the redis port")
 		return GeneralConfig{}
 	}
 
