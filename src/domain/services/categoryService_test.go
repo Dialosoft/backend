@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
+	"gorm.io/gorm"
 
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
@@ -41,23 +42,23 @@ func (m *MockCategoryRepository) FindAllIncludingDeleted() ([]*models.Category, 
 	return args.Get(0).([]*models.Category), args.Error(1)
 }
 
-func (m *MockCategoryRepository) Create(category models.Category) (uuid.UUID, error) {
-	args := m.Called(category)
-	return args.Get(0).(uuid.UUID), args.Error(1)
+func (m *MockCategoryRepository) Create(tx *gorm.DB, category *models.Category) (*models.Category, error) {
+	args := m.Called(tx, category)
+	return args.Get(0).(*models.Category), args.Error(1)
 }
 
-func (m *MockCategoryRepository) Update(category models.Category) error {
-	args := m.Called(category)
+func (m *MockCategoryRepository) Update(tx *gorm.DB, id uuid.UUID, category *models.Category) error {
+	args := m.Called(tx, id, category)
 	return args.Error(0)
 }
 
-func (m *MockCategoryRepository) Delete(id uuid.UUID) error {
-	args := m.Called(id)
+func (m *MockCategoryRepository) Delete(tx *gorm.DB, id uuid.UUID) error {
+	args := m.Called(tx, id)
 	return args.Error(0)
 }
 
-func (m *MockCategoryRepository) Restore(id uuid.UUID) error {
-	args := m.Called(id)
+func (m *MockCategoryRepository) Restore(tx *gorm.DB, id uuid.UUID) error {
+	args := m.Called(tx, id)
 	return args.Error(0)
 }
 
@@ -101,6 +102,39 @@ func (m *MockRoleRepository) Restore(roleID uuid.UUID) error {
 	args := m.Called(roleID)
 	return args.Error(0)
 }
+
+func (m *MockCategoryRepository) FirstByKey(key, value string) (*models.Category, error) {
+    args := m.Called(key, value)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).(*models.Category), args.Error(1)
+}
+
+func (m *MockCategoryRepository) FindAllByKey(key, value string) ([]*models.Category, error) {
+    args := m.Called(key, value)
+    if args.Get(0) == nil {
+        return nil, args.Error(1)
+    }
+    return args.Get(0).([]*models.Category), args.Error(1)
+}
+
+func (m *MockCategoryRepository) GetPreloads() []string {
+    args := m.Called()
+    if args.Get(0) == nil {
+        return nil
+    }
+    return args.Get(0).([]string)
+}
+
+func (m *MockCategoryRepository) GetType() string {
+    args := m.Called()
+    return args.Get(0).(string)
+}
+
+
+// ****************************************
+// ****************************************
 
 type CategoryServiceTestSuite struct {
 	suite.Suite
@@ -377,6 +411,7 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 		mockRoles      []*models.RoleEntity
 		mockRolesErr   error
 		mockCreateErr  error
+		mockCreateResult *models.Category
 		expectedResult uuid.UUID
 		expectedErr    error
 	}{
@@ -392,6 +427,12 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 			},
 			mockRolesErr:   nil,
 			mockCreateErr:  nil,
+			mockCreateResult: &models.Category{
+				ID:           categoryID,
+				Name:         "Electronics",
+				Description:  "Devices and gadgets",
+				RolesAllowed: []string{roleID.String()},
+			},
 			expectedResult: categoryID,
 			expectedErr:    nil,
 		},
@@ -404,6 +445,7 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 			},
 			mockRolesErr:   nil,
 			mockCreateErr:  nil,
+			mockCreateResult: nil,
 			expectedResult: uuid.UUID{},
 			expectedErr:    errorsUtils.ErrInvalidUUID,
 		},
@@ -417,6 +459,7 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 			mockRoles:      []*models.RoleEntity{}, // No roles found
 			mockRolesErr:   nil,
 			mockCreateErr:  nil,
+			mockCreateResult: nil,
 			expectedResult: uuid.UUID{},
 			expectedErr:    errorsUtils.ErrNotFound,
 		},
@@ -430,7 +473,8 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 			mockRoles:      []*models.RoleEntity{{ID: roleID, RoleType: "administrator"}},
 			mockRolesErr:   nil,
 			mockCreateErr:  errors.New("database error"),
-			expectedResult: uuid.UUID{}, // Se espera un UUID vacío cuando hay un error
+			mockCreateResult: nil,
+			expectedResult: uuid.UUID{},
 			expectedErr:    errors.New("database error"),
 		},
 	}
@@ -444,17 +488,22 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 			// Reset Mock's expectations before each subtest
 			suite.mockCategoryRepo.ExpectedCalls = nil
 
-			// Configure the Mock correctly to return an empty UUID and an error if a failure is expected.
+			// Configure the Mock correctly to return the category and error
 			if tt.expectedErr == nil {
-				suite.mockCategoryRepo.On("Create", mock.MatchedBy(func(category models.Category) bool {
-					return category.Name == *tt.newCategory.Name &&
-						category.Description == *tt.newCategory.Description &&
-						len(category.RolesAllowed) == len(tt.newCategory.RolesAllowedID) &&
-						category.RolesAllowed[0] == tt.newCategory.RolesAllowedID[0]
-				})).Return(tt.expectedResult, tt.mockCreateErr)
+				suite.mockCategoryRepo.On("Create", 
+					mock.AnythingOfType("*gorm.DB"),
+					mock.MatchedBy(func(category *models.Category) bool {
+						return category.Name == *tt.newCategory.Name &&
+							category.Description == *tt.newCategory.Description &&
+							len(category.RolesAllowed) == len(tt.newCategory.RolesAllowedID) &&
+							category.RolesAllowed[0] == tt.newCategory.RolesAllowedID[0]
+					}),
+				).Return(tt.mockCreateResult, tt.mockCreateErr)
 			} else {
-				// If we expect an error, we set up the mock to return only the empty uuid and the error.
-				suite.mockCategoryRepo.On("Create", mock.AnythingOfType("models.Category")).Return(uuid.UUID{}, tt.mockCreateErr)
+				suite.mockCategoryRepo.On("Create",
+					mock.AnythingOfType("*gorm.DB"),
+					mock.AnythingOfType("*models.Category"),
+				).Return(tt.mockCreateResult, tt.mockCreateErr)
 			}
 
 			result, err := suite.service.CreateCategory(tt.newCategory)
@@ -536,11 +585,15 @@ func (suite *CategoryServiceTestSuite) TestUpdateCategory() {
 			suite.mockCategoryRepo.On("FindByID", tt.categoryID).Return(tt.mockFindReturn, tt.mockFindErr)
 
 			if tt.mockFindReturn != nil {
-				suite.mockCategoryRepo.On("Update", mock.MatchedBy(func(category models.Category) bool {
-					return category.Name == *tt.updateReq.Name &&
-						category.Description == *tt.updateReq.Description &&
-						category.ID == tt.categoryID
-				})).Return(tt.mockUpdateErr)
+				suite.mockCategoryRepo.On("Update",
+					mock.AnythingOfType("*gorm.DB"),
+					tt.categoryID,
+					mock.MatchedBy(func(category *models.Category) bool {
+						return category.Name == *tt.updateReq.Name &&
+							category.Description == *tt.updateReq.Description &&
+							category.ID == tt.categoryID
+					}),
+				).Return(tt.mockUpdateErr)
 			}
 
 			err := suite.service.UpdateCategory(tt.categoryID, tt.updateReq)
@@ -581,7 +634,10 @@ func (suite *CategoryServiceTestSuite) TestDeleteCategory() {
 		suite.Run(tt.name, func() {
 			suite.mockCategoryRepo.ExpectedCalls = nil
 
-			suite.mockCategoryRepo.On("Delete", tt.categoryID).Return(tt.mockDeleteErr)
+			suite.mockCategoryRepo.On("Delete", 
+				mock.AnythingOfType("*gorm.DB"),
+				tt.categoryID,
+			).Return(tt.mockDeleteErr)
 
 			err := suite.service.DeleteCategory(tt.categoryID)
 
@@ -622,7 +678,10 @@ func (suite *CategoryServiceTestSuite) TestRestoreCategory() {
 			// Reset Mock's expectations before each subtest
 			suite.mockCategoryRepo.ExpectedCalls = nil
 
-			suite.mockCategoryRepo.On("Restore", tt.categoryID).Return(tt.mockReturnErr)
+			suite.mockCategoryRepo.On("Restore", 
+				mock.AnythingOfType("*gorm.DB"),
+				tt.categoryID,
+			).Return(tt.mockReturnErr)
 
 			err := suite.service.RestoreCategory(tt.categoryID)
 

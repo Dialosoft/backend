@@ -87,17 +87,17 @@ func (service *categoryServiceImpl) CreateCategory(newCategory request.NewCatego
 		RolesAllowed: newCategory.RolesAllowedID,
 	}
 
-	id, err := service.categoryRepository.Create(newCategoryEntity)
+	entityCreated, err := service.categoryRepository.Create(nil,&newCategoryEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return id, nil
+	return entityCreated.ID, nil
 }
 
 // DeleteCategory implements CategoryService.
 func (service *categoryServiceImpl) DeleteCategory(id uuid.UUID) error {
-	err := service.categoryRepository.Delete(id)
+	err := service.categoryRepository.Delete(nil, id)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (service *categoryServiceImpl) GetCategoryByName(name string) (*dto.Categor
 
 // RestoreCategory implements CategoryService.
 func (service *categoryServiceImpl) RestoreCategory(id uuid.UUID) error {
-	err := service.categoryRepository.Restore(id)
+	err := service.categoryRepository.Restore(nil, id)
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func (service *categoryServiceImpl) UpdateCategory(id uuid.UUID, req request.New
 		existingCategory.Description = *req.Description
 	}
 
-	err = service.categoryRepository.Update(*existingCategory)
+	err = service.categoryRepository.Update(nil, existingCategory.ID, existingCategory)
 	if err != nil {
 		return err
 	}
