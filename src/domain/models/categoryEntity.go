@@ -21,3 +21,7 @@ type Category struct {
 func (Category) TableName() string {
 	return "categories"
 }
+
+func (c Category) GetID() uuid.UUID {
+	return c.ID
+}
