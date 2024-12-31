@@ -25,3 +25,7 @@ type UserEntity struct {
 func (UserEntity) TableName() string {
 	return "users"
 }
+
+func (u UserEntity) GetID() uuid.UUID {
+	return u.ID
+}
