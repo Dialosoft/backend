@@ -65,22 +65,22 @@ func (service *authServiceImpl) Register(user dto.UserDto) (uuid.UUID, string, s
 	userEntity.RoleID = roleEntity.ID
 	userEntity.Role = *roleEntity
 
-	userID, err := service.userRepository.Create(*userEntity)
+	entityCreated, err := service.userRepository.Create(nil, userEntity)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	token, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, userID, userEntity.RoleID)
+	token, err := jsonWebToken.GenerateAccessJWT(service.jwtKey, entityCreated.GetID(), userEntity.RoleID)
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	refreshToken, err := service.getOrSaveRefreshToken(userID)
+	refreshToken, err := service.getOrSaveRefreshToken(entityCreated.GetID())
 	if err != nil {
 		return uuid.UUID{}, "", "", err
 	}
 
-	return userID, token, refreshToken, nil
+	return entityCreated.GetID(), token, refreshToken, nil
 }
 
 // Login implements AuthService.

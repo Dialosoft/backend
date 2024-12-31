@@ -10,18 +10,18 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/google/uuid"
+
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/google/uuid"
 )
 
 // UserService defines a set of methods for handling business logic related to users.
 // It provides operations like retrieving, creating, updating, and deleting users in the system.
 type UserService interface {
-
 	// GetAllUsers retrieves all users as data transfer objects (DTOs).
 	// Returns a slice of pointers to UserDto and an error if something goes wrong.
 	GetAllUsers() ([]*dto.UserDto, error)
@@ -62,7 +62,7 @@ type userServiceImpl struct {
 func (service *userServiceImpl) GetAllUsers() ([]*dto.UserDto, error) {
 	var usersDtos []*dto.UserDto
 
-	usersEntities, err := service.repository.FindAllUsers()
+	usersEntities, err := service.repository.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -99,23 +99,21 @@ func (service *userServiceImpl) GetUserByUsername(username string) (*dto.UserDto
 
 // CreateNewUser implements UserService.
 func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, error) {
-
 	roleEntity, err := service.roleRepository.FindByType("user")
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
 	userEntity := mapper.UserDtoToUserEntity(&newUser)
-
-	userEntity.ID = roleEntity.ID
+	userEntity.RoleID = roleEntity.ID
 	userEntity.Role = *roleEntity
 
-	id, err := service.repository.Create(*userEntity)
+	entityCreated, err := service.repository.Create(nil, userEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return id, nil
+	return entityCreated.GetID(), nil
 }
 
 // UpdateUser implements UserService.
@@ -150,7 +148,7 @@ func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.NewUser
 		userEntity.Role = *roleEntity
 	}
 
-	if err := service.repository.Update(userID, *userEntity); err != nil {
+	if err := service.repository.Update(nil, userID, userEntity); err != nil {
 		return err
 	}
 
@@ -159,12 +157,12 @@ func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.NewUser
 
 // DeleteUser implements UserService.
 func (service *userServiceImpl) DeleteUser(userID uuid.UUID) error {
-	return service.repository.Delete(userID)
+	return service.repository.Delete(nil, userID)
 }
 
 // RestoreUser implements UserService.
 func (service *userServiceImpl) RestoreUser(userID uuid.UUID) error {
-	return service.repository.Restore(userID)
+	return service.repository.Restore(nil, userID)
 }
 
 func (service *userServiceImpl) ProcessAvatar(userID uuid.UUID, fileHeader *multipart.FileHeader, file multipart.File) error {

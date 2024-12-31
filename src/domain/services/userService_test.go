@@ -13,53 +13,22 @@ import (
 
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
+	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
 )
 
-// MockUserRepository is a mock implementation of UserRepository
+// MockUserRepository es un mock del repositorio de usuarios que extiende el mock del repositorio abstracto
 type MockUserRepository struct {
-	mock.Mock
+	repository.MockAbstractRepository[*models.UserEntity, uuid.UUID]
 }
 
-func (m *MockUserRepository) FindAllUsers() ([]*models.UserEntity, error) {
-	args := m.Called()
-	return args.Get(0).([]*models.UserEntity), args.Error(1)
-}
-
-func (m *MockUserRepository) FindByID(id uuid.UUID) (*models.UserEntity, error) {
-	args := m.Called(id)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*models.UserEntity), args.Error(1)
-}
-
+// FindByUsername es el único método específico que necesitamos implementar
 func (m *MockUserRepository) FindByUsername(username string) (*models.UserEntity, error) {
 	args := m.Called(username)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*models.UserEntity), args.Error(1)
-}
-
-func (m *MockUserRepository) Create(newUser models.UserEntity) (uuid.UUID, error) {
-	args := m.Called(newUser)
-	return args.Get(0).(uuid.UUID), args.Error(1)
-}
-
-func (m *MockUserRepository) Update(userID uuid.UUID, updatedUser models.UserEntity) error {
-	args := m.Called(userID, updatedUser)
-	return args.Error(0)
-}
-
-func (m *MockUserRepository) Delete(userID uuid.UUID) error {
-	args := m.Called(userID)
-	return args.Error(0)
-}
-
-func (m *MockUserRepository) Restore(userID uuid.UUID) error {
-	args := m.Called(userID)
-	return args.Error(0)
 }
 
 // UserServiceTestSuite defines the test suite for UserService
@@ -272,67 +241,119 @@ func (suite *UserServiceTestSuite) TestGetUserByUsername() {
 }
 
 func (suite *UserServiceTestSuite) TestCreateNewUser() {
-	roleID := uuid.New()
-	newUserDto := dto.UserDto{
-		Username:    "newuser",
-		Email:       "newuser@test.com",
-		Password:    "password123",
-		Role: dto.RoleDto{
-			ID:         roleID,
-			RoleType:   "USER",
-			Permission: 1,
-			AdminRole:  false,
-			ModRole:    false,
-		},
-	}
-
-	mockRole := &models.RoleEntity{
-		ID:        roleID,
-		RoleType:  "user",
-		AdminRole: false,
-		ModRole:   false,
-		UserRole:  true,
-	}
+	userID := uuid.MustParse("16ceae31-e0be-41f5-b688-4740492e8acc")
+	roleID := uuid.MustParse("22ceae31-e0be-44f6-b699-4740500e8acc")
 
 	tests := []struct {
 		name          string
 		userDto       dto.UserDto
 		mockRole      *models.RoleEntity
-		mockUserID    uuid.UUID
-		mockError     error
-		expectedError string
+		mockRoleErr   error
+		mockCreateErr error
+		mockCreateResult *models.UserEntity
+		expectedResult uuid.UUID
+		expectedError error
 	}{
 		{
-			name:          "success create user",
-			userDto:       newUserDto,
-			mockRole:      mockRole,
-			mockUserID:    uuid.New(),
-			mockError:     nil,
-			expectedError: "",
+			name: "success create user",
+			userDto: dto.UserDto{
+				Username: "newuser",
+				Email:    "newuser@test.com",
+				Password: "password123",
+				Role: dto.RoleDto{
+					ID:         roleID,
+					RoleType:   "USER",
+					Permission: 1,
+					AdminRole:  false,
+					ModRole:    false,
+				},
+			},
+			mockRole: &models.RoleEntity{
+				ID:        roleID,
+				RoleType:  "user",
+				AdminRole: false,
+				ModRole:   false,
+				UserRole:  true,
+			},
+			mockRoleErr: nil,
+			mockCreateResult: &models.UserEntity{
+				ID:       userID,
+				Username: "newuser",
+				Email:    "newuser@test.com",
+				RoleID:   roleID,
+				Role:     models.RoleEntity{ID: roleID},
+			},
+			mockCreateErr:   nil,
+			expectedResult:  userID,
+			expectedError:   nil,
 		},
 		{
-			name:          "error creating user",
-			userDto:       newUserDto,
-			mockRole:      mockRole,
-			mockUserID:    uuid.Nil,
-			mockError:     errors.New("database error"),
-			expectedError: "database error",
+			name: "role not found",
+			userDto: dto.UserDto{
+				Username: "newuser",
+				Email:    "newuser@test.com",
+				Password: "password123",
+			},
+			mockRole:      nil,
+			mockRoleErr:   errors.New("role not found"),
+			mockCreateResult: nil,
+			mockCreateErr:   nil,
+			expectedResult:  uuid.UUID{},
+			expectedError:   errors.New("role not found"),
+		},
+		{
+			name: "error creating user",
+			userDto: dto.UserDto{
+				Username: "newuser",
+				Email:    "newuser@test.com",
+				Password: "password123",
+			},
+			mockRole: &models.RoleEntity{
+				ID:        roleID,
+				RoleType:  "user",
+				AdminRole: false,
+				ModRole:   false,
+				UserRole:  true,
+			},
+			mockRoleErr:   nil,
+			mockCreateResult: nil,
+			mockCreateErr:   errors.New("database error"),
+			expectedResult:  uuid.UUID{},
+			expectedError:   errors.New("database error"),
 		},
 	}
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			suite.mockRoleRepo.On("FindByType", "user").Return(tt.mockRole, nil)
-			suite.mockUserRepo.On("Create", mock.AnythingOfType("models.UserEntity")).Return(tt.mockUserID, tt.mockError)
+			// Reset Mock's expectations before each subtest
+			suite.mockRoleRepo.ExpectedCalls = nil
+			suite.mockRoleRepo.On("FindByType", "user").Return(tt.mockRole, tt.mockRoleErr)
+
+			// Reset Mock's expectations before each subtest
+			suite.mockUserRepo.ExpectedCalls = nil
+
+			// Configure the Mock correctly to return the user and error
+			if tt.mockRoleErr == nil {
+				suite.mockUserRepo.On("Create", 
+					mock.AnythingOfType("*gorm.DB"),
+					mock.MatchedBy(func(user *models.UserEntity) bool {
+						return user.Username == tt.userDto.Username &&
+							user.Email == tt.userDto.Email &&
+							user.RoleID == tt.mockRole.ID &&
+							user.Role == *tt.mockRole
+					}),
+				).Return(tt.mockCreateResult, tt.mockCreateErr)
+			}
 
 			userID, err := suite.service.CreateNewUser(tt.userDto)
 
-			if tt.expectedError != "" {
-				assert.EqualError(suite.T(), err, tt.expectedError)
-				assert.Equal(suite.T(), uuid.Nil, userID)
+			if tt.expectedError != nil {
+				assert.Error(suite.T(), err)
+				assert.Equal(suite.T(), tt.expectedError.Error(), err.Error())
+				assert.Equal(suite.T(), tt.expectedResult, userID)
 			} else {
 				assert.NoError(suite.T(), err)
-				assert.NotEqual(suite.T(), uuid.Nil, userID)
+				assert.Equal(suite.T(), tt.expectedResult, userID)
 			}
 		})
 	}
@@ -346,6 +367,14 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 		Locked:   ptrToBool(false),
 		Disable:  ptrToBool(false),
 		RoleID:   ptrToString(roleID.String()),
+	}
+
+	mockRole := &models.RoleEntity{
+		ID:        roleID,
+		RoleType:  "USER",
+		AdminRole: false,
+		ModRole:   false,
+		UserRole:  true,
 	}
 
 	mockUser := &models.UserEntity{
@@ -367,7 +396,9 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 		userID        uuid.UUID
 		updateReq     request.NewUser
 		mockUser      *models.UserEntity
-		mockError     error
+		mockRole      *models.RoleEntity
+		mockUserErr   error
+		mockRoleErr   error
 		expectedError string
 	}{
 		{
@@ -375,7 +406,9 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 			userID:        userID,
 			updateReq:     updateReq,
 			mockUser:      mockUser,
-			mockError:     nil,
+			mockRole:      mockRole,
+			mockUserErr:   nil,
+			mockRoleErr:   nil,
 			expectedError: "",
 		},
 		{
@@ -383,16 +416,54 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 			userID:        uuid.New(),
 			updateReq:     updateReq,
 			mockUser:      nil,
-			mockError:     errors.New("user not found"),
+			mockRole:      nil,
+			mockUserErr:   errors.New("user not found"),
+			mockRoleErr:   nil,
 			expectedError: "user not found",
+		},
+		{
+			name:          "role not found",
+			userID:        userID,
+			updateReq:     updateReq,
+			mockUser:      mockUser,
+			mockRole:      nil,
+			mockUserErr:   nil,
+			mockRoleErr:   errors.New("role not found"),
+			expectedError: "role not found",
 		},
 	}
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			suite.mockUserRepo.On("FindByID", tt.userID).Return(tt.mockUser, tt.mockError)
-			if tt.mockError == nil {
-				suite.mockUserRepo.On("Update", tt.userID, mock.AnythingOfType("models.UserEntity")).Return(nil)
+			// Reset Mock's expectations before each subtest
+			suite.mockUserRepo.ExpectedCalls = nil
+			suite.mockRoleRepo.ExpectedCalls = nil
+
+			// Configure user repository mock
+			suite.mockUserRepo.On("FindByID", tt.userID).Return(tt.mockUser, tt.mockUserErr)
+
+			if tt.mockUserErr == nil && tt.updateReq.RoleID != nil {
+				roleUUID, _ := uuid.Parse(*tt.updateReq.RoleID)
+				suite.mockRoleRepo.On("FindByID", roleUUID).Return(tt.mockRole, tt.mockRoleErr)
+			}
+
+			if tt.mockUserErr == nil && tt.mockRoleErr == nil {
+				suite.mockUserRepo.On("Update", 
+					mock.AnythingOfType("*gorm.DB"),
+					tt.userID,
+					mock.MatchedBy(func(user *models.UserEntity) bool {
+						matches := user.Username == *tt.updateReq.Username &&
+							user.Banned == *tt.updateReq.Locked
+						
+						if tt.mockRole != nil {
+							matches = matches &&
+								user.RoleID == tt.mockRole.ID &&
+								user.Role == *tt.mockRole
+						}
+						
+						return matches
+					}),
+				).Return(nil)
 			}
 
 			err := suite.service.UpdateUser(tt.userID, tt.updateReq)
@@ -431,7 +502,7 @@ func (suite *UserServiceTestSuite) TestDeleteUser() {
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			suite.mockUserRepo.On("Delete", tt.userID).Return(tt.mockError)
+			suite.mockUserRepo.On("Delete", mock.AnythingOfType("*gorm.DB"), tt.userID).Return(tt.mockError)
 
 			err := suite.service.DeleteUser(tt.userID)
 
@@ -469,7 +540,7 @@ func (suite *UserServiceTestSuite) TestRestoreUser() {
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			suite.mockUserRepo.On("Restore", tt.userID).Return(tt.mockError)
+			suite.mockUserRepo.On("Restore", mock.AnythingOfType("*gorm.DB"), tt.userID).Return(tt.mockError)
 
 			err := suite.service.RestoreUser(tt.userID)
 
@@ -513,7 +584,7 @@ func (suite *UserServiceTestSuite) TestProcessAvatar() {
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
 			err := suite.service.ProcessAvatar(tt.userID, tt.fileHeader, tt.file)
-			
+
 			// Como ProcessAvatar intenta procesar un archivo real,
 			// esperamos un error ya que estamos usando datos mock
 			assert.Error(suite.T(), err)
@@ -546,7 +617,7 @@ func (m *mockMultipartFile) ReadAt(p []byte, off int64) (n int, err error) {
 	return
 }
 
-func (m *mockMultipartFile) Close() error               { return nil }
+func (m *mockMultipartFile) Close() error { return nil }
 func (m *mockMultipartFile) Seek(offset int64, whence int) (int64, error) {
 	switch whence {
 	case io.SeekStart:
