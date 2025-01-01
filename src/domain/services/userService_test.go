@@ -53,6 +53,8 @@ func (suite *UserServiceTestSuite) TearDownTest() {
 }
 
 func (suite *UserServiceTestSuite) TestGetAllUsers() {
+	userIdMock := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	roleIdMock := uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")
 	tests := []struct {
 		name          string
 		mockUsers     []*models.UserEntity
@@ -63,12 +65,12 @@ func (suite *UserServiceTestSuite) TestGetAllUsers() {
 			name: "success get all users",
 			mockUsers: []*models.UserEntity{
 				{
-					ID:       uuid.New(),
+					ID:       userIdMock,
 					Username: "user1",
 					Email:    "user1@test.com",
-					RoleID:   uuid.New(),
+					RoleID:   roleIdMock,
 					Role: models.RoleEntity{
-						ID:        uuid.New(),
+						ID:        roleIdMock,
 						RoleType:  "USER",
 						AdminRole: false,
 						ModRole:   false,
@@ -76,12 +78,12 @@ func (suite *UserServiceTestSuite) TestGetAllUsers() {
 					},
 				},
 				{
-					ID:       uuid.New(),
+					ID:       userIdMock,
 					Username: "user2",
 					Email:    "user2@test.com",
-					RoleID:   uuid.New(),
+					RoleID:   roleIdMock,
 					Role: models.RoleEntity{
-						ID:        uuid.New(),
+						ID:        roleIdMock,
 						RoleType:  "ADMIN",
 						AdminRole: true,
 						ModRole:   false,
@@ -102,7 +104,7 @@ func (suite *UserServiceTestSuite) TestGetAllUsers() {
 
 	for _, tt := range tests {
 		suite.Run(tt.name, func() {
-			suite.mockUserRepo.On("FindAllUsers").Return(tt.mockUsers, tt.mockError)
+			suite.mockUserRepo.On("FindAll").Return(tt.mockUsers, tt.mockError).Once()
 
 			users, err := suite.service.GetAllUsers()
 
@@ -116,21 +118,27 @@ func (suite *UserServiceTestSuite) TestGetAllUsers() {
 					assert.Equal(suite.T(), tt.mockUsers[i].ID, user.ID)
 					assert.Equal(suite.T(), tt.mockUsers[i].Username, user.Username)
 					assert.Equal(suite.T(), tt.mockUsers[i].Email, user.Email)
+					assert.Equal(suite.T(), tt.mockUsers[i].Role.ID, user.Role.ID)
+					assert.Equal(suite.T(), tt.mockUsers[i].Role.RoleType, user.Role.RoleType)
+					assert.Equal(suite.T(), tt.mockUsers[i].Role.AdminRole, user.Role.AdminRole)
+					assert.Equal(suite.T(), tt.mockUsers[i].Role.ModRole, user.Role.ModRole)
 				}
 			}
+			suite.mockUserRepo.AssertExpectations(suite.T())
 		})
 	}
 }
 
 func (suite *UserServiceTestSuite) TestGetUserByID() {
-	userID := uuid.New()
+	userID := uuid.MustParse("16ceae31-e0be-41f5-b688-4740492e8acc")
+	roleID := uuid.MustParse("22ceae31-e0be-44f6-b699-4740500e8acc")
 	mockUser := &models.UserEntity{
 		ID:       userID,
 		Username: "testuser",
 		Email:    "test@test.com",
-		RoleID:   uuid.New(),
+		RoleID:   roleID,
 		Role: models.RoleEntity{
-			ID:        uuid.New(),
+			ID:        roleID,
 			RoleType:  "USER",
 			AdminRole: false,
 			ModRole:   false,
@@ -154,7 +162,7 @@ func (suite *UserServiceTestSuite) TestGetUserByID() {
 		},
 		{
 			name:          "user not found",
-			userID:        uuid.New(),
+			userID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 			mockUser:      nil,
 			mockError:     errors.New("user not found"),
 			expectedError: "user not found",
@@ -184,12 +192,12 @@ func (suite *UserServiceTestSuite) TestGetUserByID() {
 func (suite *UserServiceTestSuite) TestGetUserByUsername() {
 	username := "testuser"
 	mockUser := &models.UserEntity{
-		ID:       uuid.New(),
+		ID:       uuid.MustParse("550e8400-e29b-41d4-a716-446655440000"),
 		Username: username,
 		Email:    "test@test.com",
-		RoleID:   uuid.New(),
+		RoleID:   uuid.MustParse("550e8400-e29b-41d4-a716-446655440001"),
 		Role: models.RoleEntity{
-			ID:        uuid.New(),
+			ID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440002"),
 			RoleType:  "USER",
 			AdminRole: false,
 			ModRole:   false,
@@ -360,8 +368,8 @@ func (suite *UserServiceTestSuite) TestCreateNewUser() {
 }
 
 func (suite *UserServiceTestSuite) TestUpdateUser() {
-	userID := uuid.New()
-	roleID := uuid.New()
+	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	roleID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")
 	updateReq := request.NewUser{
 		Username: ptrToString("updateduser"),
 		Locked:   ptrToBool(false),
@@ -413,7 +421,7 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 		},
 		{
 			name:          "user not found",
-			userID:        uuid.New(),
+			userID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440002"),
 			updateReq:     updateReq,
 			mockUser:      nil,
 			mockRole:      nil,
@@ -478,7 +486,7 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 }
 
 func (suite *UserServiceTestSuite) TestDeleteUser() {
-	userID := uuid.New()
+	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
 	tests := []struct {
 		name          string
@@ -494,7 +502,7 @@ func (suite *UserServiceTestSuite) TestDeleteUser() {
 		},
 		{
 			name:          "error deleting user",
-			userID:        uuid.New(),
+			userID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440001"),
 			mockError:     errors.New("delete error"),
 			expectedError: "delete error",
 		},
@@ -516,7 +524,7 @@ func (suite *UserServiceTestSuite) TestDeleteUser() {
 }
 
 func (suite *UserServiceTestSuite) TestRestoreUser() {
-	userID := uuid.New()
+	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
 	tests := []struct {
 		name          string
@@ -532,7 +540,7 @@ func (suite *UserServiceTestSuite) TestRestoreUser() {
 		},
 		{
 			name:          "error restoring user",
-			userID:        uuid.New(),
+			userID:        uuid.MustParse("550e8400-e29b-41d4-a716-446655440001"),
 			mockError:     errors.New("restore error"),
 			expectedError: "restore error",
 		},
@@ -554,7 +562,7 @@ func (suite *UserServiceTestSuite) TestRestoreUser() {
 }
 
 func (suite *UserServiceTestSuite) TestProcessAvatar() {
-	userID := uuid.New()
+	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	mockFileHeader := &multipart.FileHeader{
 		Filename: "test.jpg",
 		Size:     1024,

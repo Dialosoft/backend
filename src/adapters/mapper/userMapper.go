@@ -24,9 +24,16 @@ func UserDtoToUserEntity(userDto *dto.UserDto) *models.UserEntity {
 // The Password field is intentionally left blank in the resulting UserDto.
 func UserEntityToUserDto(userEntity *models.UserEntity) *dto.UserDto {
 	userDto := dto.UserDto{
+		ID:       userEntity.ID,
 		Username: userEntity.Username,
 		Password: "",
 		Email:    userEntity.Email,
+		Role: dto.RoleDto{
+			ID:        userEntity.Role.ID,
+			RoleType:  userEntity.Role.RoleType,
+			AdminRole: userEntity.Role.AdminRole,
+			ModRole:   userEntity.Role.ModRole,
+		},
 	}
 
 	return &userDto
