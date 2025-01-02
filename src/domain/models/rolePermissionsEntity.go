@@ -14,3 +14,7 @@ type RolePermissions struct {
 func (RolePermissions) TableName() string {
 	return "role_permissions"
 }
+
+func (r RolePermissions) GetID() uuid.UUID {
+	return r.RoleID
+}
