@@ -26,3 +26,7 @@ func NewUserRepository(gormDB *gorm.DB) UserRepository {
 func (repo *userRepositoryImpl) FindByUsername(username string) (*models.UserEntity, error) {
 	return repo.FirstByKey("username", username)
 }
+
+func (repo *userRepositoryImpl) GetPreloads() []string {
+	return []string{"Role"}
+}

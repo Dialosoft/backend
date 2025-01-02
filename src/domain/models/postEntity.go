@@ -21,3 +21,11 @@ type Post struct {
 	UpdatedAt time.Time      `json:"updatedAt"`
 	DeletedAt gorm.DeletedAt `json:"deletedAt"`
 }
+
+func (Post) TableName() string {
+	return "posts"
+}
+
+func (p Post) GetID() uuid.UUID {
+	return p.ID
+}
