@@ -19,3 +19,7 @@ type TokenEntity struct {
 func (TokenEntity) TableName() string {
 	return "tokens"
 }
+
+func (t TokenEntity) GetID() uuid.UUID {
+	return t.ID
+}
