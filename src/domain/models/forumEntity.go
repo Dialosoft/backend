@@ -25,3 +25,7 @@ type Forum struct {
 func (Forum) TableName() string {
 	return "forums"
 }
+
+func (f Forum) GetID() uuid.UUID {
+	return f.ID
+}
