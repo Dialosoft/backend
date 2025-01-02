@@ -83,7 +83,7 @@ func (service *roleServiceImpl) GetDefaultRoles() (map[string]uuid.UUID, error) 
 func (service *roleServiceImpl) GetAllRoles() ([]*dto.RoleDto, error) {
 	var rolesDtos []*dto.RoleDto
 
-	rolesEntities, err := service.roleRepository.FindAllRoles()
+	rolesEntities, err := service.roleRepository.FindAll()
 	if err != nil {
 		return nil, err
 	}
@@ -130,17 +130,17 @@ func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, e
 		CanManageUsers:      newRole.AdminRole,
 	}
 
-	roleUUID, err := service.roleRepository.Create(*roleEntity)
+	entityCreated, err := service.roleRepository.Create(nil, roleEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	_, err = service.rolePermissionsRepository.Save(rolePermissionEntity)
+	_, err = service.rolePermissionsRepository.Create(nil, &rolePermissionEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return roleUUID, nil
+	return entityCreated.GetID(), nil
 }
 
 // UpdateRole implements RoleService.
@@ -163,7 +163,7 @@ func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole
 		existingRole.ModRole = *req.ModRole
 	}
 
-	return service.roleRepository.Update(roleID, *existingRole)
+	return service.roleRepository.Update(nil, roleID, existingRole)
 }
 
 func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req request.NewRolePermissions) error {
@@ -184,7 +184,7 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 		rolePermissionEntity.CanManageUsers = *req.CanManageUsers
 	}
 
-	_, err = service.rolePermissionsRepository.Save(*rolePermissionEntity)
+	_, err = service.rolePermissionsRepository.Create(nil, rolePermissionEntity)
 	if err != nil {
 		return err
 	}
@@ -203,12 +203,12 @@ func (service *roleServiceImpl) GetRolePermissionsByRoleID(roleID uuid.UUID) (*m
 
 // DeleteRole implements RoleService.
 func (service *roleServiceImpl) DeleteRole(roleID uuid.UUID) error {
-	return service.roleRepository.Delete(roleID)
+	return service.roleRepository.Delete(nil, roleID)
 }
 
 // RestoreRole implements RoleService.
 func (service *roleServiceImpl) RestoreRole(roleID uuid.UUID) error {
-	return service.roleRepository.Restore(roleID)
+	return service.roleRepository.Restore(nil, roleID)
 }
 
 func NewRoleRepository(roleRepository repository.RoleRepository, rolePermissionsRepository repository.RolePermissionsRepository) RoleService {

@@ -82,7 +82,7 @@ func (service *postServiceImpl) CreateNewPost(UserID uuid.UUID, post request.New
 		Content: post.Content,
 	}
 
-	newPostEntity, err := service.postRepository.Create(postEntity)
+	newPostEntity, err := service.postRepository.Create(nil, &postEntity)
 	if err != nil {
 		return response.PostResponse{}, err
 	}
@@ -106,7 +106,7 @@ func (service *postServiceImpl) GetAllPostsByForum(forumID uuid.UUID, limit, off
 // GetAllPosts implements PostService.
 func (service *postServiceImpl) GetAllPosts(limit, offset int) ([]response.PostResponse, error) {
 	var postResponses []response.PostResponse
-	postsModels, err := service.postRepository.FindAll(limit, offset)
+	postsModels, err := service.postRepository.FindAllWithPagination(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (service *postServiceImpl) GetPostsByUserID(userID uuid.UUID) ([]response.P
 
 func (service *postServiceImpl) GetAllPostsAndReturnSimpleResponse(limit, offset int) ([]response.SimplePostResponse, error) {
 	var postResponses []response.SimplePostResponse
-	postsModels, err := service.postRepository.FindAll(limit, offset)
+	postsModels, err := service.postRepository.FindAllWithPagination(limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (service *postServiceImpl) UpdatePostTitle(postID uuid.UUID, title string) 
 		modelPost.Title = title
 	}
 
-	return service.postRepository.Update(postID, *modelPost)
+	return service.postRepository.Update(nil, postID, modelPost)
 }
 
 // UpdatePost implements PostService.
@@ -196,7 +196,7 @@ func (service *postServiceImpl) UpdatePostContent(postID uuid.UUID, content stri
 		modelPost.Content = content
 	}
 
-	return service.postRepository.Update(postID, *modelPost)
+	return service.postRepository.Update(nil, postID, modelPost)
 }
 
 // LikePost implements PostService.
@@ -211,12 +211,12 @@ func (service *postServiceImpl) UnlikePost(postID uuid.UUID, userID uuid.UUID) e
 
 // DeletePost implements PostService.
 func (service *postServiceImpl) DeletePost(postID uuid.UUID) error {
-	return service.postRepository.Delete(postID)
+	return service.postRepository.Delete(nil, postID)
 }
 
 // RestorePost implements PostService.
 func (service *postServiceImpl) RestorePost(postID uuid.UUID) error {
-	return service.postRepository.Restore(postID)
+	return service.postRepository.Restore(nil, postID)
 }
 
 func (service *postServiceImpl) GetPostLikesByUserID(userID uuid.UUID) ([]uuid.UUID, error) {

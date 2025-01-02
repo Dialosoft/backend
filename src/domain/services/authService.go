@@ -177,7 +177,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 					return "", err
 				}
 
-				err = service.tokenRepository.Save(newTokenEntity)
+				_, err = service.tokenRepository.Create(nil, &newTokenEntity)
 				if err != nil {
 					return "", err
 				}
@@ -223,7 +223,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 			{
 				//delete
 
-				err = service.tokenRepository.Delete(jtiUUID)
+				err = service.tokenRepository.Delete(nil, jtiUUID)
 				if err != nil {
 					return "", err
 				}
@@ -234,7 +234,7 @@ func (service *authServiceImpl) getOrSaveRefreshToken(userID uuid.UUID) (string,
 				}
 			}
 
-			err = service.tokenRepository.Save(newTokenEntity)
+			_, err = service.tokenRepository.Create(nil, &newTokenEntity)
 			if err != nil {
 				return "", err
 			}

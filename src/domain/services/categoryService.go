@@ -61,7 +61,7 @@ func (service *categoryServiceImpl) CreateCategory(newCategory request.NewCatego
 		newCategory.Description = &empty
 	}
 
-	roleEntities, err := service.roleRepository.FindAllRoles()
+	roleEntities, err := service.roleRepository.FindAll()
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -92,7 +92,7 @@ func (service *categoryServiceImpl) CreateCategory(newCategory request.NewCatego
 		return uuid.UUID{}, err
 	}
 
-	return entityCreated.ID, nil
+	return entityCreated.GetID(), nil
 }
 
 // DeleteCategory implements CategoryService.

@@ -58,12 +58,12 @@ func (service *forumServiceImpl) GetForumsByCategoryIDAndAllowed(categoryID uuid
 
 	for _, forum := range forums {
 		if forum.RolesAllowed == nil {
-			forumsResponse = append(forumsResponse, mapper.ForumEntityToForumResponse(&forum))
+			forumsResponse = append(forumsResponse, mapper.ForumEntityToForumResponse(forum))
 		}
 
 		for _, role := range forum.RolesAllowed {
 			if role == userRole {
-				forumsResponse = append(forumsResponse, mapper.ForumEntityToForumResponse(&forum))
+				forumsResponse = append(forumsResponse, mapper.ForumEntityToForumResponse(forum))
 			}
 		}
 	}
@@ -76,21 +76,17 @@ func (service *forumServiceImpl) CreateForum(newRequest request.NewForum) (uuid.
 	forumEntity := mapper.ForumNewRequestToForumEntity(newRequest)
 	forumEntity.IsActive = true
 
-	forumUUID, err := service.forumRepository.Create(forumEntity)
+	createdForum, err := service.forumRepository.Create(nil, &forumEntity)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
 
-	return forumUUID, nil
+	return createdForum.ID, nil
 }
 
 // DeleteForum implements ForumService.
 func (service *forumServiceImpl) DeleteForum(id uuid.UUID) error {
-	err := service.forumRepository.Delete(id)
-	if err != nil {
-		return err
-	}
-	return nil
+	return service.forumRepository.Delete(nil, id)
 }
 
 // GetAllForums implements ForumService.
@@ -131,16 +127,7 @@ func (service *forumServiceImpl) GetForumByName(name string) (response.ForumResp
 
 // RestoreForum implements ForumService.
 func (service *forumServiceImpl) RestoreForum(id uuid.UUID) error {
-	forum, err := service.forumRepository.FindByID(id)
-	if err != nil {
-		return err
-	}
-
-	if err = service.forumRepository.Restore(forum.ID); err != nil {
-		return err
-	}
-
-	return nil
+	return service.forumRepository.Restore(nil, id)
 }
 
 // UpdateForum implements ForumService.
@@ -150,34 +137,10 @@ func (service *forumServiceImpl) UpdateForum(id uuid.UUID, req request.NewForum)
 		return err
 	}
 
-	// {
-	// 	if req.Name != nil {
-	// 		forum.Name = *req.Name
-	// 	}
+	updatedForum := mapper.ForumNewRequestToForumEntity(req)
+	updatedForum.ID = forum.ID
 
-	// 	if req.Description != nil {
-	// 		forum.Description = *req.Description
-	// 	}
-
-	// 	if req.IsActive != nil {
-	// 		forum.IsActive = *req.IsActive
-	// 	}
-
-	// 	if req.Type != nil {
-	// 		forum.Type = *req.Type
-	// 	}
-
-	// 	if req.CategoryID != nil {
-	// 		forum.CategoryID = *req.CategoryID
-	// 	}
-	// }
-
-	err = service.forumRepository.Update(*forum)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return service.forumRepository.Update(nil, id, &updatedForum)
 }
 
 func NewForumService(forumRepository repository.ForumRepository, categoryRepository repository.CategoryRepository) ForumService {
