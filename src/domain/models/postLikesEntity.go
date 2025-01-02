@@ -15,3 +15,7 @@ type PostLikes struct {
 func (PostLikes) TableName() string {
 	return "posts_likes"
 }
+
+func (p PostLikes) GetID() uuid.UUID {
+	return p.PostID
+}

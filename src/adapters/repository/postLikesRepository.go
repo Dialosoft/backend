@@ -9,6 +9,7 @@ import (
 // PostLikesRepository defines a set of methods for managing post likes in the system.
 // Each method provides operations related to the PostLikesEntity model.
 type PostLikesRepository interface {
+	AbstractRepository[*models.PostLikes, uuid.UUID]
 
 	// FindAllByPostID retrieves all likes for a specific post.
 	// Returns a slice of pointers to PostLikesEntity and an error if something goes wrong.
@@ -32,31 +33,31 @@ type PostLikesRepository interface {
 }
 
 type postLikesRepositoryImpl struct {
-	db *gorm.DB
+	*abstractRepositoryImpl[*models.PostLikes, uuid.UUID]
 }
 
-// FindAll implements PostLikesRepository.
+// NewPostLikesRepository creates a new instance of PostLikesRepository
+func NewPostLikesRepository(db *gorm.DB) PostLikesRepository {
+	repo := &postLikesRepositoryImpl{}
+	repo.abstractRepositoryImpl = CreateRepository(db, repo)
+	return repo
+}
+
+
+// FindAllByPostID implements PostLikesRepository.
 func (repo *postLikesRepositoryImpl) FindAllByPostID(postID uuid.UUID) ([]*models.PostLikes, error) {
-	var postLikes []*models.PostLikes
-	result := repo.db.Find(&postLikes, "post_id = ?", postID)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return postLikes, nil
+	return repo.FindAllByKey("post_id", postID.String())
 }
 
 // FindAllByUserID implements PostLikesRepository.
-func (repo *postLikesRepositoryImpl) FindAllByUserIDAndPostID(postID uuid.UUID, userID uuid.UUID) ([]*models.PostLikes, error) {
-	var postLikes []*models.PostLikes
-	if err := repo.db.Find(&postLikes, "post_id = ? AND user_id = ?", postID, userID).Error; err != nil {
-		return nil, err
-	}
-	return postLikes, nil
+func (repo *postLikesRepositoryImpl) FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error) {
+	return repo.FindAllByKey("user_id", userID.String())
 }
 
-func (repo *postLikesRepositoryImpl) FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error) {
+// FindAllByUserIDAndPostID implements PostLikesRepository.
+func (repo *postLikesRepositoryImpl) FindAllByUserIDAndPostID(postID uuid.UUID, userID uuid.UUID) ([]*models.PostLikes, error) {
 	var postLikes []*models.PostLikes
-	if err := repo.db.Find(&postLikes, "user_id = ?", userID).Error; err != nil {
+	if err := repo.gorm.Find(&postLikes, "post_id = ? AND user_id = ?", postID, userID).Error; err != nil {
 		return nil, err
 	}
 	return postLikes, nil
@@ -64,20 +65,15 @@ func (repo *postLikesRepositoryImpl) FindAllByUserID(userID uuid.UUID) ([]*model
 
 // Save implements PostLikesRepository.
 func (repo *postLikesRepositoryImpl) Save(postID uuid.UUID, userID uuid.UUID) error {
-	if err := repo.db.Create(&models.PostLikes{
+	postLike := &models.PostLikes{
 		PostID: postID,
 		UserID: userID,
-	}).Error; err != nil {
-		return err
 	}
-	return nil
+	_, err := repo.Create(nil, postLike)
+	return err
 }
 
 // Remove implements PostLikesRepository.
 func (repo *postLikesRepositoryImpl) Remove(postID uuid.UUID, userID uuid.UUID) error {
-	return repo.db.Delete(models.PostLikes{}, "post_id = ? AND user_id = ?", postID, userID).Error
-}
-
-func NewPostLikesRepository(db *gorm.DB) PostLikesRepository {
-	return &postLikesRepositoryImpl{db: db}
+	return repo.gorm.Where("post_id = ? AND user_id = ?", postID, userID).Delete(&models.PostLikes{}).Error
 }
