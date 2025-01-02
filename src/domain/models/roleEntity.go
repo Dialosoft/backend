@@ -22,3 +22,7 @@ type RoleEntity struct {
 func (RoleEntity) TableName() string {
 	return "roles"
 }
+
+func (r RoleEntity) GetID() uuid.UUID {
+	return r.ID
+}
