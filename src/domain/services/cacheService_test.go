@@ -322,7 +322,7 @@ func (suite *CacheServiceTestSuite) TestDeleteRefreshTokenByID() {
 	}
 }
 
-// Create a new instance of the cacsevicetestsuite structure and executes the test suite
+// Create a new instance of the TestCacheServiceTestSuite structure and executes the test suite
 func TestCacheServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CacheServiceTestSuite))
 }

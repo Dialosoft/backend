@@ -16,6 +16,7 @@ import (
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
 	"github.com/Dialosoft/src/pkg/errorsUtils"
+	testUtils "github.com/Dialosoft/src/pkg/utils/test"
 )
 
 type MockCategoryRepository struct {
@@ -328,8 +329,8 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 		{
 			name: "success creating category",
 			newCategory: request.NewCategory{
-				Name:           ptrToString("Electronics"),
-				Description:    ptrToString("Devices and gadgets"),
+				Name:           testUtils.PtrToString("Electronics"),
+				Description:    testUtils.PtrToString("Devices and gadgets"),
 				RolesAllowedID: []string{roleID.String()},
 			},
 			mockRoles: []*models.RoleEntity{
@@ -349,8 +350,8 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 		{
 			name: "invalid role UUID provided",
 			newCategory: request.NewCategory{
-				Name:           ptrToString("Electronics"),
-				Description:    ptrToString("Devices and gadgets"),
+				Name:           testUtils.PtrToString("Electronics"),
+				Description:    testUtils.PtrToString("Devices and gadgets"),
 				RolesAllowedID: []string{"invalid-uuid"},
 			},
 			mockRolesErr:     nil,
@@ -362,8 +363,8 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 		{
 			name: "role not found in system",
 			newCategory: request.NewCategory{
-				Name:           ptrToString("Electronics"),
-				Description:    ptrToString("Devices and gadgets"),
+				Name:           testUtils.PtrToString("Electronics"),
+				Description:    testUtils.PtrToString("Devices and gadgets"),
 				RolesAllowedID: []string{roleID.String()},
 			},
 			mockRoles:        []*models.RoleEntity{}, // No roles found
@@ -376,8 +377,8 @@ func (suite *CategoryServiceTestSuite) TestCreateCategory() {
 		{
 			name: "error during category creation in repository",
 			newCategory: request.NewCategory{
-				Name:           ptrToString("Electronics 2"),
-				Description:    ptrToString("Devices and gadgets"),
+				Name:           testUtils.PtrToString("Electronics 2"),
+				Description:    testUtils.PtrToString("Devices and gadgets"),
 				RolesAllowedID: []string{roleID.String()},
 			},
 			mockRoles:        []*models.RoleEntity{{ID: roleID, RoleType: "administrator"}},
@@ -445,8 +446,8 @@ func (suite *CategoryServiceTestSuite) TestUpdateCategory() {
 			name:       "success updating category",
 			categoryID: categoryID,
 			updateReq: request.NewCategory{
-				Name:        ptrToString("Updated Electronics"),
-				Description: ptrToString("Updated description"),
+				Name:        testUtils.PtrToString("Updated Electronics"),
+				Description: testUtils.PtrToString("Updated description"),
 			},
 			mockFindReturn: &models.Category{
 				ID:          categoryID,
@@ -461,8 +462,8 @@ func (suite *CategoryServiceTestSuite) TestUpdateCategory() {
 			name:       "category not found",
 			categoryID: categoryID,
 			updateReq: request.NewCategory{
-				Name:        ptrToString("Updated Electronics"),
-				Description: ptrToString("Updated description"),
+				Name:        testUtils.PtrToString("Updated Electronics"),
+				Description: testUtils.PtrToString("Updated description"),
 			},
 			mockFindReturn: nil,
 			mockFindErr:    errorsUtils.ErrNotFound,
@@ -473,8 +474,8 @@ func (suite *CategoryServiceTestSuite) TestUpdateCategory() {
 			name:       "error during update",
 			categoryID: categoryID,
 			updateReq: request.NewCategory{
-				Name:        ptrToString("Updated Electronics"),
-				Description: ptrToString("Updated description"),
+				Name:        testUtils.PtrToString("Updated Electronics"),
+				Description: testUtils.PtrToString("Updated description"),
 			},
 			mockFindReturn: &models.Category{
 				ID:          categoryID,
@@ -607,9 +608,4 @@ func (suite *CategoryServiceTestSuite) TestRestoreCategory() {
 // Create a new instance of the CategoryServiceTestSuite structure and executes the test suite
 func TestCategoryServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(CategoryServiceTestSuite))
-}
-
-// Utils pointer to string
-func ptrToString(s string) *string {
-	return &s
 }

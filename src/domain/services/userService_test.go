@@ -15,6 +15,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
+	testUtils "github.com/Dialosoft/src/pkg/utils/test"
 )
 
 // MockUserRepository es un mock del repositorio de usuarios que extiende el mock del repositorio abstracto
@@ -371,10 +372,10 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	roleID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")
 	updateReq := request.NewUser{
-		Username: ptrToString("updateduser"),
+		Username: testUtils.PtrToString("updateduser"),
 		Locked:   ptrToBool(false),
 		Disable:  ptrToBool(false),
-		RoleID:   ptrToString(roleID.String()),
+		RoleID:   testUtils.PtrToString(roleID.String()),
 	}
 
 	mockRole := &models.RoleEntity{

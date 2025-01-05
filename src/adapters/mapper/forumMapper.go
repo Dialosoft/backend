@@ -5,6 +5,7 @@ import (
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/models"
+	utils "github.com/Dialosoft/src/pkg/utils/mapper"
 )
 
 func ForumDtoToForumEntity(forumDto *dto.ForumDto) *models.Forum {
@@ -38,15 +39,40 @@ func ForumDtoToForumEntity(forumDto *dto.ForumDto) *models.Forum {
 // 	return &ForumDto
 // }
 
-func ForumNewRequestToForumEntity(newRequest request.NewForum) models.Forum {
-	return models.Forum{
-		Name:         *newRequest.Name,
-		Description:  *newRequest.Description,
-		IsActive:     *newRequest.IsActive,
-		Type:         *newRequest.Type,
-		RolesAllowed: newRequest.RolesAllowed,
-		CategoryID:   *newRequest.CategoryID,
-	}
+func ForumNewRequestToForumEntity(newRequest request.NewForum) (models.Forum, error) {
+    name, err := utils.GetValueOrError(newRequest.Name, "Name")
+    if err != nil {
+        return models.Forum{}, err
+    }
+
+    description, err := utils.GetValueOrError(newRequest.Description, "Description")
+    if err != nil {
+        return models.Forum{}, err
+    }
+
+    isActive, err := utils.GetValueOrError(newRequest.IsActive, "IsActive")
+    if err != nil {
+        return models.Forum{}, err
+    }
+
+    forumType, err := utils.GetValueOrError(newRequest.Type, "Type")
+    if err != nil {
+        return models.Forum{}, err
+    }
+
+    categoryID, err := utils.GetValueOrError(newRequest.CategoryID, "CategoryID")
+    if err != nil {
+        return models.Forum{}, err
+    }
+
+    return models.Forum{
+        Name:         name,
+        Description:  description,
+        IsActive:     isActive,
+        Type:         forumType,
+        RolesAllowed: newRequest.RolesAllowed,
+        CategoryID:   categoryID,
+    }, nil
 }
 
 func ForumEntityToForumResponse(forumEntity *models.Forum) response.ForumResponse {
