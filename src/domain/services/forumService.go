@@ -1,11 +1,13 @@
 package services
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
-	"github.com/google/uuid"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 )
 
 // ForumService defines the methods for managing forums in the system.
@@ -73,7 +75,11 @@ func (service *forumServiceImpl) GetForumsByCategoryIDAndAllowed(categoryID uuid
 
 // CreateForum implements ForumService.
 func (service *forumServiceImpl) CreateForum(newRequest request.NewForum) (uuid.UUID, error) {
-	forumEntity := mapper.ForumNewRequestToForumEntity(newRequest)
+
+	forumEntity, err := mapper.ForumNewRequestToForumEntity(newRequest)
+    if err != nil {
+        return uuid.UUID{}, err
+    }
 	forumEntity.IsActive = true
 
 	createdForum, err := service.forumRepository.Create(nil, &forumEntity)
@@ -132,12 +138,24 @@ func (service *forumServiceImpl) RestoreForum(id uuid.UUID) error {
 
 // UpdateForum implements ForumService.
 func (service *forumServiceImpl) UpdateForum(id uuid.UUID, req request.NewForum) error {
+
+	if req.CategoryID != nil {
+        _, err := uuid.Parse(*req.CategoryID)
+        if err != nil {
+            return errorsUtils.ErrInvalidUUID
+        }
+    }
+
+
 	forum, err := service.forumRepository.FindByID(id)
 	if err != nil {
 		return err
 	}
 
-	updatedForum := mapper.ForumNewRequestToForumEntity(req)
+	updatedForum, err := mapper.ForumNewRequestToForumEntity(req)
+    if err != nil {
+        return err
+    }
 	updatedForum.ID = forum.ID
 
 	return service.forumRepository.Update(nil, id, &updatedForum)
