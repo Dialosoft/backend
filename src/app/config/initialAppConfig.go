@@ -1,15 +1,16 @@
 package config
 
 import (
+	"github.com/go-playground/validator"
+	"github.com/gofiber/fiber/v3"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
+
 	"github.com/Dialosoft/src/adapters/http/controller"
 	"github.com/Dialosoft/src/adapters/http/middleware"
 	"github.com/Dialosoft/src/adapters/http/router"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/services"
-	"github.com/go-playground/validator"
-	"github.com/gofiber/fiber/v3"
-	"github.com/redis/go-redis/v9"
-	"gorm.io/gorm"
 )
 
 // Setup for the api
@@ -37,7 +38,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 	authService := services.NewAuthService(userRepository, roleRepository, tokenRepository, cacheService, generalConfig.JWTKey)
 	forumService := services.NewForumService(forumRepository, categoryRepository)
 	categoryService := services.NewCategoryService(categoryRepository, roleRepository)
-	roleService := services.NewRoleRepository(roleRepository, rolePermissionsRepository)
+	roleService := services.NewRoleService(roleRepository, rolePermissionsRepository)
 	postService := services.NewPostService(postRepository, postLikesRepository, userRepository)
 
 	// Middlewares
