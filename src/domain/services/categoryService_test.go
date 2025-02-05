@@ -37,15 +37,6 @@ func (m *MockCategoryRepository) FindAllIncludingDeleted() ([]*models.Category, 
 // ****************************************
 // ****************************************
 
-type MockRoleRepository struct {
-	repository.MockAbstractRepository[*models.RoleEntity, uuid.UUID]
-}
-
-func (m *MockRoleRepository) FindByType(roleType string) (*models.RoleEntity, error) {
-	args := m.Called(roleType)
-	return args.Get(0).(*models.RoleEntity), args.Error(1)
-}
-
 
 type CategoryServiceTestSuite struct {
 	suite.Suite

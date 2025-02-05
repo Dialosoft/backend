@@ -291,7 +291,7 @@ func (suite *CacheServiceTestSuite) TestGetRefreshTokenByID() {
 	}
 }
 
-// TestDeleteRefreshTokenByID prueba el método DeleteRefreshTokenByID.
+// TestDeleteRefreshTokenByID tests the DeleteRefreshTokenByID method.
 func (suite *CacheServiceTestSuite) TestDeleteRefreshTokenByID() {
 	userID := uuid.New()
 

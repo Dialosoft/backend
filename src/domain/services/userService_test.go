@@ -18,12 +18,12 @@ import (
 	testUtils "github.com/Dialosoft/src/pkg/utils/test"
 )
 
-// MockUserRepository es un mock del repositorio de usuarios que extiende el mock del repositorio abstracto
+// MockUserRepository is a mock of the user repository that extends the mock of the abstract repository
 type MockUserRepository struct {
 	repository.MockAbstractRepository[*models.UserEntity, uuid.UUID]
 }
 
-// FindByUsername es el único método específico que necesitamos implementar
+// FindByUsername is the only specific method we need to implement
 func (m *MockUserRepository) FindByUsername(username string) (*models.UserEntity, error) {
 	args := m.Called(username)
 	if args.Get(0) == nil {
@@ -569,7 +569,7 @@ func (suite *UserServiceTestSuite) TestProcessAvatar() {
 		Size:     1024,
 	}
 
-	// Crear un mock de multipart.File
+	// Create a mock of multipart.File
 	mockFile := &mockMultipartFile{
 		content: []byte("fake image content"),
 	}
@@ -594,8 +594,8 @@ func (suite *UserServiceTestSuite) TestProcessAvatar() {
 		suite.Run(tt.name, func() {
 			err := suite.service.ProcessAvatar(tt.userID, tt.fileHeader, tt.file)
 
-			// Como ProcessAvatar intenta procesar un archivo real,
-			// esperamos un error ya que estamos usando datos mock
+			// As ProcessAvatar attempts to process a real file,
+			// we expect an error since we're using mock data
 			assert.Error(suite.T(), err)
 		})
 	}

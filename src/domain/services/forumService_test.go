@@ -190,7 +190,7 @@ func (suite *ForumServiceTestSuite) TestCreateForum() {
             // Reset Mock's expectations before each subtest
             suite.mockForumRepo.ExpectedCalls = nil
 
-            // Configurar el mock para el caso de creación
+            // Configure the mock for the creation case
             suite.mockForumRepo.On("Create", mock.AnythingOfType("*gorm.DB"), mock.AnythingOfType("*models.Forum")).
                 Return(tt.mockReturn, tt.mockReturnErr)
 
