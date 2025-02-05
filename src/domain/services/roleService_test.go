@@ -234,6 +234,232 @@ func (suite *RoleServiceTestSuite) TestSetRolePermissionsByRoleID() {
 	}
 }
 
+func (suite *RoleServiceTestSuite) TestGetRolePermissionsByRoleID() {
+	// We define a fixed UUID to use in all tests
+	roleID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+
+	tests := []struct {
+		name           string
+		roleID         uuid.UUID
+		mockSetup      func()
+		expectedResult *models.RolePermissions
+		expectedError  error
+	}{
+		{
+			name:   "success getting role permissions",
+			roleID: roleID,
+			mockSetup: func() {
+				// Mock FindByRoleID to return existing permissions
+				suite.mockPermRepo.On("FindByRoleID", roleID).
+					Return(&models.RolePermissions{
+						RoleID:              roleID,
+						CanManageCategories: true,
+						CanManageForums:     true,
+						CanManageRoles:      false,
+						CanManageUsers:      true,
+					}, nil)
+			},
+			expectedResult: &models.RolePermissions{
+				RoleID:              roleID,
+				CanManageCategories: true,
+				CanManageForums:     true,
+				CanManageRoles:      false,
+				CanManageUsers:      true,
+			},
+			expectedError: nil,
+		},
+		{
+			name:   "error when role not found",
+			roleID: roleID,
+			mockSetup: func() {
+				// Mock FindByRoleID to return error
+				suite.mockPermRepo.On("FindByRoleID", roleID).
+					Return((*models.RolePermissions)(nil), errors.New("role not found"))
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("role not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			// Reset mock expectations
+			suite.mockPermRepo.ExpectedCalls = nil
+
+			// Setup mocks for this test case
+			tt.mockSetup()
+
+			// Execute
+			result, err := suite.service.GetRolePermissionsByRoleID(tt.roleID)
+
+			// Assert
+			if tt.expectedError != nil {
+				assert.ErrorContains(suite.T(), err, tt.expectedError.Error())
+				assert.Nil(suite.T(), result)
+			} else {
+				assert.NoError(suite.T(), err)
+				assert.Equal(suite.T(), tt.expectedResult, result)
+			}
+		})
+	}
+}
+
+func (suite *RoleServiceTestSuite) TestRestoreRole() {
+	// We define a fixed UUID to use in all tests
+	roleID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+
+	tests := []struct {
+		name          string
+		roleID        uuid.UUID
+		mockSetup     func()
+		expectedError error
+	}{
+		{
+			name:   "success restoring role",
+			roleID: roleID,
+			mockSetup: func() {
+				// Mock Restore to return success
+				suite.mockRoleRepo.On("Restore", mock.AnythingOfType("*gorm.DB"), roleID).
+					Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:   "error when role not found or already restored",
+			roleID: roleID,
+			mockSetup: func() {
+				// Mock Restore to return error
+				suite.mockRoleRepo.On("Restore", mock.AnythingOfType("*gorm.DB"), roleID).
+					Return(errors.New("role not found or already restored"))
+			},
+			expectedError: errors.New("role not found or already restored"),
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			// Reset mock expectations
+			suite.mockRoleRepo.ExpectedCalls = nil
+
+			// Setup mocks for this test case
+			tt.mockSetup()
+
+			// Execute
+			err := suite.service.RestoreRole(tt.roleID)
+
+			// Assert
+			if tt.expectedError != nil {
+				assert.ErrorContains(suite.T(), err, tt.expectedError.Error())
+			} else {
+				assert.NoError(suite.T(), err)
+			}
+		})
+	}
+}
+
+func (suite *RoleServiceTestSuite) TestGetDefaultRoles() {
+	// We define fixed UUIDs to use in all tests
+	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
+	moderatorID := uuid.MustParse("650e8400-e29b-41d4-a716-446655440000")
+	adminID := uuid.MustParse("750e8400-e29b-41d4-a716-446655440000")
+
+	tests := []struct {
+		name           string
+		mockSetup      func()
+		expectedResult map[string]uuid.UUID
+		expectedError  error
+	}{
+		{
+			name: "success getting all default roles",
+			mockSetup: func() {
+				// Mock FindByType for each role type
+				suite.mockRoleRepo.On("FindByType", "user").
+					Return(&models.RoleEntity{
+						ID:       userID,
+						RoleType: "user",
+					}, nil)
+				suite.mockRoleRepo.On("FindByType", "moderator").
+					Return(&models.RoleEntity{
+						ID:       moderatorID,
+						RoleType: "moderator",
+					}, nil)
+				suite.mockRoleRepo.On("FindByType", "administrator").
+					Return(&models.RoleEntity{
+						ID:       adminID,
+						RoleType: "administrator",
+					}, nil)
+			},
+			expectedResult: map[string]uuid.UUID{
+				"user":          userID,
+				"moderator":     moderatorID,
+				"administrator": adminID,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error when moderator role not found",
+			mockSetup: func() {
+				// Mock FindByType for user role
+				suite.mockRoleRepo.On("FindByType", "user").
+					Return(&models.RoleEntity{
+						ID:       userID,
+						RoleType: "user",
+					}, nil)
+				// Mock FindByType for moderator role to return error
+				suite.mockRoleRepo.On("FindByType", "moderator").
+					Return((*models.RoleEntity)(nil), errors.New("role not found"))
+				// Mock for admin role should not be called
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("failed to get default role moderator: role not found"),
+		},
+		{
+			name: "error when getting administrator role fails",
+			mockSetup: func() {
+				// Mock FindByType for user role
+				suite.mockRoleRepo.On("FindByType", "user").
+					Return(&models.RoleEntity{
+						ID:       userID,
+						RoleType: "user",
+					}, nil)
+				// Mock FindByType for moderator role
+				suite.mockRoleRepo.On("FindByType", "moderator").
+					Return(&models.RoleEntity{
+						ID:       moderatorID,
+						RoleType: "moderator",
+					}, nil)
+				// Mock FindByType for admin role to return error
+				suite.mockRoleRepo.On("FindByType", "administrator").
+					Return((*models.RoleEntity)(nil), errors.New("database error"))
+			},
+			expectedResult: nil,
+			expectedError:  errors.New("failed to get default role administrator: database error"),
+		},
+	}
+
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			// Reset mock expectations
+			suite.mockRoleRepo.ExpectedCalls = nil
+
+			// Setup mocks for this test case
+			tt.mockSetup()
+
+			// Execute
+			result, err := suite.service.GetDefaultRoles()
+
+			// Assert
+			if tt.expectedError != nil {
+				assert.ErrorContains(suite.T(), err, tt.expectedError.Error())
+				assert.Nil(suite.T(), result)
+			} else {
+				assert.NoError(suite.T(), err)
+				assert.Equal(suite.T(), tt.expectedResult, result)
+			}
+		})
+	}
+}
+
 func TestRoleServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(RoleServiceTestSuite))
 }
