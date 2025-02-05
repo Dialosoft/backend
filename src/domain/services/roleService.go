@@ -3,19 +3,19 @@ package services
 import (
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"github.com/Dialosoft/src/adapters/dto"
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/google/uuid"
 )
 
 // RoleService defines a set of methods for handling business logic related to roles.
 // It interacts with role data transfer objects (RoleDto) for operations like retrieving,
 // creating, updating, and deleting roles in the system.
 type RoleService interface {
-
 	// GetAllRoles retrieves all roles as data transfer objects (DTOs).
 	// Returns a slice of pointers to RoleDto and an error if something goes wrong.
 	GetAllRoles() ([]*dto.RoleDto, error)
@@ -120,6 +120,12 @@ func (service *roleServiceImpl) GetRoleByType(roleType string) (*dto.RoleDto, er
 
 // CreateNewRole implements RoleService.
 func (service *roleServiceImpl) CreateNewRole(newRole dto.RoleDto) (uuid.UUID, error) {
+	// Verify if the role type already exists
+	existingRole, err := service.roleRepository.FindByType(newRole.RoleType)
+	if err == nil && existingRole != nil {
+		return uuid.UUID{}, fmt.Errorf("role type already exists")
+	}
+
 	roleEntity := mapper.RoleDtoToRoleEntity(&newRole)
 
 	rolePermissionEntity := models.RolePermissions{
@@ -168,9 +174,11 @@ func (service *roleServiceImpl) UpdateRole(roleID uuid.UUID, req request.NewRole
 
 func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req request.NewRolePermissions) error {
 	rolePermissionEntity, err := service.rolePermissionsRepository.FindByRoleID(roleID)
+
 	if err != nil {
 		return err
 	}
+
 	if req.CanManageCategories != nil {
 		rolePermissionEntity.CanManageCategories = *req.CanManageCategories
 	}
@@ -184,12 +192,8 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 		rolePermissionEntity.CanManageUsers = *req.CanManageUsers
 	}
 
-	_, err = service.rolePermissionsRepository.Create(nil, rolePermissionEntity)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	err = service.rolePermissionsRepository.Update(nil, roleID, rolePermissionEntity)
+	return err
 }
 
 func (service *roleServiceImpl) GetRolePermissionsByRoleID(roleID uuid.UUID) (*models.RolePermissions, error) {
@@ -211,6 +215,6 @@ func (service *roleServiceImpl) RestoreRole(roleID uuid.UUID) error {
 	return service.roleRepository.Restore(nil, roleID)
 }
 
-func NewRoleRepository(roleRepository repository.RoleRepository, rolePermissionsRepository repository.RolePermissionsRepository) RoleService {
+func NewRoleService(roleRepository repository.RoleRepository, rolePermissionsRepository repository.RolePermissionsRepository) RoleService {
 	return &roleServiceImpl{roleRepository: roleRepository, rolePermissionsRepository: rolePermissionsRepository}
 }
