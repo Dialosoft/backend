@@ -1,13 +1,15 @@
 package services
 
 import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/adapters/mapper"
 	"github.com/Dialosoft/src/adapters/repository"
 	"github.com/Dialosoft/src/domain/models"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
+	"github.com/Dialosoft/src/pkg/errorsUtils"
 )
 
 // PostService provides an interface for managing posts in the system.
@@ -172,7 +174,6 @@ func (service *postServiceImpl) GetLikeCount(postID uuid.UUID) (int64, error) {
 
 // UpdatePost implements PostService.
 func (service *postServiceImpl) UpdatePostTitle(postID uuid.UUID, title string) error {
-
 	modelPost, err := service.postRepository.FindByID(postID)
 	if err != nil {
 		return err
@@ -201,12 +202,22 @@ func (service *postServiceImpl) UpdatePostContent(postID uuid.UUID, content stri
 
 // LikePost implements PostService.
 func (service *postServiceImpl) LikePost(postID uuid.UUID, userID uuid.UUID) error {
-	return service.postLikesRepo.Save(postID, userID)
+	// Check if the post is already liked
+	existingLikes, err := service.postLikesRepo.FindAllByUserIDAndPostID(postID, userID)
+	if err != nil {
+		return err
+	}
+
+	if len(existingLikes) > 0 {
+		return errorsUtils.ErrPostAlreadyLiked
+	}
+
+	return service.postLikesRepo.SaveLike(postID, userID)
 }
 
 // UnlikePost implements PostService.
 func (service *postServiceImpl) UnlikePost(postID uuid.UUID, userID uuid.UUID) error {
-	return service.postLikesRepo.Remove(postID, userID)
+	return service.postLikesRepo.RemoveLike(postID, userID)
 }
 
 // DeletePost implements PostService.

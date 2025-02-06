@@ -1,9 +1,10 @@
 package repository
 
 import (
-	"github.com/Dialosoft/src/domain/models"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+
+	"github.com/Dialosoft/src/domain/models"
 )
 
 // PostLikesRepository defines a set of methods for managing post likes in the system.
@@ -23,13 +24,13 @@ type PostLikesRepository interface {
 	// Returns a slice of pointers to PostLikesEntity and an error if something goes wrong.
 	FindAllByUserID(userID uuid.UUID) ([]*models.PostLikes, error)
 
-	// Save inserts a new like for a specific post by a user.
+	// SaveLike inserts a new like for a specific post by a user.
 	// Returns an error if the operation fails.
-	Save(postID uuid.UUID, userID uuid.UUID) error
+	SaveLike(postID uuid.UUID, userID uuid.UUID) error
 
-	// Remove removes a like for a specific post by a user.
+	// RemoveLike removes a like for a specific post by a user.
 	// Returns an error if the operation fails.
-	Remove(postID uuid.UUID, userID uuid.UUID) error
+	RemoveLike(postID uuid.UUID, userID uuid.UUID) error
 }
 
 type postLikesRepositoryImpl struct {
@@ -42,7 +43,6 @@ func NewPostLikesRepository(db *gorm.DB) PostLikesRepository {
 	repo.abstractRepositoryImpl = CreateRepository(db, repo)
 	return repo
 }
-
 
 // FindAllByPostID implements PostLikesRepository.
 func (repo *postLikesRepositoryImpl) FindAllByPostID(postID uuid.UUID) ([]*models.PostLikes, error) {
@@ -63,8 +63,8 @@ func (repo *postLikesRepositoryImpl) FindAllByUserIDAndPostID(postID uuid.UUID, 
 	return postLikes, nil
 }
 
-// Save implements PostLikesRepository.
-func (repo *postLikesRepositoryImpl) Save(postID uuid.UUID, userID uuid.UUID) error {
+// SaveLike implements PostLikesRepository.
+func (repo *postLikesRepositoryImpl) SaveLike(postID uuid.UUID, userID uuid.UUID) error {
 	postLike := &models.PostLikes{
 		PostID: postID,
 		UserID: userID,
@@ -73,7 +73,7 @@ func (repo *postLikesRepositoryImpl) Save(postID uuid.UUID, userID uuid.UUID) er
 	return err
 }
 
-// Remove implements PostLikesRepository.
-func (repo *postLikesRepositoryImpl) Remove(postID uuid.UUID, userID uuid.UUID) error {
+// RemoveLike implements PostLikesRepository.
+func (repo *postLikesRepositoryImpl) RemoveLike(postID uuid.UUID, userID uuid.UUID) error {
 	return repo.gorm.Where("post_id = ? AND user_id = ?", postID, userID).Delete(&models.PostLikes{}).Error
 }
