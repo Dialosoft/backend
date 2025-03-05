@@ -17,8 +17,8 @@ import (
 	"github.com/Dialosoft/src/app/database"
 )
 
-// E2eTestSuite is a suite of e2e tests for the application.
-type E2eTestSuite struct {
+// BaseE2eTestSuite is a suite of e2e tests for the application.
+type BaseE2eTestSuite struct {
 	suite.Suite
 	testCtx     context.Context          // Test execution context shared by all tests
 	db          *gorm.DB                 // Postgres database connection
@@ -28,7 +28,7 @@ type E2eTestSuite struct {
 }
 
 // SetupSuite is called before any tests in the suite are run.
-func (suite *E2eTestSuite) SetupSuite() {
+func (suite *BaseE2eTestSuite) SetupSuite() {
 	// Initialize test context
 	suite.testCtx = context.Background()
 
@@ -71,7 +71,7 @@ func (suite *E2eTestSuite) SetupSuite() {
 	pgPort, err := pgContainer.MappedPort(suite.testCtx, "5432")
 	suite.NoError(err)
 
-    	// Test configuration
+    // Test configuration
 	testConfig := config.GeneralConfig{
 		Host:     pgHost,
 		Port:     pgPort.Int(),
@@ -82,7 +82,7 @@ func (suite *E2eTestSuite) SetupSuite() {
 		JWTKey:   "test-jwt-key",
 	}
 
-    	// Use Connecttodatabase to handle migrations and roles
+    // Use Connecttodatabase to handle migrations and roles
 	conn, err := database.ConnectToDatabase(testConfig)
 	suite.NoError(err)
 
@@ -140,7 +140,7 @@ func (suite *E2eTestSuite) SetupSuite() {
 }
 
 // TearDownSuite is called after all tests in the suite have been run, regardless of whether they passed or failed.
-func (suite *E2eTestSuite) TearDownSuite() {
+func (suite *BaseE2eTestSuite) TearDownSuite() {
 
     if suite.pgContainer != nil {
         err := suite.pgContainer.Terminate(suite.testCtx)
