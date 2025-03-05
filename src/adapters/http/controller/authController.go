@@ -63,8 +63,7 @@ func (ac *AuthController) Register(c fiber.Ctx) error {
 		return response.ErrInternalServer(c, err, userDto, ac.Layer)
 	}
 
-	// TODO: Change status code to 201 when the API is ready in StandardResponse because POST usually returns 201
-	return response.Standard(c, "Successfully registered", response.RegisterResponse{
+	return response.StandardCreated(c, "Successfully registered", response.RegisterResponse{
 		UserID:       userID.String(),
 		AccessToken:  token,
 		RefreshToken: refreshToken,

@@ -47,7 +47,7 @@ func (suite *AuthRouterTestSuite) SetupTest() {
 	err := database.CreateDefaultRoles(suite.db)
 	suite.NoError(err)
 
-	// Verificar que se crearon los roles
+	// Verify if the roles were created
 	var count int64
 	err = suite.db.Model(&models.RoleEntity{}).Count(&count).Error
 	suite.NoError(err)
@@ -90,7 +90,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Password: "password123",
 		}
 
-		resp, _ := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		resp, _ := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusCreated)
 
 		body, err := io.ReadAll(resp.Body)
 		suite.NoError(err)
@@ -130,7 +130,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Email:    "existing@example.com",
 			Password: "password123",
 		}
-		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusCreated)
 		suite.NoError(err)
 
 		// Try to register a user with the same email
@@ -165,7 +165,7 @@ func (suite *AuthRouterTestSuite) TestLoginEndpoint() {
 			Email:    "login@example.com",
 			Password: "password123",
 		}
-		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusCreated)
 		suite.NoError(err)
 
 		// Now attempt to login with this user
@@ -201,7 +201,7 @@ func (suite *AuthRouterTestSuite) TestLoginEndpoint() {
 			Email:    "fail@example.com",
 			Password: "password123",
 		}
-		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusCreated)
 		suite.NoError(err)
 
 		// Attempt login with wrong password
@@ -257,7 +257,7 @@ func (suite *AuthRouterTestSuite) TestRefreshTokenEndpoint() {
 			Email:    "refresh@example.com",
 			Password: "password123",
 		}
-		resp, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusCreated)
 		suite.NoError(err)
 
 		body, err := io.ReadAll(resp.Body)
