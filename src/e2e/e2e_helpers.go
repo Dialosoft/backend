@@ -26,8 +26,9 @@ type TestHelpers struct {
 
 // RequestOptions contains options for making HTTP requests
 type RequestOptions struct {
-	Headers map[string]string
-	Token   string // For authentication purposes
+	Headers      map[string]string
+	Token        string
+	RefreshToken string
 }
 
 // MakeRequest creates and sends an HTTP request to the test server
@@ -63,6 +64,11 @@ func (h *TestHelpers) MakeRequestWithOptions(method, path string, payload interf
 		// Add Authorization header if token is provided
 		if options.Token != "" {
 			req.Header.Set("Authorization", "Bearer "+options.Token)
+		}
+
+		// Add X-Refresh-Token header if refresh token is provided
+		if options.RefreshToken != "" {
+			req.Header.Set("X-Refresh-Token", options.RefreshToken)
 		}
 	}
 
@@ -171,7 +177,7 @@ func (h *TestHelpers) GetRoleIDByType(db *gorm.DB, roleType string) string {
 }
 
 // Create admin user and login with it to get admin token
-func (h *TestHelpers) CreateAdminUserAndLogin(db *gorm.DB) string {
+func (h *TestHelpers) CreateAdminUserAndLogin(db *gorm.DB) (string, string, string) {
 	// Register an admin user first
 	adminUserName := "admin_test_user"
 	adminEmail := "admin@example.com"
@@ -197,7 +203,7 @@ func (h *TestHelpers) CreateAdminUserAndLogin(db *gorm.DB) string {
 	h.NoError(result.Error)
 
 	// Get a fresh admin token with admin role
-	adminToken := h.LoginUser(adminUserName, adminPassword)
+	adminID, adminToken, adminRefreshToken := h.LoginUserFull(adminUserName, adminPassword)
 
-	return adminToken
+	return adminID, adminToken, adminRefreshToken
 }
