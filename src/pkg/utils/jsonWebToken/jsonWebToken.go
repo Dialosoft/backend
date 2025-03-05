@@ -86,3 +86,29 @@ func ValidateJWT(tokenString, secretKey string) (jwt.MapClaims, error) {
 		return nil, fmt.Errorf("invalid token")
 	}
 }
+
+// ExtractUserIDFromToken extracts the user ID from a JWT token
+// Returns the user ID as a string and an error if the extraction fails
+func ExtractUserIDFromToken(tokenString, secretKey string) (string, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(secretKey), nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	// Check for sub claim which contains the user ID
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		userID, ok := claims["sub"].(string)
+		if !ok {
+			return "", fmt.Errorf("failed to extract user_id from JWT claims")
+		}
+
+		return userID, nil
+	} else {
+		return "", fmt.Errorf("invalid token")
+	}
+}
