@@ -3,7 +3,6 @@
 package e2e
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,33 +18,43 @@ import (
 )
 
 type AuthRouterTestSuite struct {
-	E2eTestSuite
+	BaseE2eTestSuite
 	server *TestServer
+	helpers TestHelpers
 }
 
 // SetupSuite is called before any Router tests in the suite are run.
 func (suite *AuthRouterTestSuite) SetupSuite() {
-	suite.E2eTestSuite.SetupSuite()
+	suite.BaseE2eTestSuite.SetupSuite()
 	suite.server = NewTestServer(suite.db, suite.rdClient)
+	suite.helpers = TestHelpers{
+		Suite:  &suite.Suite,
+		Server: suite.server,
+	}
 }
 
 // TearDownSuite is called after all Router tests in the suite have been run, regardless of whether they passed or failed.
 func (suite *AuthRouterTestSuite) TearDownSuite() {
 	// Shutdown the server after a set of tests
-    err := suite.server.Shutdown()
-    suite.NoError(err)
+	err := suite.server.Shutdown()
+	suite.NoError(err)
 
-    suite.E2eTestSuite.TearDownSuite()
+	suite.BaseE2eTestSuite.TearDownSuite()
 }
 
 func (suite *AuthRouterTestSuite) SetupTest() {
 	// Create predetermined roles at the beginning of each test
 	err := database.CreateDefaultRoles(suite.db)
 	suite.NoError(err)
+
+	// Verificar que se crearon los roles
+	var count int64
+	err = suite.db.Model(&models.RoleEntity{}).Count(&count).Error
+	suite.NoError(err)
+	suite.Greater(count, int64(0), "No roles were created")
 }
 
 func (suite *AuthRouterTestSuite) TearDownTest() {
-
 	// truncate Tables maintaining the structure and restrictions
 	tables := []string{
 		"comment_votes",
@@ -70,22 +79,6 @@ func (suite *AuthRouterTestSuite) TearDownTest() {
 	suite.NoError(err)
 }
 
-func (suite *AuthRouterTestSuite) makeRequest(method, path string, payload interface{}, expectedStatus int) (*http.Response, error) {
-	jsonPayload, err := json.Marshal(payload)
-	suite.NoError(err)
-
-	req, err := http.NewRequest(method, GetAPIBasePath(path), bytes.NewBuffer(jsonPayload))
-	suite.NoError(err)
-
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := suite.server.App.Test(req, -1) // Remove timeout
-	suite.NoError(err)
-
-	suite.Equal(expectedStatus, resp.StatusCode)
-	return resp, nil
-}
-
 func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 	t := suite.T()
 
@@ -97,7 +90,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Password: "password123",
 		}
 
-		resp, _ := suite.makeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		resp, _ := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
 
 		body, err := io.ReadAll(resp.Body)
 		suite.NoError(err)
@@ -105,18 +98,16 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 		// close response body after reading it to avoid resource leak
 		defer resp.Body.Close()
 
-		var standardResponse struct {
-			Message string                    `json:"message"`
-			Data    response.RegisterResponse `json:"data"`
+		var registerResponse struct {
+			Data response.RegisterResponse `json:"data"`
+			Message string `json:"message"`
 		}
-
-		err = json.Unmarshal(body, &standardResponse)
+		err = json.Unmarshal(body, &registerResponse)
 		suite.NoError(err)
 
-		// Now you can access the data through standardResponse.Data
-		suite.NotEmpty(standardResponse.Data.UserID)
-		suite.NotEmpty(standardResponse.Data.AccessToken)
-		suite.NotEmpty(standardResponse.Data.RefreshToken)
+		suite.NotEmpty(registerResponse.Data.UserID)
+		suite.NotEmpty(registerResponse.Data.AccessToken)
+		suite.NotEmpty(registerResponse.Data.RefreshToken)
 
 		// Verify user in the database
 		var user models.UserEntity
@@ -139,7 +130,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Email:    "existing@example.com",
 			Password: "password123",
 		}
-		_, err := suite.makeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
 		suite.NoError(err)
 
 		// Try to register a user with the same email
@@ -148,7 +139,7 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 			Email:    "existing@example.com",
 			Password: "password456",
 		}
-		resp, err := suite.makeRequest("POST", "/auth/register", registerPayload2, http.StatusConflict) // Esperamos un conflicto (409)
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload2, http.StatusConflict) // Esperamos un conflicto (409)
 		suite.NoError(err)
 
 		body, err := io.ReadAll(resp.Body)
@@ -161,6 +152,215 @@ func (suite *AuthRouterTestSuite) TestRegisterEndpoint() {
 
 		// Verify the error message.Adjust "Email Already Exists" according to your real answer.
 		suite.Equal("CONFLICT", errorResponse.ErrorMessage)
+	})
+}
+
+func (suite *AuthRouterTestSuite) TestLoginEndpoint() {
+	t := suite.T()
+
+	t.Run("should login user successfully", func(t *testing.T) {
+		// First, register a user
+		registerPayload := request.RegisterRequest{
+			Username: "loginuser",
+			Email:    "login@example.com",
+			Password: "password123",
+		}
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		suite.NoError(err)
+
+		// Now attempt to login with this user
+		loginPayload := request.LoginRequest{
+			Username: "loginuser",
+			Password: "password123",
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/login", loginPayload, http.StatusOK)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var loginResponse struct {
+			Data response.LoginResponse `json:"data"`
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(body, &loginResponse)
+		suite.NoError(err)
+
+		// Verify the token data is returned
+		suite.NotEmpty(loginResponse.Data.AccessToken)
+		suite.NotEmpty(loginResponse.Data.RefreshToken)
+		suite.Equal("Successfully logged in", loginResponse.Message)
+	})
+
+	t.Run("should fail with invalid credentials", func(t *testing.T) {
+		// Register a user first
+		registerPayload := request.RegisterRequest{
+			Username: "failuser",
+			Email:    "fail@example.com",
+			Password: "password123",
+		}
+		_, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		suite.NoError(err)
+
+		// Attempt login with wrong password
+		loginPayload := request.LoginRequest{
+			Username: "failuser",
+			Password: "wrongpassword",
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/login", loginPayload, http.StatusUnauthorized)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var errorResponse response.StandardError
+		err = json.Unmarshal(body, &errorResponse)
+		suite.NoError(err)
+
+		// Verify the error message
+		suite.Equal("UNAUTHORIZED", errorResponse.ErrorMessage)
+	})
+
+	t.Run("should fail with non-existing user", func(t *testing.T) {
+		loginPayload := request.LoginRequest{
+			Username: "nonexistentuser",
+			Password: "password123",
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/login", loginPayload, http.StatusUnauthorized)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var errorResponse response.StandardError
+		err = json.Unmarshal(body, &errorResponse)
+		suite.NoError(err)
+
+		// Verify the error message
+		suite.Equal("UNAUTHORIZED", errorResponse.ErrorMessage)
+	})
+}
+
+func (suite *AuthRouterTestSuite) TestRefreshTokenEndpoint() {
+	t := suite.T()
+
+	t.Run("should refresh token successfully", func(t *testing.T) {
+		// First, register a user to get valid tokens
+		registerPayload := request.RegisterRequest{
+			Username: "refreshuser",
+			Email:    "refresh@example.com",
+			Password: "password123",
+		}
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/register", registerPayload, http.StatusOK)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var registerResponse struct {
+			Data response.RegisterResponse `json:"data"`
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(body, &registerResponse)
+		suite.NoError(err)
+
+		refreshToken := registerResponse.Data.RefreshToken
+		suite.NotEmpty(refreshToken)
+
+		// Now attempt to refresh the token
+		refreshPayload := request.RefreshToken{
+			Refresh: refreshToken,
+		}
+
+		resp, err = suite.helpers.MakeRequest("POST", "/auth/refresh-token", refreshPayload, http.StatusOK)
+		suite.NoError(err)
+
+		body, err = io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var refreshResponse struct {
+			Data response.RefreshTokenResponse `json:"data"`
+			Message string `json:"message"`
+		}
+		err = json.Unmarshal(body, &refreshResponse)
+		suite.NoError(err)
+
+		// Verify the new access token is returned
+		suite.NotEmpty(refreshResponse.Data.AccessToken)
+		suite.Equal("successfully refreshed", refreshResponse.Message)
+	})
+
+	t.Run("should fail with invalid refresh token", func(t *testing.T) {
+		// Attempt to refresh with an invalid token
+		refreshPayload := request.RefreshToken{
+			Refresh: "invalid.refresh.token",
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/refresh-token", refreshPayload, http.StatusUnauthorized)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var errorResponse response.StandardError
+		err = json.Unmarshal(body, &errorResponse)
+		suite.NoError(err)
+
+		// Verify the error message
+		suite.Equal("UNAUTHORIZED", errorResponse.ErrorMessage)
+	})
+
+	t.Run("should fail with empty refresh token", func(t *testing.T) {
+		// Attempt to refresh with an empty token
+		refreshPayload := request.RefreshToken{
+			Refresh: "",
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/refresh-token", refreshPayload, http.StatusUnauthorized)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var errorResponse response.StandardError
+		err = json.Unmarshal(body, &errorResponse)
+		suite.NoError(err)
+
+		// Verify the error message
+		suite.Equal("UNAUTHORIZED", errorResponse.ErrorMessage)
+	})
+
+	t.Run("should fail with expired refresh token", func(t *testing.T) {
+		// This is an example of an expired JWT token (created with "test-jwt-key" and expired in 2020)
+		expiredToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyLCJleHAiOjE1NzYyMzkwMjJ9.xOsZT8J4xdQZsnPQKrz17SMmGxlygcKOCiXRgBJEt3M"
+		
+		refreshPayload := request.RefreshToken{
+			Refresh: expiredToken,
+		}
+
+		resp, err := suite.helpers.MakeRequest("POST", "/auth/refresh-token", refreshPayload, http.StatusUnauthorized)
+		suite.NoError(err)
+
+		body, err := io.ReadAll(resp.Body)
+		suite.NoError(err)
+		defer resp.Body.Close()
+
+		var errorResponse response.StandardError
+		err = json.Unmarshal(body, &errorResponse)
+		suite.NoError(err)
+
+		// Verify the error message
+		suite.Equal("UNAUTHORIZED", errorResponse.ErrorMessage)
 	})
 }
 
