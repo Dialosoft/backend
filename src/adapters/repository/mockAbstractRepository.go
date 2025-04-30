@@ -59,3 +59,8 @@ func (m *MockAbstractRepository[T, K]) GetType() string {
 	args := m.Called()
 	return args.String(0)
 }
+
+func (m *MockAbstractRepository[T, K]) GetKeyIdName() string {
+    args := m.Called()
+    return args.String(0)
+}

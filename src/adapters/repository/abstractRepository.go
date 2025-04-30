@@ -63,6 +63,9 @@ type AbstractRepository[T Identifiable[K], K ID] interface {
 
 	// GetType returns the types defined of the repository.
 	GetType() string
+
+	// GetKeyIdName returns the name of the key ID.
+	GetKeyIdName() string
 }
 
 type abstractRepositoryImpl[T Identifiable[K], K ID] struct {
@@ -111,10 +114,12 @@ func (repo *abstractRepositoryImpl[T, K]) FindByID(id K) (T, error) {
 		return entity, errors.New("self reference is nil in repository")
 	}
 
+	// Use the GetKeyIdName method that can be over -written
+	keyIdName := repo.self.GetKeyIdName()
 	preloads := repo.self.GetPreloads()
 	db := applyPreloads(repo.gorm, preloads)
 
-	if err := db.Where("id = ?", id).First(&entity).Error; err != nil {
+	if err := db.Where(keyIdName+" = ?", id).First(&entity).Error; err != nil {
 		return entity, err
 	}
 	return entity, nil
@@ -169,10 +174,16 @@ func (repo *abstractRepositoryImpl[T, K]) Create(tx *gorm.DB, newEntity T) (T, e
 func (repo *abstractRepositoryImpl[T, K]) Update(tx *gorm.DB, id K, newEntity T) error {
 	entity := createInstance[T]()
 
+	// Use the GetKeyIdName method that can be over -written
+	keyIdName := repo.self.GetKeyIdName()
+
+	// TODO: https://stackoverflow.com/questions/56653423/gorm-doesnt-update-boolean-field-to-false
+	// Using Save instead of gorm.Model.Updates due to Updates method not updating boolean fields to false
+	// this is due to The fields with zero value (as false for Booleans) are considered not established and therefore do not update
 	if err := repo.TransCheck(tx).
 		Model(entity).
-		Where("id = ?", id).
-		Updates(&newEntity).
+		Where(keyIdName+" = ?", id).Updates(newEntity).
+		Save(&newEntity).
 		Error; err != nil {
 		return err
 	}
@@ -184,8 +195,11 @@ func (repo *abstractRepositoryImpl[T, K]) Update(tx *gorm.DB, id K, newEntity T)
 func (repo *abstractRepositoryImpl[T, K]) Delete(tx *gorm.DB, id K) error {
 	entity := createInstance[T]()
 
+	// Use the GetKeyIdName method that can be over -written
+	keyIdName := repo.self.GetKeyIdName()
+
 	if err := repo.TransCheck(tx).
-		Where("id = ?", id).
+		Where(keyIdName+" = ?", id).
 		Delete(entity).
 		Error; err != nil {
 		return err
@@ -197,10 +211,13 @@ func (repo *abstractRepositoryImpl[T, K]) Delete(tx *gorm.DB, id K) error {
 func (repo *abstractRepositoryImpl[T, K]) Restore(tx *gorm.DB, id K) error {
 	entity := createInstance[T]()
 
+	// Use the GetKeyIdName method that can be over -written
+	keyIdName := repo.self.GetKeyIdName()
+
 	result := repo.TransCheck(tx).
 		Unscoped().
 		Model(entity).
-		Where("id = ?", id).
+		Where(keyIdName+" = ?", id).
 		Update("deleted_at", nil)
 	if result.Error != nil {
 		return result.Error
@@ -218,6 +235,10 @@ func (repo *abstractRepositoryImpl[T, K]) GetType() string {
 	kType := reflect.TypeOf(new(K)).Elem().String()
 
 	return fmt.Sprintf("abstractRepositoryImpl[T: %s, K: %s]", tType, kType)
+}
+
+func (repo *abstractRepositoryImpl[T, K]) GetKeyIdName() string {
+	return "id"
 }
 
 // Helper function createInstance dynamically creates a new instance of type T.
