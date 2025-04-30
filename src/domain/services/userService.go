@@ -40,7 +40,7 @@ type UserService interface {
 
 	// UpdateUser modifies an existing user identified by their UUID based on the provided UserDto.
 	// Returns an error if the update fails.
-	UpdateUser(userID uuid.UUID, req request.NewUser) error
+	UpdateUser(userID uuid.UUID, req request.StateUser) error
 
 	// DeleteUser marks a user as deleted by their UUID.
 	// Returns an error if the deletion fails.
@@ -117,7 +117,7 @@ func (service *userServiceImpl) CreateNewUser(newUser dto.UserDto) (uuid.UUID, e
 }
 
 // UpdateUser implements UserService.
-func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.NewUser) error {
+func (service *userServiceImpl) UpdateUser(userID uuid.UUID, req request.StateUser) error {
 	var roleEntity *models.RoleEntity
 
 	userEntity, err := service.repository.FindByID(userID)

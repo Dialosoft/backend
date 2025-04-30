@@ -140,7 +140,7 @@ definitions:
         example: false
         type: boolean
     type: object
-  request.NewUser:
+  request.StateUser:
     properties:
       disable:
         type: boolean
@@ -1998,7 +1998,7 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/request.NewUser'
+          $ref: '#/definitions/request.StateUser'
       produces:
       - application/json
       responses:

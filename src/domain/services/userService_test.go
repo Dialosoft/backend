@@ -371,7 +371,7 @@ func (suite *UserServiceTestSuite) TestCreateNewUser() {
 func (suite *UserServiceTestSuite) TestUpdateUser() {
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	roleID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440001")
-	updateReq := request.NewUser{
+	updateReq := request.StateUser{
 		Username: testUtils.PtrToString("updateduser"),
 		Locked:   ptrToBool(false),
 		Disable:  ptrToBool(false),
@@ -403,7 +403,7 @@ func (suite *UserServiceTestSuite) TestUpdateUser() {
 	tests := []struct {
 		name          string
 		userID        uuid.UUID
-		updateReq     request.NewUser
+		updateReq     request.StateUser
 		mockUser      *models.UserEntity
 		mockRole      *models.RoleEntity
 		mockUserErr   error

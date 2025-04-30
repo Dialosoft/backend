@@ -2720,7 +2720,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.NewUser"
+                            "$ref": "#/definitions/request.StateUser"
                         }
                     }
                 ],
@@ -2955,7 +2955,7 @@
                 }
             }
         },
-        "request.NewUser": {
+        "request.StateUser": {
             "type": "object",
             "properties": {
                 "disable": {

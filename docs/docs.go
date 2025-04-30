@@ -2726,7 +2726,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/request.NewUser"
+                            "$ref": "#/definitions/request.StateUser"
                         }
                     }
                 ],
@@ -2961,7 +2961,7 @@ const docTemplate = `{
                 }
             }
         },
-        "request.NewUser": {
+        "request.StateUser": {
             "type": "object",
             "properties": {
                 "disable": {

@@ -151,7 +151,7 @@ func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 // @Accept json
 // @Produce json
 // @Param id path string true "User ID"
-// @Param user body request.NewUser true "Updated User Data"
+// @Param user body request.StateUser true "Updated User Data"
 // @Success 200 {object} response.StandardResponse "UPDATED - User updated successfully"
 // @Failure 400 {object} response.StandardError "BAD REQUEST - Invalid input data"
 // @Failure 404 {object} response.StandardError "NOT FOUND - User not found"
@@ -160,7 +160,7 @@ func (uc *UserController) CreateNewUser(c fiber.Ctx) error {
 // @Security RefreshTokenAuth
 // @Router /users/protected/update-user/{id} [put]
 func (uc *UserController) UpdateUser(c fiber.Ctx) error {
-	var req request.NewUser
+	var req request.StateUser
 
 	id := c.Params("id")
 	if id == "" {

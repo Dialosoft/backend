@@ -11,7 +11,7 @@ type UpdateUserRequest struct {
 	Email    string `json:"email"`
 }
 
-type NewUser struct {
+type StateUser struct {
 	Username *string `json:"username"`
 	Locked   *bool   `json:"locked"`
 	Disable  *bool   `json:"disable"`
