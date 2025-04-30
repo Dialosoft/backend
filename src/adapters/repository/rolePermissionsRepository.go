@@ -33,3 +33,7 @@ func (repo *rolePermissionsRepositoryImpl) FindByRoleID(roleID uuid.UUID) (*mode
 	fmt.Println("get into to FindByRoleID (repository)")
 	return repo.FirstByKey("role_id", roleID.String())
 }
+
+func (repo *rolePermissionsRepositoryImpl) GetKeyIdName() string {
+    return "role_id"
+}

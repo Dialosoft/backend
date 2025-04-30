@@ -192,7 +192,7 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 		rolePermissionEntity.CanManageUsers = *req.CanManageUsers
 	}
 
-	err = service.rolePermissionsRepository.UpdateRole(nil, roleID, rolePermissionEntity)
+	err = service.rolePermissionsRepository.Update(nil, roleID, rolePermissionEntity)
 	return err
 }
 

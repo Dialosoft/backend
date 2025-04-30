@@ -362,6 +362,7 @@ func (suite *RoleServiceTestSuite) TestGetDefaultRoles() {
 	userID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	moderatorID := uuid.MustParse("650e8400-e29b-41d4-a716-446655440000")
 	adminID := uuid.MustParse("750e8400-e29b-41d4-a716-446655440000")
+	anonymousID := uuid.MustParse("850e8400-e29b-41d4-a716-446655440000")
 
 	tests := []struct {
 		name           string
@@ -388,11 +389,17 @@ func (suite *RoleServiceTestSuite) TestGetDefaultRoles() {
 						ID:       adminID,
 						RoleType: "administrator",
 					}, nil)
+				suite.mockRoleRepo.On("FindByType", "anonymous").
+					Return(&models.RoleEntity{
+						ID:       anonymousID,
+						RoleType: "anonymous",
+					}, nil)
 			},
 			expectedResult: map[string]uuid.UUID{
 				"user":          userID,
 				"moderator":     moderatorID,
 				"administrator": adminID,
+				"anonymous":     anonymousID,
 			},
 			expectedError: nil,
 		},
@@ -404,6 +411,12 @@ func (suite *RoleServiceTestSuite) TestGetDefaultRoles() {
 					Return(&models.RoleEntity{
 						ID:       userID,
 						RoleType: "user",
+					}, nil)
+				// Mock FindByType for anonymous role
+				suite.mockRoleRepo.On("FindByType", "anonymous").
+					Return(&models.RoleEntity{
+						ID:       anonymousID,
+						RoleType: "anonymous",
 					}, nil)
 				// Mock FindByType for moderator role to return error
 				suite.mockRoleRepo.On("FindByType", "moderator").
@@ -421,6 +434,12 @@ func (suite *RoleServiceTestSuite) TestGetDefaultRoles() {
 					Return(&models.RoleEntity{
 						ID:       userID,
 						RoleType: "user",
+					}, nil)
+				// Mock FindByType for anonymous role
+				suite.mockRoleRepo.On("FindByType", "anonymous").
+					Return(&models.RoleEntity{
+						ID:       anonymousID,
+						RoleType: "anonymous",
 					}, nil)
 				// Mock FindByType for moderator role
 				suite.mockRoleRepo.On("FindByType", "moderator").
