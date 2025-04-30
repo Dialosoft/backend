@@ -66,7 +66,7 @@ type roleServiceImpl struct {
 func (service *roleServiceImpl) GetDefaultRoles() (map[string]uuid.UUID, error) {
 	roles := map[string]uuid.UUID{}
 
-	roleTypes := []string{"user", "moderator", "administrator"}
+	roleTypes := []string{"user", "moderator", "administrator", "anonymous"}
 
 	for _, roleType := range roleTypes {
 		role, err := service.GetRoleByType(roleType)
@@ -192,7 +192,7 @@ func (service *roleServiceImpl) SetRolePermissionsByRoleID(roleID uuid.UUID, req
 		rolePermissionEntity.CanManageUsers = *req.CanManageUsers
 	}
 
-	err = service.rolePermissionsRepository.Update(nil, roleID, rolePermissionEntity)
+	err = service.rolePermissionsRepository.UpdateRole(nil, roleID, rolePermissionEntity)
 	return err
 }
 

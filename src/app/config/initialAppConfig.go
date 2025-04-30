@@ -48,7 +48,7 @@ func SetupAPI(db *gorm.DB, redisConn *redis.Client, generalConfig GeneralConfig)
 	// Controllers
 	userController := controller.NewUserController(userService, "Controller/UserController")
 	authController := controller.NewAuthController(authService, validate, "Controller/AuthController")
-	forumController := controller.NewForumController(forumService, "Controller/ForumController")
+	forumController := controller.NewForumController(forumService, roleService, "Controller/ForumController")
 	categoryController := controller.NewCategoryController(categoryService, "Controller/CategoryController")
 	roleController := controller.NewRoleController(roleService, "Controller/RoleController")
 	postController := controller.NewPostController(postService, "Controller/PostController")

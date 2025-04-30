@@ -5,6 +5,7 @@ package e2e
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -179,8 +180,10 @@ func (h *TestHelpers) GetRoleIDByType(db *gorm.DB, roleType string) string {
 // Create admin user and login with it to get admin token
 func (h *TestHelpers) CreateAdminUserAndLogin(db *gorm.DB) (string, string, string) {
 	// Register an admin user first
-	adminUserName := "admin_test_user"
-	adminEmail := "admin@example.com"
+	// Add a random timestamp or uuid to make each single user
+	uniqueSuffix := uuid.New().String()[0:8]
+	adminUserName := fmt.Sprintf("admin_%s", uniqueSuffix)
+	adminEmail := fmt.Sprintf("admin_%s@example.com", uniqueSuffix)
 	adminPassword := "adminPassword123"
 	adminID, _, _ := h.RegisterAndLoginUser(adminUserName, adminEmail, adminPassword)
 
@@ -206,4 +209,65 @@ func (h *TestHelpers) CreateAdminUserAndLogin(db *gorm.DB) (string, string, stri
 	adminID, adminToken, adminRefreshToken := h.LoginUserFull(adminUserName, adminPassword)
 
 	return adminID, adminToken, adminRefreshToken
+}
+
+// CreateTestCategories creates predetermined categories for testing
+func (h *TestHelpers) CreateTestCategories(db *gorm.DB) ([]string, error) {
+	categories := []models.Category{
+		{
+			Name:        "General",
+			Description: "General discussion category for testing",
+			RolesAllowed: []string{
+				"user", "moderator", "administrator", "anonymous",
+			},
+		},
+		{
+			Name:        "Support",
+			Description: "Technical support category for testing",
+			RolesAllowed: []string{
+				"user", "moderator", "administrator",
+			},
+		},
+		{
+			Name:        "Announcements",
+			Description: "Announcements category for testing",
+			RolesAllowed: []string{
+				"moderator", "administrator",
+			},
+		},
+	}
+
+	categoryIDs := make([]string, 0, len(categories))
+
+	// Check if categories already exist
+	var categoryNames []string
+	for _, cat := range categories {
+		categoryNames = append(categoryNames, cat.Name)
+	}
+
+	var existingCategories []models.Category
+	if err := db.Where("name IN ?", categoryNames).Find(&existingCategories).Error; err != nil {
+		return nil, err
+	}
+
+	// Skip the categories that already exist
+	existingCategoryMap := make(map[string]bool)
+	for _, cat := range existingCategories {
+		existingCategoryMap[cat.Name] = true
+		categoryIDs = append(categoryIDs, cat.ID.String())
+	}
+
+	// Create the categories that don't exist yet
+	for _, cat := range categories {
+		if existingCategoryMap[cat.Name] {
+			continue
+		}
+
+		if err := db.Create(&cat).Error; err != nil {
+			return nil, err
+		}
+		categoryIDs = append(categoryIDs, cat.ID.String())
+	}
+
+	return categoryIDs, nil
 }
