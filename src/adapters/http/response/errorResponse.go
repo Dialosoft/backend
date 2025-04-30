@@ -10,6 +10,7 @@ import (
 
 type StandardError struct {
 	ErrorMessage string `json:"error" example:"An error occurred - some context"`
+	Details      string `json:"details,omitempty"`
 }
 
 type ValidatorError struct {
@@ -21,6 +22,7 @@ type ValidatorError struct {
 func ErrInternalServer(c fiber.Ctx, err error, data interface{}, layer string) error {
 	response := StandardError{
 		ErrorMessage: "INTERNAL SERVER ERROR",
+		Details:      err.Error(),
 	}
 	logger.CaptureError(err, fmt.Sprintf("(%s) Internal server error", layer), map[string]interface{}{
 		"data":   data,

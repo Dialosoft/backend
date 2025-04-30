@@ -48,12 +48,12 @@ func (mc *ManagementController) ChangeUserRole(c fiber.Ctx) error {
 		return response.ErrUUIDParse(c, req.UserID)
 	}
 
-	newUserRequest := request.NewUser{
+	stateUserRequest := request.StateUser{
 		RoleID: &req.RoleID,
 	}
 
 	// Update the user's role
-	if err := mc.UserService.UpdateUser(userUUID, newUserRequest); err != nil {
+	if err := mc.UserService.UpdateUser(userUUID, stateUserRequest); err != nil {
 		return response.ErrInternalServer(c, err, nil, mc.Layer)
 	}
 
