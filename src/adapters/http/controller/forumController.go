@@ -4,23 +4,25 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+
 	"github.com/Dialosoft/src/adapters/http/request"
 	"github.com/Dialosoft/src/adapters/http/response"
 	"github.com/Dialosoft/src/domain/services"
 	"github.com/Dialosoft/src/pkg/utils/devconfig"
 	"github.com/Dialosoft/src/pkg/utils/logger"
-	"github.com/gofiber/fiber/v3"
-	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type ForumController struct {
 	ForumService services.ForumService
+	RoleService  services.RoleService
 	Layer        string
 }
 
-func NewForumController(forumService services.ForumService, Layer string) *ForumController {
-	return &ForumController{ForumService: forumService, Layer: Layer}
+func NewForumController(forumService services.ForumService, roleService services.RoleService, Layer string) *ForumController {
+	return &ForumController{ForumService: forumService, RoleService: roleService, Layer: Layer}
 }
 
 // GetAllForums retrieves all forums.
@@ -113,7 +115,7 @@ func (fc *ForumController) GetForumByName(c fiber.Ctx) error {
 
 // GetForumsByCategoryIDAndAllowed retrieves forums allowed by category ID.
 // @Summary Get forums by category ID
-// @Description Retrieves forums by category ID if allowed for the role.
+// @Description Retrieves forums by category ID if allowed for the role, due to it's a public endpoint, in case the user is not authenticated, it will return all forums.
 // @Tags Forums
 // @Param categoryID path string true "Category ID"
 // @Produce json
@@ -136,17 +138,34 @@ func (fc *ForumController) GetForumsByCategoryIDAndAllowed(c fiber.Ctx) error {
 		return response.ErrUUIDParse(c, categoryID)
 	}
 
-	roleID := c.Locals("roleID")
-	roleIDString, ok := roleID.(string)
-	if !ok {
-		logger.Error("Invalid roleID format in token", map[string]interface{}{
-			"roleID": roleID,
-			"route":  c.Path(),
-		})
-		return response.PersonalizedErr(c, "Error in token: claims", fiber.StatusForbidden)
+	// Predetermined value for non -authenticated users
+	var defaultUserRole string = "anonymous"
+
+	if roleIDFromContext := c.Locals("roleID"); roleIDFromContext != nil {
+		roleIDString, ok := roleIDFromContext.(string)
+		if ok {
+
+			roleIdFromContextUUID, err := uuid.Parse(roleIDString)
+			
+			if err != nil {
+				return response.ErrUUIDParse(c, roleIDString)
+			}
+
+			roleFromContext, err := fc.RoleService.GetRoleByID(roleIdFromContextUUID)
+
+			if err != nil {
+				return response.ErrInternalServer(c, err, roleFromContext, fc.Layer)
+			}
+
+			logger.Info("roleId exists in context", map[string]interface{}{
+				"roleID": roleIDFromContext,
+				"route":  c.Path(),
+			})
+			defaultUserRole = roleFromContext.RoleType
+		}
 	}
 
-	forums, err := fc.ForumService.GetForumsByCategoryIDAndAllowed(categoryUUID, roleIDString)
+	forums, err := fc.ForumService.GetForumsByCategoryIDAndAllowed(categoryUUID, defaultUserRole)
 	if err != nil {
 		return response.ErrInternalServer(c, err, forums, fc.Layer)
 	}
@@ -213,6 +232,10 @@ func (fc *ForumController) CreateForum(c fiber.Ctx) error {
 // @Router /forums/protected/update-forum/{id} [put]
 func (fc *ForumController) UpdateForum(c fiber.Ctx) error {
 	var req request.NewForum
+
+	if err := c.Bind().Body(&req); err != nil {
+		return response.ErrBadRequest(c, string(c.Body()), err, fc.Layer)
+	}
 
 	id := c.Params("id")
 	if id == "" {

@@ -71,9 +71,10 @@ func StartTokenChecker(ctx context.Context, db *gorm.DB, interval time.Duration)
 func CreateDefaultRoles(db *gorm.DB) error {
 
 	roles := []models.RoleEntity{
-		{RoleType: "user", Permission: 1, AdminRole: false, ModRole: false},
-		{RoleType: "moderator", Permission: 2, AdminRole: false, ModRole: true},
-		{RoleType: "administrator", Permission: 3, AdminRole: true, ModRole: false},
+		{RoleType: "user", Permission: 1, AdminRole: false, ModRole: false, UserRole: true},
+		{RoleType: "moderator", Permission: 2, AdminRole: false, ModRole: true, UserRole: true},
+		{RoleType: "administrator", Permission: 3, AdminRole: true, ModRole: false, UserRole: true},
+		{RoleType: "anonymous", Permission: 4, AdminRole: false, ModRole: false, UserRole: false},
 	}
 
 	roleTypes := make([]string, len(roles))
@@ -143,6 +144,14 @@ func getRolePermissions(roleType string, roleID uuid.UUID) models.RolePermission
 			CanManageForums:     true,
 			CanManageRoles:      true,
 			CanManageUsers:      true,
+		}
+	case "anonymous":
+		return models.RolePermissions{
+			RoleID:              roleID,
+			CanManageCategories: false,
+			CanManageForums:     false,
+			CanManageRoles:      false,
+			CanManageUsers:      false,
 		}
 	default:
 		return models.RolePermissions{}
